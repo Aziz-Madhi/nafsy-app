@@ -6,25 +6,16 @@ export const recordMood = mutation({
   args: {
     userId: v.id("users"),
     rating: v.number(),
-    emotions: v.array(v.string()),
     note: v.optional(v.string()),
-    triggers: v.optional(v.array(v.string())),
-    activities: v.optional(v.array(v.string())),
+    factors: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    // Validate rating is between 1-10
-    if (args.rating < 1 || args.rating > 10) {
-      throw new Error("Rating must be between 1 and 10");
-    }
-
     const moodId = await ctx.db.insert("moods", {
       userId: args.userId,
       rating: args.rating,
-      emotions: args.emotions,
       note: args.note,
+      factors: args.factors,
       timestamp: Date.now(),
-      triggers: args.triggers,
-      activities: args.activities,
     });
 
     return moodId;
@@ -35,40 +26,22 @@ export const recordMood = mutation({
 export const getUserMoods = query({
   args: {
     userId: v.id("users"),
-    days: v.optional(v.number()), // Number of days to look back
+    limit: v.optional(v.number()),
+    days: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const days = args.days || 30;
-    const startTime = Date.now() - (days * 24 * 60 * 60 * 1000);
+    const limit = args.limit || 30;
+    const daysAgo = args.days || 30;
+    const cutoffTime = Date.now() - (daysAgo * 24 * 60 * 60 * 1000);
 
     const moods = await ctx.db
       .query("moods")
-      .withIndex("by_user_and_time", (q) => 
-        q.eq("userId", args.userId).gte("timestamp", startTime)
-      )
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .filter((q) => q.gte(q.field("timestamp"), cutoffTime))
       .order("desc")
-      .collect();
+      .take(limit);
 
     return moods;
-  },
-});
-
-// Get today's mood
-export const getTodaysMood = query({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const startTime = todayStart.getTime();
-
-    const mood = await ctx.db
-      .query("moods")
-      .withIndex("by_user_and_time", (q) => 
-        q.eq("userId", args.userId).gte("timestamp", startTime)
-      )
-      .first();
-
-    return mood;
   },
 });
 
@@ -76,109 +49,75 @@ export const getTodaysMood = query({
 export const getMoodStats = query({
   args: {
     userId: v.id("users"),
-    days: v.number(),
+    days: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const startTime = Date.now() - (args.days * 24 * 60 * 60 * 1000);
+    const daysAgo = args.days || 30;
+    const cutoffTime = Date.now() - (daysAgo * 24 * 60 * 60 * 1000);
 
     const moods = await ctx.db
       .query("moods")
-      .withIndex("by_user_and_time", (q) => 
-        q.eq("userId", args.userId).gte("timestamp", startTime)
-      )
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .filter((q) => q.gte(q.field("timestamp"), cutoffTime))
       .collect();
 
     if (moods.length === 0) {
       return {
         averageRating: 0,
         totalEntries: 0,
-        mostCommonEmotions: [],
-        trend: "stable",
+        trend: "neutral",
+        mostCommonFactors: [],
       };
     }
 
-    // Calculate average rating
-    const totalRating = moods.reduce((sum, mood) => sum + mood.rating, 0);
-    const averageRating = totalRating / moods.length;
-
-    // Find most common emotions
-    const emotionCounts: Record<string, number> = {};
+    const averageRating = moods.reduce((sum, mood) => sum + mood.rating, 0) / moods.length;
+    
+    // Calculate trend (comparing first half vs second half)
+    const midpoint = Math.floor(moods.length / 2);
+    const firstHalf = moods.slice(0, midpoint);
+    const secondHalf = moods.slice(midpoint);
+    
+    const firstHalfAvg = firstHalf.length > 0 
+      ? firstHalf.reduce((sum, mood) => sum + mood.rating, 0) / firstHalf.length 
+      : 0;
+    const secondHalfAvg = secondHalf.length > 0 
+      ? secondHalf.reduce((sum, mood) => sum + mood.rating, 0) / secondHalf.length 
+      : 0;
+    
+    let trend = "neutral";
+    if (secondHalfAvg > firstHalfAvg + 0.5) trend = "improving";
+    else if (secondHalfAvg < firstHalfAvg - 0.5) trend = "declining";
+    
+    // Get most common factors
+    const factorCounts: { [key: string]: number } = {};
     moods.forEach(mood => {
-      mood.emotions.forEach(emotion => {
-        emotionCounts[emotion] = (emotionCounts[emotion] || 0) + 1;
+      mood.factors?.forEach(factor => {
+        factorCounts[factor] = (factorCounts[factor] || 0) + 1;
       });
     });
-
-    const mostCommonEmotions = Object.entries(emotionCounts)
-      .sort(([, a], [, b]) => b - a)
+    
+    const mostCommonFactors = Object.entries(factorCounts)
+      .sort(([,a], [,b]) => b - a)
       .slice(0, 5)
-      .map(([emotion]) => emotion);
-
-    // Calculate trend (simple linear regression)
-    let trend = "stable";
-    if (moods.length >= 3) {
-      const firstThird = moods.slice(0, Math.floor(moods.length / 3));
-      const lastThird = moods.slice(-Math.floor(moods.length / 3));
-      
-      const firstAvg = firstThird.reduce((sum, m) => sum + m.rating, 0) / firstThird.length;
-      const lastAvg = lastThird.reduce((sum, m) => sum + m.rating, 0) / lastThird.length;
-      
-      if (lastAvg - firstAvg > 0.5) trend = "improving";
-      else if (firstAvg - lastAvg > 0.5) trend = "declining";
-    }
+      .map(([factor, count]) => ({ factor, count }));
 
     return {
-      averageRating: Math.round(averageRating * 10) / 10,
+      averageRating,
       totalEntries: moods.length,
-      mostCommonEmotions,
       trend,
+      mostCommonFactors,
     };
   },
 });
 
-// Get mood insights for AI
-export const getMoodInsights = query({
+// Get latest mood
+export const getLatestMood = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
-    const moods = await ctx.db
+    return await ctx.db
       .query("moods")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .order("desc")
-      .take(30);
-
-    // Group by rating ranges
-    const moodGroups = {
-      low: moods.filter(m => m.rating <= 3),
-      medium: moods.filter(m => m.rating > 3 && m.rating <= 7),
-      high: moods.filter(m => m.rating > 7),
-    };
-
-    // Find common triggers for low moods
-    const lowMoodTriggers: Record<string, number> = {};
-    moodGroups.low.forEach(mood => {
-      mood.triggers?.forEach(trigger => {
-        lowMoodTriggers[trigger] = (lowMoodTriggers[trigger] || 0) + 1;
-      });
-    });
-
-    // Find activities associated with high moods
-    const highMoodActivities: Record<string, number> = {};
-    moodGroups.high.forEach(mood => {
-      mood.activities?.forEach(activity => {
-        highMoodActivities[activity] = (highMoodActivities[activity] || 0) + 1;
-      });
-    });
-
-    return {
-      recentMoods: moods.slice(0, 7),
-      commonLowMoodTriggers: Object.entries(lowMoodTriggers)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 3)
-        .map(([trigger]) => trigger),
-      helpfulActivities: Object.entries(highMoodActivities)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 3)
-        .map(([activity]) => activity),
-    };
+      .first();
   },
 });

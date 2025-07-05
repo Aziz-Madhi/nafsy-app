@@ -1,3 +1,5 @@
+import { LocaleProvider } from "@/hooks/useLocale";
+import { ThemeProvider } from "@/theme";
 import { ClerkLoaded, ClerkProvider, useAuth as useClerkAuth } from "@clerk/clerk-expo";
 import { ConvexReactClient } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
@@ -7,8 +9,8 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useRef } from "react";
 import { Text, View } from "react-native";
 import "react-native-reanimated";
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { tokenCache } from "../../utils/cache";
-import { LocaleProvider } from "@/hooks/useLocale";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -56,22 +58,26 @@ export default function RootLayout() {
   }
 
   return (
-    <LocaleProvider>
-      <ClerkProvider 
-        tokenCache={tokenCache} 
-        publishableKey={publishableKey}
-      >
-        <ConvexProviderWithClerk client={convex} useAuth={useClerkAuth}>
-          <ClerkLoaded>
-            <Stack>
-              <Stack.Screen name="index" options={{ headerShown: false }} />
-              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="+not-found" />
-            </Stack>
-          </ClerkLoaded>
-        </ConvexProviderWithClerk>
-      </ClerkProvider>
-    </LocaleProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <LocaleProvider>
+        <ThemeProvider>
+          <ClerkProvider 
+            tokenCache={tokenCache} 
+            publishableKey={publishableKey}
+          >
+            <ConvexProviderWithClerk client={convex} useAuth={useClerkAuth}>
+              <ClerkLoaded>
+                <Stack>
+                  <Stack.Screen name="index" options={{ headerShown: false }} />
+                  <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen name="+not-found" />
+                </Stack>
+              </ClerkLoaded>
+            </ConvexProviderWithClerk>
+          </ClerkProvider>
+        </ThemeProvider>
+      </LocaleProvider>
+    </GestureHandlerRootView>
   );
 }

@@ -31,7 +31,7 @@ const REDIRECT_URL = Linking.createURL("sso-callback", { scheme: APP_SCHEME });
 export default function SignUpScreen() {
   const { isLoaded, signUp, setActive } = useSignUp();
   const router = useRouter();
-  const { t, locale } = useTranslation();
+  const { t, tLegacy, locale } = useTranslation();
   
   const { startOAuthFlow: googleAuth } = useOAuth({ strategy: "oauth_google" });
   const { startOAuthFlow: appleAuth } = useOAuth({ strategy: "oauth_apple" });
@@ -44,32 +44,20 @@ export default function SignUpScreen() {
   const [isLoading, setIsLoading] = useState(false);
 
   const content = {
-    title: t("Create Account", { en: "Create Account", ar: "إنشاء حساب" }),
-    subtitle: t("Start your wellness journey", { 
-      en: "Start your wellness journey", 
-      ar: "ابدأ رحلتك نحو الصحة النفسية" 
-    }),
-    name: t("Name", { en: "Name", ar: "الاسم" }),
-    email: t("Email", { en: "Email", ar: "البريد الإلكتروني" }),
-    password: t("Password", { en: "Password", ar: "كلمة المرور" }),
-    signUpButton: t("Sign Up", { en: "Sign Up", ar: "إنشاء حساب" }),
-    haveAccount: t("Already have an account?", { 
-      en: "Already have an account?", 
-      ar: "لديك حساب بالفعل؟" 
-    }),
-    signIn: t("Sign In", { en: "Sign In", ar: "تسجيل الدخول" }),
-    verifyEmail: t("Verify Email", { en: "Verify Email", ar: "تأكيد البريد الإلكتروني" }),
-    verifyEmailDesc: t("Enter verification code", { 
-      en: "We've sent a verification code to your email", 
-      ar: "لقد أرسلنا رمز التحقق إلى بريدك الإلكتروني" 
-    }),
-    verificationCode: t("Verification Code", { en: "Verification Code", ar: "رمز التحقق" }),
-    verify: t("Verify", { en: "Verify", ar: "تأكيد" }),
-    terms: t("Terms", { 
-      en: "By signing up, you agree to our Terms of Service and Privacy Policy", 
-      ar: "بإنشاء حساب، فإنك توافق على شروط الخدمة وسياسة الخصوصية" 
-    }),
-    orContinueWith: t("Or continue with", { en: "Or continue with", ar: "أو تابع باستخدام" }),
+    title: t("auth.signUp.title"),
+    subtitle: t("auth.signUp.subtitle"),
+    name: t("auth.signUp.firstName"),
+    email: t("auth.signUp.email"),
+    password: t("auth.signUp.password"),
+    signUpButton: t("auth.signUp.signUpButton"),
+    haveAccount: t("auth.signUp.hasAccount"),
+    signIn: t("auth.signUp.signIn"),
+    verifyEmail: "Verify Email", // TODO: Add to centralized translations
+    verifyEmailDesc: "We've sent a verification code to your email", // TODO: Add to centralized translations
+    verificationCode: "Verification Code", // TODO: Add to centralized translations
+    verify: "Verify", // TODO: Add to centralized translations
+    terms: "By signing up, you agree to our Terms of Service and Privacy Policy", // TODO: Add to centralized translations
+    orContinueWith: t("auth.signUp.orContinueWith"),
   };
 
   const onSignUpPress = async () => {
@@ -78,7 +66,7 @@ export default function SignUpScreen() {
     // Basic validation
     if (!firstName || !emailAddress || !password) {
       Alert.alert(
-        t("Error", { en: "Error", ar: "خطأ" }),
+        t("error"),
         t("Fill all fields", { 
           en: "Please fill in all fields", 
           ar: "يرجى ملء جميع الحقول" 
@@ -91,7 +79,7 @@ export default function SignUpScreen() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(emailAddress)) {
       Alert.alert(
-        t("Error", { en: "Error", ar: "خطأ" }),
+        t("error"),
         t("Invalid email", { 
           en: "Please enter a valid email address", 
           ar: "يرجى إدخال بريد إلكتروني صحيح" 
@@ -103,7 +91,7 @@ export default function SignUpScreen() {
     // Password validation
     if (password.length < 8) {
       Alert.alert(
-        t("Error", { en: "Error", ar: "خطأ" }),
+        t("error"),
         t("Weak password", { 
           en: "Password must be at least 8 characters", 
           ar: "يجب أن تكون كلمة المرور 8 أحرف على الأقل" 
@@ -135,7 +123,7 @@ export default function SignUpScreen() {
         });
         
       Alert.alert(
-        t("Error", { en: "Error", ar: "خطأ" }),
+        t("error"),
         errorMessage
       );
     } finally {
@@ -189,7 +177,7 @@ export default function SignUpScreen() {
         });
         
       Alert.alert(
-        t("Error", { en: "Error", ar: "خطأ" }),
+        t("error"),
         errorMessage
       );
     }
@@ -210,7 +198,7 @@ export default function SignUpScreen() {
       router.replace("/(tabs)");
     } catch (err: any) {
       Alert.alert(
-        t("Error", { en: "Error", ar: "خطأ" }),
+        t("error"),
         err.errors?.[0]?.message || t("Verification failed", { 
           en: "Invalid verification code", 
           ar: "رمز التحقق غير صحيح" 

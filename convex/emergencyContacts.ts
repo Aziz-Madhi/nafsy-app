@@ -1,26 +1,27 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
-// Add an emergency contact
+// Add emergency contact
 export const addEmergencyContact = mutation({
   args: {
     userId: v.id("users"),
     name: v.string(),
     phone: v.string(),
-    relationship: v.optional(v.string()),
+    relationship: v.string(),
     isPrimary: v.boolean(),
   },
   handler: async (ctx, args) => {
-    // If setting as primary, unset other primary contacts
+    // If this is set as primary, remove primary flag from others
     if (args.isPrimary) {
       const existingContacts = await ctx.db
         .query("emergencyContacts")
         .withIndex("by_user", (q) => q.eq("userId", args.userId))
-        .filter((q) => q.eq(q.field("isPrimary"), true))
         .collect();
 
       for (const contact of existingContacts) {
-        await ctx.db.patch(contact._id, { isPrimary: false });
+        if (contact.isPrimary) {
+          await ctx.db.patch(contact._id, { isPrimary: false });
+        }
       }
     }
 
@@ -30,7 +31,6 @@ export const addEmergencyContact = mutation({
       phone: args.phone,
       relationship: args.relationship,
       isPrimary: args.isPrimary,
-      createdAt: Date.now(),
     });
 
     return contactId;
@@ -41,17 +41,10 @@ export const addEmergencyContact = mutation({
 export const getUserEmergencyContacts = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
-    const contacts = await ctx.db
+    return await ctx.db
       .query("emergencyContacts")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .collect();
-
-    // Sort by primary first, then by creation date
-    return contacts.sort((a, b) => {
-      if (a.isPrimary && !b.isPrimary) return -1;
-      if (!a.isPrimary && b.isPrimary) return 1;
-      return b.createdAt - a.createdAt;
-    });
   },
 });
 
@@ -70,31 +63,26 @@ export const updateEmergencyContact = mutation({
       throw new Error("Contact not found");
     }
 
-    // If setting as primary, unset other primary contacts
-    if (args.isPrimary === true) {
-      const otherContacts = await ctx.db
+    // If this is being set as primary, remove primary flag from others
+    if (args.isPrimary) {
+      const existingContacts = await ctx.db
         .query("emergencyContacts")
         .withIndex("by_user", (q) => q.eq("userId", contact.userId))
-        .filter((q) => 
-          q.and(
-            q.eq(q.field("isPrimary"), true),
-            q.neq(q.field("_id"), args.contactId)
-          )
-        )
         .collect();
 
-      for (const otherContact of otherContacts) {
-        await ctx.db.patch(otherContact._id, { isPrimary: false });
+      for (const existingContact of existingContacts) {
+        if (existingContact.isPrimary && existingContact._id !== args.contactId) {
+          await ctx.db.patch(existingContact._id, { isPrimary: false });
+        }
       }
     }
 
-    const updates: any = {};
-    if (args.name !== undefined) updates.name = args.name;
-    if (args.phone !== undefined) updates.phone = args.phone;
-    if (args.relationship !== undefined) updates.relationship = args.relationship;
-    if (args.isPrimary !== undefined) updates.isPrimary = args.isPrimary;
-
-    await ctx.db.patch(args.contactId, updates);
+    await ctx.db.patch(args.contactId, {
+      name: args.name,
+      phone: args.phone,
+      relationship: args.relationship,
+      isPrimary: args.isPrimary,
+    });
   },
 });
 

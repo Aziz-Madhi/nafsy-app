@@ -1,16 +1,17 @@
 import * as Form from "@/components/ui/Form";
 import { useTranslation } from "@/hooks/useLocale";
-import * as AC from "@bacons/apple-colors";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import React from "react";
 import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useAppTheme } from "@/theme";
 
 export default function ProfileScreen() {
   const { signOut } = useAuth();
   const { user } = useUser();
   const router = useRouter();
   const { t } = useTranslation();
+  const { colors, styles } = useAppTheme();
 
   const handleSignOut = async () => {
     await signOut();
@@ -18,20 +19,20 @@ export default function ProfileScreen() {
   };
 
   const content = {
-    profile: t("Profile", { en: "Profile", ar: "الملف الشخصي" }),
-    settings: t("Settings", { en: "Settings", ar: "الإعدادات" }),
-    preferences: t("Preferences", { en: "Preferences", ar: "التفضيلات" }),
-    notifications: t("Notifications", { en: "Notifications", ar: "الإشعارات" }),
-    privacy: t("Privacy", { en: "Privacy", ar: "الخصوصية" }),
-    help: t("Help", { en: "Help & Support", ar: "المساعدة والدعم" }),
-    about: t("About", { en: "About Nafsy", ar: "عن نفسي" }),
-    signOut: t("Sign Out", { en: "Sign Out", ar: "تسجيل الخروج" }),
+    profile: t("profile.title"),
+    settings: t("profile.settings"),
+    preferences: t("profile.preferences"),
+    notifications: t("profile.notifications"),
+    privacy: t("profile.privacy"),
+    help: t("profile.help"),
+    about: t("profile.about"),
+    signOut: t("profile.signOut"),
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <Form.List navigationTitle={content.profile}>
-        <View style={styles.header}>
+        <View style={localStyles.header}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>
               {user?.firstName?.[0]?.toUpperCase() || "U"}
@@ -61,7 +62,7 @@ export default function ProfileScreen() {
 
         <Form.Section>
           <TouchableOpacity onPress={handleSignOut}>
-            <Form.Text style={{ color: AC.systemRed }}>
+            <Form.Text style={{ color: colors.interactive.destructive }}>
               {content.signOut}
             </Form.Text>
           </TouchableOpacity>
@@ -71,37 +72,9 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: AC.systemBackground,
-  },
+const localStyles = StyleSheet.create({
   header: {
     alignItems: "center",
     paddingVertical: 24,
-  },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: AC.systemBlue,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  avatarText: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
-  name: {
-    fontSize: 24,
-    fontWeight: "600",
-    color: AC.label,
-    marginBottom: 4,
-  },
-  email: {
-    fontSize: 16,
-    color: AC.secondaryLabel,
   },
 });

@@ -1,9 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import { getTranslation, type Locale } from "@/locales";
 
 const LOCALE_KEY = "@nafsy/locale";
-
-export type Locale = "en" | "ar";
 
 interface LocaleContextType {
   locale: Locale;
@@ -17,14 +16,8 @@ const LocaleContext = createContext<LocaleContextType | undefined>(undefined);
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>("en");
   const [isLoading, setIsLoading] = useState(true);
-  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
-    // Prevent multiple loads
-    if (hasLoaded) return;
-    
-    setHasLoaded(true);
-    
     // Load locale on mount
     AsyncStorage.getItem(LOCALE_KEY)
       .then((savedLocale) => {
@@ -38,16 +31,16 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
       .finally(() => {
         setIsLoading(false);
       });
-  }, [hasLoaded]);
+  }, []);
 
-  const setLocale = React.useCallback(async (newLocale: Locale) => {
+  const setLocale = async (newLocale: Locale) => {
     try {
       await AsyncStorage.setItem(LOCALE_KEY, newLocale);
       setLocaleState(newLocale);
     } catch (error) {
       console.error("Error saving locale:", error);
     }
-  }, []);
+  };
 
   // Memoize the context value so React can bail out of unnecessary updates
   const value = React.useMemo(
@@ -75,13 +68,19 @@ export function useLocale() {
   return context;
 }
 
-// Translation helper
+// Translation helper - now uses centralized translations
 export function useTranslation() {
   const { locale } = useLocale();
   
-  const t = (key: string, translations: { en: string; ar: string }) => {
+  const t = (key: string) => {
+    return getTranslation(locale, key);
+  };
+  
+  // Legacy support for inline translations (deprecated)
+  const tLegacy = (key: string, translations: { en: string; ar: string }) => {
+    console.warn(`Legacy translation used for "${key}". Please migrate to centralized translations.`);
     return translations[locale];
   };
   
-  return { t, locale };
+  return { t, tLegacy, locale };
 }

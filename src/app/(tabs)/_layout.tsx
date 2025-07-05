@@ -71,10 +71,10 @@ export default function TabsLayout() {
   }
 
   const tabLabels = {
-    chat: t("Chat", { en: "Chat", ar: "محادثة" }),
-    mood: t("Mood", { en: "Mood", ar: "المزاج" }),
-    exercises: t("Exercises", { en: "Exercises", ar: "التمارين" }),
-    profile: t("Profile", { en: "Profile", ar: "الملف" }),
+    chat: t("navigation.chat"),
+    mood: t("navigation.mood"),
+    exercises: t("navigation.exercises"),
+    profile: t("navigation.profile"),
   };
 
   return (

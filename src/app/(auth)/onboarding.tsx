@@ -21,7 +21,7 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const { user } = useUser();
   const { isAuthenticated } = useConvexAuth();
-  const { t, locale } = useTranslation();
+  const { t, tLegacy, locale } = useTranslation();
   
   const upsertUser = useMutation(api.users.upsertUser);
   const completeOnboarding = useMutation(api.users.completeOnboarding);
@@ -36,47 +36,23 @@ export default function OnboardingScreen() {
   const [isLoading, setIsLoading] = useState(false);
 
   const content = {
-    welcome: t("Welcome", { en: "Welcome", ar: "مرحباً" }),
-    letsGetStarted: t("Let's get started", { 
-      en: "Let's personalize your experience", 
-      ar: "دعنا نخصص تجربتك" 
-    }),
-    preferences: t("Preferences", { en: "Your Preferences", ar: "تفضيلاتك" }),
-    notifications: t("Daily Check-ins", { 
-      en: "Daily Mood Check-ins", 
-      ar: "تسجيل المزاج اليومي" 
-    }),
-    notificationDesc: t("Get reminded", { 
-      en: "Get reminded to track your mood", 
-      ar: "احصل على تذكير لتتبع مزاجك" 
-    }),
-    voiceChat: t("Voice Chat", { en: "Voice Conversations", ar: "المحادثات الصوتية" }),
-    voiceChatDesc: t("Talk to Nafsy", { 
-      en: "Talk to Nafsy using voice", 
-      ar: "تحدث مع نفسي بالصوت" 
-    }),
-    theme: t("Theme", { en: "App Theme", ar: "مظهر التطبيق" }),
-    themeAuto: t("Auto", { en: "Automatic", ar: "تلقائي" }),
-    themeLight: t("Light", { en: "Light", ar: "فاتح" }),
-    themeDark: t("Dark", { en: "Dark", ar: "داكن" }),
-    continue: t("Continue", { en: "Continue", ar: "متابعة" }),
-    finish: t("Finish", { en: "Start Your Journey", ar: "ابدأ رحلتك" }),
-    privacy: t("Privacy", { 
-      en: "Your privacy matters", 
-      ar: "خصوصيتك مهمة" 
-    }),
-    privacyDesc: t("Privacy description", { 
-      en: "Everything you share with Nafsy is encrypted and private. We never share your data without your permission. You can delete your data anytime.", 
-      ar: "كل ما تشاركه مع نفسي مشفر وخاص. لن نشارك بياناتك أبداً بدون إذنك. يمكنك حذف بياناتك في أي وقت." 
-    }),
-    emergencyContact: t("Emergency Contact", { 
-      en: "Emergency Contact (Optional)", 
-      ar: "جهة اتصال الطوارئ (اختياري)" 
-    }),
-    emergencyDesc: t("Emergency description", { 
-      en: "Add someone we can suggest contacting if you're in crisis", 
-      ar: "أضف شخصاً يمكننا اقتراح الاتصال به في حالة الأزمات" 
-    }),
+    welcome: t("auth.onboarding.title"),
+    letsGetStarted: t("auth.onboarding.subtitle"),
+    preferences: "Your Preferences", // TODO: Add to centralized translations
+    notifications: "Daily Mood Check-ins", // TODO: Add to centralized translations
+    notificationDesc: "Get reminded to track your mood", // TODO: Add to centralized translations
+    voiceChat: "Voice Conversations", // TODO: Add to centralized translations
+    voiceChatDesc: "Talk to Nafsy using voice", // TODO: Add to centralized translations
+    theme: "App Theme", // TODO: Add to centralized translations
+    themeAuto: "Automatic", // TODO: Add to centralized translations
+    themeLight: "Light", // TODO: Add to centralized translations
+    themeDark: "Dark", // TODO: Add to centralized translations
+    continue: t("continue"),
+    finish: t("auth.onboarding.getStarted"),
+    privacy: "Your privacy matters", // TODO: Add to centralized translations
+    privacyDesc: "Everything you share with Nafsy is encrypted and private. We never share your data without your permission. You can delete your data anytime.", // TODO: Add to centralized translations
+    emergencyContact: t("auth.onboarding.emergencyContact"),
+    emergencyDesc: t("auth.onboarding.emergencyDescription"),
   };
 
   const handleComplete = async () => {
@@ -101,7 +77,7 @@ export default function OnboardingScreen() {
     } catch (error) {
       console.error("Onboarding error:", error);
       Alert.alert(
-        t("Error", { en: "Error", ar: "خطأ" }),
+        t("error"),
         t("Onboarding failed", { 
           en: "Failed to complete setup. Please try again.", 
           ar: "فشل إكمال الإعداد. يرجى المحاولة مرة أخرى." 
@@ -208,19 +184,19 @@ export default function OnboardingScreen() {
               <View style={styles.privacyFeature}>
                 <Image source="sf:lock.fill" size={24} tintColor={AC.systemBlue} />
                 <Text style={styles.privacyFeatureText}>
-                  {t("Encrypted", { en: "End-to-end encrypted", ar: "تشفير من طرف إلى طرف" })}
+                  {t("auth.onboarding.encrypted")}
                 </Text>
               </View>
               <View style={styles.privacyFeature}>
                 <Image source="sf:hand.raised.fill" size={24} tintColor={AC.systemBlue} />
                 <Text style={styles.privacyFeatureText}>
-                  {t("No sharing", { en: "Never shared without consent", ar: "لن تُشارك بدون موافقة" })}
+                  {t("auth.onboarding.noSharing")}
                 </Text>
               </View>
               <View style={styles.privacyFeature}>
                 <Image source="sf:trash.fill" size={24} tintColor={AC.systemBlue} />
                 <Text style={styles.privacyFeatureText}>
-                  {t("Delete anytime", { en: "Delete your data anytime", ar: "احذف بياناتك في أي وقت" })}
+                  {t("auth.onboarding.deleteAnytime")}
                 </Text>
               </View>
             </View>

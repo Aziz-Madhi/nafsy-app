@@ -4,17 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an Expo Router template project featuring iOS-style form components. Originally created by Evan Bacon from the Expo team, it provides a comprehensive UI component library that mimics Apple's settings app design patterns.
+**Nafsy** is a mental health React Native app built with Expo, featuring AI-powered chat, mood tracking, wellness exercises, and multilingual support (English/Arabic). The app uses Clerk for authentication, Convex for real-time backend, and follows iOS design patterns with Apple-style components.
 
 ## Development Commands
-AlWAYS USE BUN or BUNX COMMAND
-
-## Commands
+**ALWAYS USE BUN or BUNX COMMANDS**
 
 ### Development
 - `bun expo start` - Start Expo development server
-- `bun expo start --tunnel` - Start with tunnel for testing on physical devices
 - `bun expo start --clear` - Start with cache cleared
+- `bun expo start --tunnel` - Start with tunnel for testing on physical devices
 - `bun expo prebuild` - Generate native iOS/Android projects
 - `bun expo run:ios` - Run on iOS simulator
 - `bun expo run:android` - Run on Android emulator
@@ -24,15 +22,14 @@ AlWAYS USE BUN or BUNX COMMAND
 - `bunx convex deploy` - Deploy backend to production
 - `bunx convex dashboard` - Open Convex dashboard in browser
 - `bunx convex logs` - View real-time backend logs
-- `bunx convex init` - Initialize new Convex project
 - `bunx convex env` - Manage environment variables
 
 ### Code Quality
 - `bun expo install --fix` - Fix package version mismatches
-- `bun lint` - Run ESLint
-- `bun lint:fix` - Run ESLint with auto-fix
-- `bun type-check` - Run TypeScript type checking
-- `bun format` - Format code with Prettier
+- `bun lint` - Run ESLint (currently has config issues)
+- `bun lint:fix` - Run ESLint with auto-fix (currently has config issues)
+- TypeScript checking via IDE integration (no separate command available)
+- `bun format` - Format code with Prettier (if available)
 
 ### Build & Deploy
 - `bunx eas build --platform ios` - Build for iOS using EAS
@@ -41,250 +38,205 @@ AlWAYS USE BUN or BUNX COMMAND
 - `bunx eas submit` - Submit to app stores
 - `bunx eas update` - Push OTA updates
 
-### OpenAI Integration
-- `bun test:openai` - Test OpenAI API connection
-- `bun openai:models` - List available OpenAI models
+## Critical Lessons Learned
 
+### Infinite Render Loop Prevention
+**MOST IMPORTANT**: This project previously had infinite render loop issues. Always follow these patterns:
 
-## Architecture Overview
+1. **LocaleProvider Context Stability**:
+   ```tsx
+   // CORRECT: Use React.useMemo and useCallback for stable context values
+   const setLocale = React.useCallback(async (newLocale: Locale) => {
+     // implementation
+   }, []);
 
-### Navigation Structure
-- **Root Layout**: `/src/app/_layout.tsx` - Sets up theme provider, font loading, and tab navigation
-- **Tab Navigation**: Two main tabs - Home `(index)` and Info `(info)`
-- **Stack Navigation**: Uses custom `Stack` component that wraps Expo Router with iOS-style headers
-- **Modal Support**: Custom modal navigator with native iOS bottom sheets and web-compatible drawer (vaul)
+   const value = React.useMemo(() => ({
+     locale,
+     setLocale,
+     isLoading,
+     isRTL: locale === "ar",
+   }), [locale, isLoading]);
+   ```
 
-### Component Architecture
-- **Form Components** (`/src/components/ui/Form.tsx`): Core form system with sections, items, links, toggles, date pickers
-- **Theme System** (`/src/components/ui/ThemeProvider.tsx`): Automatic dark/light mode with Apple color system
-- **Platform-Specific**: Components have `.ios.tsx`, `.web.tsx` variants for platform optimization
+2. **Navigation Redirect Loops**: Always check loading states before redirecting
+   ```tsx
+   // CORRECT: Wait for auth state to load
+   if (!isLoaded) {
+     return null;
+   }
+   ```
 
-### Key Technical Decisions
-- **React 19 + React Compiler**: Enabled for performance optimization
-- **SVG Handling**: Custom Metro transformer converts SVGs to React components
-- **SF Symbols**: Custom `Image` component (`/src/components/ui/img.tsx`) supports `sf:` prefix for Apple icons
-- **Path Aliases**: Use `@/` to import from `src/` directory
-- **Fonts**: Suspense-based font loading system with custom `AsyncFont` component
+3. **Effect Dependencies**: Be careful with useEffect dependencies to prevent loops
+   ```tsx
+   // CORRECT: Use refs for one-time operations
+   const hasRedirected = useRef(false);
+   
+   useEffect(() => {
+     if (hasRedirected.current || !isLoaded) return;
+     hasRedirected.current = true;
+     // redirect logic
+   }, [isSignedIn, isLoaded, router]);
+   ```
 
-### Form Component Patterns
+### TypeScript Color Handling
+When using Apple Colors with React Navigation:
 ```tsx
-// Basic form structure
-<Form.List navigationTitle="Title">
-  <Form.Section title="Section">
-    <Form.Text>Item</Form.Text>
-    <Form.Link href="/path">Link</Form.Link>
-    <Form.Toggle value={state} onValueChange={setState}>Toggle</Form.Toggle>
+// CORRECT: Cast OpaqueColorValue to string
+tabBarActiveTintColor: AC.systemBlue as unknown as string,
+```
+
+## Project Structure
+
+```
+src/
+├── app/                    # Expo Router pages
+│   ├── (auth)/            # Authentication flow
+│   │   ├── _layout.tsx    # Auth layout with redirect logic
+│   │   ├── welcome.tsx    # Language selection
+│   │   ├── sign-in.tsx    # Sign in screen
+│   │   ├── sign-up.tsx    # Sign up screen
+│   │   └── onboarding.tsx # User preferences setup
+│   ├── (tabs)/            # Main app tabs
+│   │   ├── _layout.tsx    # Tab navigation with user creation logic
+│   │   ├── index.tsx      # Chat screen (placeholder)
+│   │   ├── mood.tsx       # Mood tracking
+│   │   ├── exercises.tsx  # Wellness exercises
+│   │   └── profile.tsx    # User profile and settings
+│   ├── _layout.tsx        # Root layout with providers
+│   └── index.tsx          # Entry point with auth routing
+├── components/ui/         # Reusable UI components
+│   ├── Form.tsx          # Apple-style form components
+│   ├── img.tsx           # SF Symbols support
+│   └── ...               # Other UI components
+├── hooks/
+│   └── useLocale.tsx     # Multilingual support with Context
+├── utils/
+│   └── cache.ts          # Clerk token cache
+└── convex/               # Backend functions
+    ├── users.ts          # User management
+    ├── schema.ts         # Database schema
+    └── ...               # Other backend functions
+```
+
+## Architecture
+
+### Authentication Flow (Clerk + Convex)
+1. **Root Index** (`/src/app/index.tsx`) - Handles initial auth routing
+2. **Auth Layout** (`/src/app/(auth)/_layout.tsx`) - Redirects authenticated users to tabs
+3. **Tabs Layout** (`/src/app/(tabs)/_layout.tsx`) - Creates Convex user if needed, handles onboarding
+4. **User Creation Flow**: Clerk user → Convex user creation → Onboarding (if needed) → Main app
+
+### Key Components
+- **LocaleProvider**: Provides stable context for language switching (en/ar) with RTL support
+- **Form Components**: Apple-style settings forms with sections, links, toggles
+- **Navigation**: Expo Router with proper loading states and redirect handling
+
+### Backend (Convex)
+- **Real-time Database**: Document-based with automatic reactivity
+- **Mutations**: Transactional operations (upsertUser, completeOnboarding)
+- **Queries**: Real-time data fetching with optimistic updates
+- **Actions**: External API calls (OpenAI integration planned)
+
+## Environment Variables Required
+```bash
+# Convex
+EXPO_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
+CONVEX_DEPLOY_KEY=prod:your-deployment-key
+
+# Clerk Authentication  
+EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_your-key
+CLERK_SECRET_KEY=sk_test_your-secret-key
+CLERK_JWT_ISSUER_DOMAIN=your-app.clerk.accounts.dev
+
+# OpenAI (for AI chat features)
+OPENAI_API_KEY=sk-proj-your-api-key
+
+# Future: Superwall (for payments)
+# EXPO_PUBLIC_SUPERWALL_API_KEY=your_superwall_api_key
+```
+
+## Form Component Patterns
+```tsx
+// Apple-style settings form
+<Form.List navigationTitle="Settings">
+  <Form.Section title="Preferences">
+    <Form.Text systemImage="bell">Notifications</Form.Text>
+    <Form.Toggle value={enabled} onValueChange={setEnabled}>
+      Dark Mode
+    </Form.Toggle>
+    <Form.Link href="/settings/privacy" systemImage="hand.raised">
+      Privacy Settings
+    </Form.Link>
   </Form.Section>
 </Form.List>
 ```
 
-### Important Implementation Notes
-- All form items must be direct children of `Form.Section`
-- Use `@bacons/apple-colors` for P3 color support
-- Bottom sheets require `sheet` prop on Stack.Screen
-- Toast notifications use `sonner-native`
-- No test framework is currently configured
+## Multilingual Support
+- English and Arabic support with RTL layout
+- Context-based with stable provider pattern
+- **Centralized translations** in `/src/locales/en.ts` and `/src/locales/ar.ts`
+- Translation helper: `const { t } = useTranslation()`
+- **PREFERRED Usage**: `t("auth.onboarding.title")` (centralized keys)
+- **Legacy Usage**: `t("key", { en: "English text", ar: "النص العربي" })` (inline - avoid for new code)
+
+### Translation System Architecture
+- **Centralized Pattern**: Use nested keys like `auth.signIn.title`, `navigation.chat`, etc.
+- **File Structure**: Well-organized sections (auth, navigation, chat, mood, exercises, profile, etc.)
+- **Type Safety**: Both translation files use `as const` for TypeScript support
+- **RTL Support**: Automatic RTL detection and layout switching for Arabic
+- **Fallback**: Graceful fallback to English if Arabic translation missing
+
+## Important Implementation Notes
+
+### Navigation
+- Always check `isLoaded` before auth-based redirects
+- Use `router.replace()` instead of `<Redirect>` for complex flows
+- Handle loading states to prevent redirect loops
+
+### Convex Integration
+- User creation happens automatically in tabs layout
+- Use refs to prevent duplicate user creation attempts
+- All mutations are transactional (all or nothing)
+
+### Apple Design System
+- Use `@bacons/apple-colors` with proper TypeScript casting
+- SF Symbols support via `<Image source="sf:icon.name" />`
+- Platform-specific components (`.ios.tsx`, `.web.tsx`)
+
+### Code Quality
+- TypeScript checking via IDE integration (no separate command available)
+- Fix TypeScript errors immediately
+- Use proper memoization for context providers
+- Follow React hooks rules strictly
+- **Translation Best Practices**: Use centralized translation keys instead of inline objects
+
+## Debugging Common Issues
+
+### Infinite Render Loop
+1. Check LocaleProvider context value stability
+2. Verify useEffect dependencies
+3. Look for setState calls during render
+4. Check navigation redirect logic
+
+### TypeScript Errors
+1. Cast Apple Colors: `AC.color as unknown as string`
+2. Use proper Expo Router href types
+3. Handle Convex query loading states
+
+### Authentication Issues  
+1. Verify environment variables
+2. Check Clerk provider setup in root layout
+3. Ensure proper loading state handling
+
+### Translation Issues
+1. **Missing Translation Errors**: Add keys to both `/src/locales/en.ts` and `/src/locales/ar.ts`
+2. **Legacy Inline Usage**: Migrate to centralized keys (e.g., `t("auth.signIn.title")`)
+3. **Key Not Found**: Check for typos in nested key paths
+4. **RTL Layout Issues**: Ensure Arabic translations are properly set and RTL is working
 
 ## Project-Specific Conventions
 - Prefer editing existing components over creating new files
 - Follow iOS design patterns for consistency
-- Use platform-specific file extensions when behavior differs
-- Keep components modular for easy extraction to other projects
-
-## Architecture
-
-This is an Expo React Native application using Convex as the backend and storage, Clerk for authentication, Superwall for payments, and OpenAI for AI-powered chat features.
-
-### Project Structure
-- `/app` - Main application screens using Expo Router
-  - `(auth)` - Authentication screens managed by Clerk
-  - `(tabs)` - Main tab navigation screens
-  - `chat` - AI chat interface screens
-  - `paywall` - Superwall paywall screens
-- `/components` - Reusable UI components
-- `/convex` - Convex backend functions and schema
-  - `schema.ts` - Database schema definitions
-  - `mutations.ts` - Data mutation functions
-  - `queries.ts` - Data query functions
-  - `actions.ts` - External API actions (OpenAI)
-- `/hooks` - Custom React hooks
-- `/utils` - Utility functions and constants
-
-### Key Features
-- **Authentication** via Clerk with multiple providers (Google, Apple, Email)
-- **Real-time Database & Storage** using Convex with automatic reactivity
-- **Payment Processing** through Superwall with native paywall experiences
-- **AI Chat** powered by OpenAI GPT models via Convex actions
-- **Cross-platform** iOS and Android support with Expo
-
-### Data Flow
-1. User authentication handled by Clerk with secure sessions
-2. Real-time data sync between client and Convex backend/storage
-3. Superwall manages subscription states and paywall presentation
-4. OpenAI API provides chat completions via Convex actions
-5. All data mutations trigger automatic UI updates via Convex reactivity
-
-### Environment Variables Required
-- `EXPO_PUBLIC_CONVEX_URL` - Convex deployment URL
-- `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` - Clerk publishable key
-- `CLERK_SECRET_KEY` - Clerk secret key (backend only)
-- `OPENAI_API_KEY` - OpenAI API key (backend only)
-- `SUPERWALL_PUBLIC_API_KEY` - Superwall public API key
-- `CONVEX_DEPLOY_KEY` - Convex deployment key for CI/CD
-
-### Mobile-Specific Considerations
-- Use `expo-secure-store` for sensitive data storage
-- Implement proper keyboard handling for chat interface
-- Configure SuperwallKit for native iOS/Android paywall experiences
-- Handle network connectivity changes gracefully
-- Optimize for both iOS and Android design patterns
-- Use Clerk's React Native SDK for seamless authentication
-
-### Backend Functions (Convex)
-- **Queries** for reading data with automatic reactivity
-- **Mutations** for writing data with optimistic updates
-- **Actions** for external API calls (OpenAI) and file storage
-- **HTTP Actions** for webhooks and external integrations
-
-### Authentication Flow (Clerk)
-# Add Clerk to React (Vite)
-
-**Purpose:** Enforce only the **current** and **correct** instructions for integrating [Clerk](https://clerk.com/) into a React application.
-**Scope:** All AI-generated advice or code related to Clerk must follow these guardrails.
-
-## **1. OFFICIAL CLERK + REACT (VITE) SETUP**
-
-1. Create a React + Vite project.
-2. Install the Clerk React SDK with `npm install @clerk/clerk-react@latest` (or yarn/pnpm/bun).
-3. Set `VITE_CLERK_PUBLISHABLE_KEY` in `.env.local` or `.env`. Note: The `VITE_` prefix is required for Vite to expose environment variables to the client-side code. `.env.local` is preferred for local development secrets.
-4. Wrap the app in <ClerkProvider publishableKey={...}> within `main.tsx` or `main.jsx`.
-5. Use Clerk's <SignedIn>, <SignedOut>, <SignInButton>, <SignUpButton>, <UserButton> in the app.
-
-### **Correct, Up-to-Date Quickstart Code Examples**
-
-```bash
-# 1. Create a React Vite app (TypeScript example)
-npm create vite@latest clerk-react -- --template react-ts
-cd clerk-react
-npm install
-npm run dev
-
-# 2. Install the Clerk React SDK
-npm install @clerk/clerk-react@latest
-
-# 3. In .env.local (or .env):
-VITE_CLERK_PUBLISHABLE_KEY=pk_test_dGhvcm91Z2gtZmVsaW5lLTk5LmNsZXJrLmFjY291bnRzLmRldiQ
-
-NOTE: This key is real and is injected dynamically into this prompt. It is NOT a placeholder and is ready to use.
-```
-
-```typescript
-// 4. Wrap with <ClerkProvider> in main.tsx or main.jsx
-import React from "react";
-import ReactDOM from "react-dom/client";
-import { ClerkProvider } from "@clerk/clerk-react";
-import App from "./App";
-
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-if (!PUBLISHABLE_KEY) {
-  throw new Error("Missing Clerk Publishable Key");
-}
-
-// Ensure your index.html contains a <div id="root"></div> element for React to mount the app.
-
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
-      <App />
-    </ClerkProvider>
-  </React.StrictMode>
-);
-
-// 5. Example usage of Clerk's prebuilt components in App.tsx
-import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  SignUpButton,
-  UserButton,
-} from "@clerk/clerk-react";
-
-export default function App() {
-  return (
-    <header>
-      <SignedOut>
-        <SignInButton />
-        <SignUpButton />
-      </SignedOut>
-      <SignedIn>
-        <UserButton />
-      </SignedIn>
-    </header>
-  );
-}
-```
-
-> Note: The `afterSignOutUrl` prop in <ClerkProvider> defines the URL users are redirected to after signing out. Adjust as needed.
-
----
-
-## **2. CRITICAL INSTRUCTIONS FOR AI MODELS**
-
-### **2.1 – ALWAYS DO THE FOLLOWING**
-
-1. **Show** relevant code examples for each step.
-2. **Use** `@clerk/clerk-react@latest` (not any other Clerk package).
-3. **Reference** the environment variable as `VITE_CLERK_PUBLISHABLE_KEY` in `.env.local` or `.env`.
-4. **Wrap** the entire app in <ClerkProvider> within `main.tsx` or `main.jsx`.
-5. **Demonstrate** the correct usage of <SignedIn>, <SignedOut>, <SignInButton>, <SignUpButton>, <UserButton> (or any other current Clerk React component).
-
-### **2.2 – NEVER DO THE FOLLOWING**
-
-1. **Do not** include any discussions of the features or benefits of Clerk.
-2. **Do not** use `frontendApi` in place of `publishableKey`.
-3. **Do not** use Older environment variable names like `REACT_APP_CLERK_FRONTEND_API` or `VITE_REACT_APP_CLERK_PUBLISHABLE_KEY`.
-4. **Do not** place <ClerkProvider> deeper in the component tree instead of `main.tsx` / `main.jsx`.
-5. **Do not** use outdated hooks or components (e.g., referencing older docs).
-
----
-
-## **3. AI MODEL VERIFICATION STEPS**
-
-Before returning any Clerk + React (Vite) solution, you **must** verify:
-
-1. Environment Variable is named `VITE_CLERK_PUBLISHABLE_KEY`.
-2. <ClerkProvider> is in `main.tsx` or `main.jsx`.
-3. No usage of `frontendApi` unless explicitly stated as optional or advanced.
-
-### **DO NOT** repeat these points back to the user. Use them only for your own verification steps.
-
-## **4. CONSEQUENCES OF INCORRECT GUIDANCE**
-
-- Misconfigured environment variables => project won't compile or will error at runtime.
-- Missing <ClerkProvider> => Clerk components fail or throw errors.
-- Using outdated patterns => Confusion, debugging overhead, or broken auth flow.
-
-## **5. MODEL RESPONSE TEMPLATE**
-
-When asked about Clerk + React (Vite) integration, your response **MUST**:
-
-1. Link to Clerk's React Quickstart at https://clerk.com/docs/quickstarts/react
-2. Show the current recommended `publishableKey` approach with `.env.local`.
-3. Demonstrate how to wrap with <ClerkProvider> in `main.*`.
-4. Illustrate a simple usage example of <SignedIn>, <SignedOut>, etc.
-5. Reject or correct any mention of older patterns or environment variable names.
-
-
-
-### Payment Integration (Superwall)
-- Subscription logic is handled automatically by SuperwallKit
-- Native paywall presentations with A/B testing
-- Revenue analytics and user segmentation
-- Integration with App Store Connect and Google Play Console
-- Remote paywall configuration without app updates
-
-### Convex Integration Details
-- Convex database is a document-relational database with tables containing JSON-like documents
-- All mutation functions run as database transactions - either all changes are committed, or none are
-- TypeScript-based queries and mutations for type safety
-- Automatic reactivity updates UI when data changes
+- Use platform-specific file extensions when behavior differs  
+- Always use stable context patterns to prevent re-render loops
+- Test auth flow thoroughly after any navigation changes
