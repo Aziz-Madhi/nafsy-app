@@ -1,6 +1,6 @@
 import { Image } from "@/components/ui/img";
 import { useTranslation } from "@/hooks/useLocale";
-import * as AC from "@bacons/apple-colors";
+import { useAppTheme } from "@/theme";
 import { useOAuth, useSignUp } from "@clerk/clerk-expo";
 import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
@@ -13,7 +13,6 @@ import {
     Platform,
     SafeAreaView,
     ScrollView,
-    StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
@@ -32,6 +31,7 @@ export default function SignUpScreen() {
   const { isLoaded, signUp, setActive } = useSignUp();
   const router = useRouter();
   const { t, tLegacy, locale } = useTranslation();
+  const { theme, styles: commonStyles } = useAppTheme();
   
   const { startOAuthFlow: googleAuth } = useOAuth({ strategy: "oauth_google" });
   const { startOAuthFlow: appleAuth } = useOAuth({ strategy: "oauth_apple" });
@@ -209,14 +209,16 @@ export default function SignUpScreen() {
     }
   };
 
+  const styles = createStyles(theme);
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={commonStyles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.content}>
+          <View style={commonStyles.paddedContent}>
             <TouchableOpacity
               style={styles.backButton}
               onPress={() => router.back()}
@@ -224,34 +226,34 @@ export default function SignUpScreen() {
               <Image
                 source={locale === "ar" ? "sf:chevron.right" : "sf:chevron.left"}
                 size={24}
-                tintColor={AC.systemBlue}
+                tintColor={theme.colors.interactive.primary}
               />
             </TouchableOpacity>
 
-            <View style={styles.header}>
+            <View style={commonStyles.header}>
               <Image 
                 source="sf:brain.head.profile" 
                 size={60} 
-                tintColor={AC.systemTeal}
-                style={styles.logo}
+                tintColor={theme.colors.wellness.calm}
+                style={commonStyles.logo}
               />
-              <Text style={styles.title}>
+              <Text style={commonStyles.title}>
                 {pendingVerification ? content.verifyEmail : content.title}
               </Text>
-              <Text style={styles.subtitle}>
+              <Text style={commonStyles.subtitle}>
                 {pendingVerification ? content.verifyEmailDesc : content.subtitle}
               </Text>
             </View>
 
             {!pendingVerification ? (
               <>
-                <View style={styles.form}>
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>{content.name}</Text>
+                <View style={commonStyles.form}>
+                  <View style={commonStyles.inputContainer}>
+                    <Text style={commonStyles.inputLabel}>{content.name}</Text>
                     <TextInput
-                      style={styles.input}
+                      style={commonStyles.input}
                       placeholder={content.name}
-                      placeholderTextColor={AC.placeholderText}
+                      placeholderTextColor={theme.colors.text.placeholder}
                       value={firstName}
                       onChangeText={setFirstName}
                       autoCapitalize="words"
@@ -259,12 +261,12 @@ export default function SignUpScreen() {
                     />
                   </View>
 
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>{content.email}</Text>
+                  <View style={commonStyles.inputContainer}>
+                    <Text style={commonStyles.inputLabel}>{content.email}</Text>
                     <TextInput
-                      style={styles.input}
+                      style={commonStyles.input}
                       placeholder={content.email}
-                      placeholderTextColor={AC.placeholderText}
+                      placeholderTextColor={theme.colors.text.placeholder}
                       value={emailAddress}
                       onChangeText={setEmailAddress}
                       autoCapitalize="none"
@@ -273,12 +275,12 @@ export default function SignUpScreen() {
                     />
                   </View>
 
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>{content.password}</Text>
+                  <View style={commonStyles.inputContainer}>
+                    <Text style={commonStyles.inputLabel}>{content.password}</Text>
                     <TextInput
-                      style={styles.input}
+                      style={commonStyles.input}
                       placeholder={content.password}
-                      placeholderTextColor={AC.placeholderText}
+                      placeholderTextColor={theme.colors.text.placeholder}
                       value={password}
                       onChangeText={setPassword}
                       secureTextEntry
@@ -289,66 +291,66 @@ export default function SignUpScreen() {
                   <Text style={styles.terms}>{content.terms}</Text>
 
                   <TouchableOpacity
-                    style={[styles.signUpButton, isLoading && styles.disabledButton]}
+                    style={[commonStyles.primaryButton, isLoading && commonStyles.disabledButton]}
                     onPress={onSignUpPress}
                     disabled={isLoading}
                   >
                     {isLoading ? (
-                      <ActivityIndicator color="#FFFFFF" />
+                      <ActivityIndicator color={theme.colors.background} />
                     ) : (
-                      <Text style={styles.signUpButtonText}>{content.signUpButton}</Text>
+                      <Text style={commonStyles.primaryButtonText}>{content.signUpButton}</Text>
                     )}
                   </TouchableOpacity>
 
                   {/* OAuth Section */}
-                  <View style={styles.divider}>
-                    <View style={styles.dividerLine} />
-                    <Text style={styles.dividerText}>{content.orContinueWith}</Text>
-                    <View style={styles.dividerLine} />
+                  <View style={commonStyles.divider}>
+                    <View style={commonStyles.dividerLine} />
+                    <Text style={commonStyles.dividerText}>{content.orContinueWith}</Text>
+                    <View style={commonStyles.dividerLine} />
                   </View>
 
                   <View style={styles.socialButtons}>
                     <TouchableOpacity
-                      style={styles.socialButton}
+                      style={commonStyles.secondaryButton}
                       onPress={() => onOAuthPress("oauth_google")}
                     >
                       <Image
                         source="sf:globe.europe.africa"
                         size={24}
-                        tintColor={AC.label}
+                        tintColor={theme.colors.text.primary}
                       />
-                      <Text style={styles.socialButtonText}>Google</Text>
+                      <Text style={commonStyles.secondaryButtonText}>Google</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                      style={styles.socialButton}
+                      style={commonStyles.secondaryButton}
                       onPress={() => onOAuthPress("oauth_apple")}
                     >
                       <Image
                         source="sf:apple.logo"
                         size={24}
-                        tintColor={AC.label}
+                        tintColor={theme.colors.text.primary}
                       />
-                      <Text style={styles.socialButtonText}>Apple</Text>
+                      <Text style={commonStyles.secondaryButtonText}>Apple</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
 
-                <View style={styles.footer}>
-                  <Text style={styles.footerText}>{content.haveAccount}</Text>
+                <View style={commonStyles.footer}>
+                  <Text style={commonStyles.footerText}>{content.haveAccount}</Text>
                   <TouchableOpacity onPress={() => router.back()}>
-                    <Text style={styles.signInLink}>{content.signIn}</Text>
+                    <Text style={commonStyles.link}>{content.signIn}</Text>
                   </TouchableOpacity>
                 </View>
               </>
             ) : (
-              <View style={styles.form}>
-                <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>{content.verificationCode}</Text>
+              <View style={commonStyles.form}>
+                <View style={commonStyles.inputContainer}>
+                  <Text style={commonStyles.inputLabel}>{content.verificationCode}</Text>
                   <TextInput
-                    style={styles.input}
+                    style={commonStyles.input}
                     placeholder="123456"
-                    placeholderTextColor={AC.placeholderText}
+                    placeholderTextColor={theme.colors.text.placeholder}
                     value={code}
                     onChangeText={setCode}
                     keyboardType="number-pad"
@@ -358,14 +360,14 @@ export default function SignUpScreen() {
                 </View>
 
                 <TouchableOpacity
-                  style={[styles.signUpButton, isLoading && styles.disabledButton]}
+                  style={[commonStyles.primaryButton, isLoading && commonStyles.disabledButton]}
                   onPress={onPressVerify}
                   disabled={isLoading}
                 >
                   {isLoading ? (
-                    <ActivityIndicator color="#FFFFFF" />
+                    <ActivityIndicator color={theme.colors.background} />
                   ) : (
-                    <Text style={styles.signUpButtonText}>{content.verify}</Text>
+                    <Text style={commonStyles.primaryButtonText}>{content.verify}</Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -377,140 +379,27 @@ export default function SignUpScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: AC.systemBackground,
-  },
+const createStyles = (theme: ReturnType<typeof useAppTheme>) => ({
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
   },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-  },
   backButton: {
-    paddingVertical: 16,
+    paddingVertical: theme.spacing.md,
     alignSelf: "flex-start",
   },
-  header: {
-    alignItems: "center",
-    marginBottom: 32,
-  },
-  logo: {
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: AC.label,
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  subtitle: {
-    fontSize: 16,
-    color: AC.secondaryLabel,
-    textAlign: "center",
-  },
-  form: {
-    marginBottom: 24,
-  },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  inputLabel: {
-    fontSize: 14,
-    color: AC.label,
-    marginBottom: 8,
-    fontWeight: "500",
-  },
-  input: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: AC.separator,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    color: AC.label,
-    backgroundColor: AC.secondarySystemGroupedBackground,
-  },
   terms: {
-    fontSize: 12,
-    color: AC.secondaryLabel,
+    fontSize: theme.fontSize.xs,
+    color: theme.colors.text.secondary,
     textAlign: "center",
-    marginBottom: 24,
-    paddingHorizontal: 16,
+    marginBottom: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md,
     lineHeight: 18,
-  },
-  signUpButton: {
-    height: 48,
-    backgroundColor: AC.systemBlue,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  disabledButton: {
-    opacity: 0.6,
-  },
-  signUpButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 4,
-    marginTop: "auto",
-    paddingBottom: 24,
-  },
-  footerText: {
-    fontSize: 14,
-    color: AC.secondaryLabel,
-  },
-  signInLink: {
-    fontSize: 14,
-    color: AC.systemBlue,
-    fontWeight: "500",
-  },
-  divider: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 24,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: AC.separator,
-  },
-  dividerText: {
-    fontSize: 14,
-    color: AC.secondaryLabel,
-    paddingHorizontal: 16,
   },
   socialButtons: {
     flexDirection: "row",
-    gap: 12,
-  },
-  socialButton: {
-    flex: 1,
-    height: 48,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    borderWidth: 1,
-    borderColor: AC.separator,
-    borderRadius: 12,
-    backgroundColor: AC.secondarySystemGroupedBackground,
-  },
-  socialButtonText: {
-    fontSize: 16,
-    color: AC.label,
-    fontWeight: "500",
+    gap: theme.spacing.sm,
   },
 });

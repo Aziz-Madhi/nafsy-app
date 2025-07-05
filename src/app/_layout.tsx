@@ -1,3 +1,4 @@
+import { GlobalErrorHandler } from "@/components/error/GlobalErrorHandler";
 import { LocaleProvider } from "@/hooks/useLocale";
 import { ThemeProvider } from "@/theme";
 import { ClerkLoaded, ClerkProvider, useAuth as useClerkAuth } from "@clerk/clerk-expo";
@@ -61,21 +62,23 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <LocaleProvider>
         <ThemeProvider>
-          <ClerkProvider 
-            tokenCache={tokenCache} 
-            publishableKey={publishableKey}
-          >
-            <ConvexProviderWithClerk client={convex} useAuth={useClerkAuth}>
-              <ClerkLoaded>
-                <Stack>
-                  <Stack.Screen name="index" options={{ headerShown: false }} />
-                  <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                  <Stack.Screen name="+not-found" />
-                </Stack>
-              </ClerkLoaded>
-            </ConvexProviderWithClerk>
-          </ClerkProvider>
+          <GlobalErrorHandler>
+            <ClerkProvider 
+              tokenCache={tokenCache} 
+              publishableKey={publishableKey}
+            >
+              <ConvexProviderWithClerk client={convex} useAuth={useClerkAuth}>
+                <ClerkLoaded>
+                  <Stack>
+                    <Stack.Screen name="index" options={{ headerShown: false }} />
+                    <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                    <Stack.Screen name="+not-found" />
+                  </Stack>
+                </ClerkLoaded>
+              </ConvexProviderWithClerk>
+            </ClerkProvider>
+          </GlobalErrorHandler>
         </ThemeProvider>
       </LocaleProvider>
     </GestureHandlerRootView>

@@ -3,10 +3,9 @@
  * Following LEVER framework - demonstrating reusable list patterns
  */
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
 import { GenericList, SimpleListItem } from '@/components/ui/GenericList';
-import { CommonStyles } from '@/utils/styles';
-import * as AC from '@bacons/apple-colors';
+import { useAppTheme } from '@/theme';
 
 // Example data interfaces
 interface MoodEntry {
@@ -47,6 +46,9 @@ export function MoodHistoryList({
   onRefresh: () => void;
   onMoodPress: (mood: MoodEntry) => void;
 }) {
+  const { theme } = useAppTheme();
+  const moodItemStyles = createMoodItemStyles(theme);
+  
   const renderMoodItem = ({ item }: { item: MoodEntry }) => {
     const moodEmojis = {
       great: '😄',
@@ -106,11 +108,14 @@ export function ExercisesList({
   onLoadMore: () => void;
   onExercisePress: (exercise: Exercise) => void;
 }) {
+  const { theme } = useAppTheme();
+  const exerciseItemStyles = createExerciseItemStyles(theme);
+  
   const renderExerciseItem = ({ item }: { item: Exercise }) => {
     const categoryColors = {
-      breathing: AC.systemBlue,
-      meditation: AC.systemPurple,
-      mindfulness: AC.systemGreen,
+      breathing: theme.colors.tint,
+      meditation: theme.colors.secondary,
+      mindfulness: theme.colors.tint,
     };
 
     return (
@@ -199,6 +204,9 @@ export function ChatMessagesList({
   loading: boolean;
   onRefresh: () => void;
 }) {
+  const { theme } = useAppTheme();
+  const chatStyles = createChatStyles(theme);
+  
   const renderMessage = ({ item }: { item: ChatMessage }) => {
     const isUser = item.sender === 'user';
     
@@ -241,22 +249,22 @@ export function ChatMessagesList({
 }
 
 // Styles for mood items
-const moodItemStyles = StyleSheet.create({
+const createMoodItemStyles = (theme: ReturnType<typeof useAppTheme>['theme']) => ({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: AC.systemBackground,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    backgroundColor: theme.colors.background,
   },
   emojiContainer: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: AC.secondarySystemGroupedBackground,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
+    backgroundColor: theme.colors.surface,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    marginRight: theme.spacing.sm,
   },
   emoji: {
     fontSize: 24,
@@ -265,98 +273,98 @@ const moodItemStyles = StyleSheet.create({
     flex: 1,
   },
   date: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: AC.label,
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.medium,
+    color: theme.colors.text,
   },
   notes: {
-    fontSize: 14,
-    color: AC.secondaryLabel,
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.secondaryText,
     marginTop: 4,
   },
 });
 
 // Styles for exercise items
-const exerciseItemStyles = StyleSheet.create({
+const createExerciseItemStyles = (theme: ReturnType<typeof useAppTheme>['theme']) => ({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: AC.systemBackground,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
+    backgroundColor: theme.colors.background,
   },
   categoryIndicator: {
     width: 4,
     height: 60,
     borderRadius: 2,
-    marginRight: 12,
+    marginRight: theme.spacing.sm,
   },
   content: {
     flex: 1,
   },
   title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: AC.label,
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.text,
     marginBottom: 4,
   },
   description: {
-    fontSize: 14,
-    color: AC.secondaryLabel,
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.secondaryText,
     marginBottom: 4,
   },
   duration: {
-    fontSize: 12,
-    color: AC.tertiaryLabel,
-    fontWeight: '500',
+    fontSize: theme.fontSize.xs,
+    color: theme.colors.secondaryText,
+    fontWeight: theme.fontWeight.medium,
   },
   checkmark: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: AC.systemGreen,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: theme.colors.tint,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
   },
   checkmarkText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: 'bold',
+    color: theme.colors.background,
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.bold,
   },
 });
 
 // Styles for chat messages
-const chatStyles = StyleSheet.create({
+const createChatStyles = (theme: ReturnType<typeof useAppTheme>['theme']) => ({
   messageContainer: {
-    marginHorizontal: 16,
+    marginHorizontal: theme.spacing.md,
     marginVertical: 4,
     maxWidth: '80%',
     borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
   },
   userMessage: {
-    alignSelf: 'flex-end',
-    backgroundColor: AC.systemBlue,
+    alignSelf: 'flex-end' as const,
+    backgroundColor: theme.colors.tint,
   },
   aiMessage: {
-    alignSelf: 'flex-start',
-    backgroundColor: AC.secondarySystemGroupedBackground,
+    alignSelf: 'flex-start' as const,
+    backgroundColor: theme.colors.surface,
   },
   messageText: {
-    fontSize: 16,
+    fontSize: theme.fontSize.md,
     lineHeight: 20,
   },
   userMessageText: {
-    color: 'white',
+    color: theme.colors.background,
   },
   aiMessageText: {
-    color: AC.label,
+    color: theme.colors.text,
   },
   timestamp: {
     fontSize: 11,
-    color: AC.tertiaryLabel,
+    color: theme.colors.secondaryText,
     marginTop: 4,
-    alignSelf: 'flex-end',
+    alignSelf: 'flex-end' as const,
   },
 });

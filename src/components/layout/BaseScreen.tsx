@@ -8,13 +8,11 @@ import {
   Platform,
   TouchableOpacity,
   Text,
-  StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from '@/components/ui/img';
-import { CommonStyles } from '@/utils/styles';
 import { useTranslation } from '@/hooks/useLocale';
-import * as AC from '@bacons/apple-colors';
+import { useAppTheme } from '@/theme';
 
 interface BaseScreenProps {
   children: React.ReactNode;
@@ -60,15 +58,18 @@ export const BaseScreen = React.memo<BaseScreenProps>(function BaseScreen({
 }) {
   const router = useRouter();
   const { locale } = useTranslation();
+  const appTheme = useAppTheme();
+  const { theme, styles: commonStyles } = appTheme;
+  const styles = createStyles(appTheme);
 
   const containerStyle = [
-    CommonStyles.container,
+    commonStyles.container,
     backgroundColor && { backgroundColor },
   ];
 
   const contentStyle = [
-    contentPadding && CommonStyles.paddedContent,
-    centered && CommonStyles.centeredContent,
+    contentPadding && commonStyles.paddedContent,
+    centered && commonStyles.centeredContent,
     !contentPadding && !centered && { flex: 1 },
   ];
 
@@ -80,7 +81,7 @@ export const BaseScreen = React.memo<BaseScreenProps>(function BaseScreen({
         <View style={styles.headerLeft}>
           {showBackButton && (
             <TouchableOpacity
-              style={CommonStyles.button}
+              style={commonStyles.button}
               onPress={() => router.back()}
               accessibilityLabel="Go back"
               accessibilityRole="button"
@@ -88,15 +89,15 @@ export const BaseScreen = React.memo<BaseScreenProps>(function BaseScreen({
               <Image
                 source={locale === 'ar' ? 'sf:chevron.right' : 'sf:chevron.left'}
                 size={24}
-                tintColor={AC.systemBlue}
+                tintColor={theme.colors.interactive.primary}
               />
             </TouchableOpacity>
           )}
         </View>
 
         <View style={styles.headerCenter}>
-          {title && <Text style={CommonStyles.title}>{title}</Text>}
-          {subtitle && <Text style={CommonStyles.subtitle}>{subtitle}</Text>}
+          {title && <Text style={commonStyles.title}>{title}</Text>}
+          {subtitle && <Text style={commonStyles.subtitle}>{subtitle}</Text>}
         </View>
 
         <View style={styles.headerRight}>
@@ -113,14 +114,14 @@ export const BaseScreen = React.memo<BaseScreenProps>(function BaseScreen({
           style={styles.scrollView}
           contentContainerStyle={[
             styles.scrollContent,
-            centered && CommonStyles.centeredContent,
+            centered && commonStyles.centeredContent,
           ]}
           refreshControl={
             onRefresh ? (
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                tintColor={AC.systemBlue}
+                tintColor={theme.colors.interactive.primary}
               />
             ) : undefined
           }
@@ -163,32 +164,32 @@ export const BaseScreen = React.memo<BaseScreenProps>(function BaseScreen({
   return screenContent;
 });
 
-const styles = StyleSheet.create({
+const createStyles = (appTheme: ReturnType<typeof useAppTheme>) => ({
   headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    paddingHorizontal: appTheme.spacing.md,
+    paddingVertical: appTheme.spacing.sm,
     minHeight: 60,
   },
   headerLeft: {
     width: 60,
-    alignItems: 'flex-start',
+    alignItems: 'flex-start' as const,
   },
   headerCenter: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: 'center' as const,
   },
   headerRight: {
     width: 60,
-    alignItems: 'flex-end',
+    alignItems: 'flex-end' as const,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: appTheme.spacing.lg,
   },
 });
 
@@ -231,6 +232,7 @@ export const CenteredScreen = React.memo<Omit<BaseScreenProps, 'centered' | 'scr
 // Modal-style screen with close button
 export const ModalScreen = React.memo<Omit<BaseScreenProps, 'showBackButton'> & { onClose?: () => void }>(function ModalScreen(props) {
   const { onClose, ...rest } = props;
+  const { styles: commonStyles } = useAppTheme();
   
   return (
     <BaseScreen
@@ -238,7 +240,7 @@ export const ModalScreen = React.memo<Omit<BaseScreenProps, 'showBackButton'> & 
       headerRight={
         onClose ? (
           <TouchableOpacity onPress={onClose}>
-            <Text style={CommonStyles.link}>Close</Text>
+            <Text style={commonStyles.link}>Close</Text>
           </TouchableOpacity>
         ) : undefined
       }

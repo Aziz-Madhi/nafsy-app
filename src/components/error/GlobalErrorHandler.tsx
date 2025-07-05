@@ -1,8 +1,7 @@
 import React, { ReactNode } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { ErrorBoundary } from './ErrorBoundary';
-import * as AC from '@bacons/apple-colors';
-import { CommonStyles } from '@/utils/styles';
+import { useAppTheme } from '@/theme';
 
 /**
  * Global Error Handler for Nafsy app
@@ -71,6 +70,29 @@ function GlobalErrorFallback({
   error: Error | null;
   resetErrorBoundary: () => void;
 }) {
+  let theme, commonStyles;
+  
+  try {
+    const themeData = useAppTheme();
+    theme = themeData.theme;
+    commonStyles = themeData.styles;
+  } catch (themeError) {
+    // Fallback if theme provider is not available
+    theme = {
+      colors: {
+        background: { primary: '#FFFFFF' },
+        text: { primary: '#000000', secondary: '#666666' },
+        interactive: { primary: '#007AFF', destructive: '#FF3B30' }
+      }
+    };
+    commonStyles = {
+      primaryButton: { backgroundColor: '#007AFF', padding: 12, borderRadius: 8 },
+      secondaryButton: { backgroundColor: '#F2F2F7', padding: 12, borderRadius: 8 },
+      primaryButtonText: { color: '#FFFFFF', fontWeight: '600' },
+      secondaryButtonText: { color: '#000000', fontWeight: '500' }
+    };
+  }
+  
   const handleReportBug = () => {
     Alert.alert(
       'Report Bug',
@@ -91,44 +113,44 @@ function GlobalErrorFallback({
   };
 
   return (
-    <View style={styles.globalErrorContainer}>
+    <View style={[styles.globalErrorContainer, { backgroundColor: theme.colors.background.primary }]}>
       <View style={styles.globalErrorContent}>
         {/* App Icon/Logo area */}
         <View style={styles.logoContainer}>
-          <Text style={styles.appName}>Nafsy</Text>
+          <Text style={[styles.appName, { color: theme.colors.interactive.primary }]}>Nafsy</Text>
         </View>
         
         <Text style={styles.globalErrorEmoji}>💙</Text>
-        <Text style={styles.globalErrorTitle}>
+        <Text style={[styles.globalErrorTitle, { color: theme.colors.text.primary }]}>
           We're sorry for the trouble
         </Text>
-        <Text style={styles.globalErrorMessage}>
+        <Text style={[styles.globalErrorMessage, { color: theme.colors.text.secondary }]}>
           Nafsy encountered an unexpected error. Don't worry - your data is safe. 
           Please restart the app to continue.
         </Text>
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={[CommonStyles.primaryButton, styles.restartButton]}
+            style={[commonStyles.primaryButton, styles.restartButton]}
             onPress={resetErrorBoundary}
           >
-            <Text style={CommonStyles.primaryButtonText}>
+            <Text style={commonStyles.primaryButtonText}>
               Restart App
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[CommonStyles.secondaryButton, styles.reportButton]}
+            style={[commonStyles.secondaryButton, styles.reportButton]}
             onPress={handleReportBug}
           >
-            <Text style={CommonStyles.secondaryButtonText}>
+            <Text style={commonStyles.secondaryButtonText}>
               Report Issue
             </Text>
           </TouchableOpacity>
         </View>
 
         {__DEV__ && error && (
-          <View style={styles.devInfo}>
+          <View style={[styles.devInfo, { backgroundColor: theme.colors.interactive.destructive }]}>
             <Text style={styles.devTitle}>Development Info:</Text>
             <Text style={styles.devError}>{error.message}</Text>
             <Text style={styles.devStack} numberOfLines={5}>
@@ -167,6 +189,36 @@ export function GlobalErrorHandler({ children }: GlobalErrorHandlerProps) {
 }
 
 /**
+ * Feature error fallback component
+ */
+function FeatureErrorFallback({ featureName }: { featureName: string }) {
+  let theme;
+  
+  try {
+    theme = useAppTheme().theme;
+  } catch {
+    theme = {
+      colors: {
+        background: { secondary: '#F2F2F7' },
+        text: { primary: '#000000', secondary: '#666666' }
+      }
+    };
+  }
+  
+  return (
+    <View style={[styles.featureErrorContainer, { backgroundColor: theme.colors.background.secondary }]}>
+      <Text style={styles.featureErrorEmoji}>⚠️</Text>
+      <Text style={[styles.featureErrorTitle, { color: theme.colors.text.primary }]}>
+        {featureName} Unavailable
+      </Text>
+      <Text style={[styles.featureErrorMessage, { color: theme.colors.text.secondary }]}>
+        This feature is temporarily unavailable. Please try again later.
+      </Text>
+    </View>
+  );
+}
+
+/**
  * Error Handler for specific features
  */
 export function FeatureErrorBoundary({ 
@@ -183,20 +235,41 @@ export function FeatureErrorBoundary({
           componentStack: errorInfo.componentStack,
         });
       }}
-      fallback={
-        <View style={styles.featureErrorContainer}>
-          <Text style={styles.featureErrorEmoji}>⚠️</Text>
-          <Text style={styles.featureErrorTitle}>
-            {featureName} Unavailable
-          </Text>
-          <Text style={styles.featureErrorMessage}>
-            This feature is temporarily unavailable. Please try again later.
-          </Text>
-        </View>
-      }
+      fallback={<FeatureErrorFallback featureName={featureName} />}
     >
       {children}
     </ErrorBoundary>
+  );
+}
+
+/**
+ * Critical error fallback component
+ */
+function CriticalErrorFallback() {
+  let theme;
+  
+  try {
+    theme = useAppTheme().theme;
+  } catch {
+    theme = {
+      colors: {
+        background: { primary: '#FFFFFF' },
+        text: { secondary: '#666666' },
+        interactive: { destructive: '#FF3B30' }
+      }
+    };
+  }
+  
+  return (
+    <View style={[styles.criticalErrorContainer, { backgroundColor: theme.colors.background.primary }]}>
+      <Text style={styles.criticalErrorEmoji}>🚨</Text>
+      <Text style={[styles.criticalErrorTitle, { color: theme.colors.interactive.destructive }]}>
+        Critical Error
+      </Text>
+      <Text style={[styles.criticalErrorMessage, { color: theme.colors.text.secondary }]}>
+        A critical error occurred. Please restart the app.
+      </Text>
+    </View>
   );
 }
 
@@ -212,17 +285,7 @@ export function CriticalErrorBoundary({ children }: { children: ReactNode }) {
           componentStack: errorInfo.componentStack,
         });
       }}
-      fallback={
-        <View style={styles.criticalErrorContainer}>
-          <Text style={styles.criticalErrorEmoji}>🚨</Text>
-          <Text style={styles.criticalErrorTitle}>
-            Critical Error
-          </Text>
-          <Text style={styles.criticalErrorMessage}>
-            A critical error occurred. Please restart the app.
-          </Text>
-        </View>
-      }
+      fallback={<CriticalErrorFallback />}
     >
       {children}
     </ErrorBoundary>
@@ -232,7 +295,6 @@ export function CriticalErrorBoundary({ children }: { children: ReactNode }) {
 const styles = StyleSheet.create({
   globalErrorContainer: {
     flex: 1,
-    backgroundColor: AC.systemBackground,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 32,
@@ -247,7 +309,6 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: AC.systemTeal,
   },
   globalErrorEmoji: {
     fontSize: 64,
@@ -256,13 +317,11 @@ const styles = StyleSheet.create({
   globalErrorTitle: {
     fontSize: 24,
     fontWeight: '600',
-    color: AC.label,
     textAlign: 'center',
     marginBottom: 16,
   },
   globalErrorMessage: {
     fontSize: 16,
-    color: AC.secondaryLabel,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 32,
@@ -278,7 +337,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   devInfo: {
-    backgroundColor: AC.systemRed,
     borderRadius: 8,
     padding: 12,
     marginTop: 24,
@@ -302,7 +360,6 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
   },
   featureErrorContainer: {
-    backgroundColor: AC.secondarySystemGroupedBackground,
     borderRadius: 12,
     padding: 24,
     margin: 16,
@@ -315,19 +372,16 @@ const styles = StyleSheet.create({
   featureErrorTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: AC.label,
     textAlign: 'center',
     marginBottom: 8,
   },
   featureErrorMessage: {
     fontSize: 14,
-    color: AC.secondaryLabel,
     textAlign: 'center',
     lineHeight: 20,
   },
   criticalErrorContainer: {
     flex: 1,
-    backgroundColor: AC.systemBackground,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 32,
@@ -339,13 +393,11 @@ const styles = StyleSheet.create({
   criticalErrorTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: AC.systemRed,
     textAlign: 'center',
     marginBottom: 12,
   },
   criticalErrorMessage: {
     fontSize: 16,
-    color: AC.secondaryLabel,
     textAlign: 'center',
     lineHeight: 22,
   },

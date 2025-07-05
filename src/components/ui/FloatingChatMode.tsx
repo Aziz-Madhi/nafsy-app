@@ -1,4 +1,4 @@
-import { useTheme } from '@/theme/ThemeProvider';
+import { useTheme } from '@/theme';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';

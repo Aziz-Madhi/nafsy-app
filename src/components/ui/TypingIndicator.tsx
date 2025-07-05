@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
-import { useTheme } from '@/theme/ThemeProvider';
+import { useTheme } from '@/theme';
 
 interface TypingIndicatorProps {
   visible: boolean;

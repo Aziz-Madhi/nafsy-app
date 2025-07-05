@@ -1,7 +1,8 @@
 import { Image } from "@/components/ui/img";
 import { useTranslation } from "@/hooks/useLocale";
-import * as AC from "@bacons/apple-colors";
+import { useAppTheme } from "@/theme";
 import { useOAuth, useSignIn } from "@clerk/clerk-expo";
+import * as AC from "@bacons/apple-colors";
 import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
@@ -18,7 +19,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { CommonStyles } from "@/utils/styles";
 
 // Warm up the browser for OAuth
 WebBrowser.maybeCompleteAuthSession();
@@ -32,6 +32,7 @@ export default function SignInScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
   const router = useRouter();
   const { t, tLegacy, locale } = useTranslation();
+  const { theme, styles: commonStyles } = useAppTheme();
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -142,12 +143,12 @@ export default function SignInScreen() {
   };
 
   return (
-    <SafeAreaView style={CommonStyles.container}>
+    <SafeAreaView style={commonStyles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
       >
-        <View style={CommonStyles.paddedContent}>
+        <View style={commonStyles.paddedContent}>
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => router.back()}
@@ -155,28 +156,28 @@ export default function SignInScreen() {
             <Image
               source={locale === "ar" ? "sf:chevron.right" : "sf:chevron.left"}
               size={24}
-              tintColor={AC.systemBlue}
+              tintColor={theme.colors.interactive.primary}
             />
           </TouchableOpacity>
 
-          <View style={CommonStyles.header}>
+          <View style={commonStyles.header}>
             <Image 
               source="sf:brain.head.profile" 
               size={60} 
-              tintColor={AC.systemTeal}
-              style={CommonStyles.logo}
+              tintColor={theme.colors.wellness.calm}
+              style={commonStyles.logo}
             />
-            <Text style={CommonStyles.title}>{content.title}</Text>
-            <Text style={CommonStyles.subtitle}>{content.subtitle}</Text>
+            <Text style={commonStyles.title}>{content.title}</Text>
+            <Text style={commonStyles.subtitle}>{content.subtitle}</Text>
           </View>
 
-          <View style={CommonStyles.form}>
-            <View style={CommonStyles.inputContainer}>
-              <Text style={CommonStyles.inputLabel}>{content.email}</Text>
+          <View style={commonStyles.form}>
+            <View style={commonStyles.inputContainer}>
+              <Text style={commonStyles.inputLabel}>{content.email}</Text>
               <TextInput
-                style={CommonStyles.input}
+                style={commonStyles.input}
                 placeholder={content.email}
-                placeholderTextColor={AC.placeholderText}
+                placeholderTextColor={theme.colors.text.placeholder}
                 value={emailAddress}
                 onChangeText={setEmailAddress}
                 autoCapitalize="none"
@@ -185,12 +186,12 @@ export default function SignInScreen() {
               />
             </View>
 
-            <View style={CommonStyles.inputContainer}>
-              <Text style={CommonStyles.inputLabel}>{content.password}</Text>
+            <View style={commonStyles.inputContainer}>
+              <Text style={commonStyles.inputLabel}>{content.password}</Text>
               <TextInput
-                style={CommonStyles.input}
+                style={commonStyles.input}
                 placeholder={content.password}
-                placeholderTextColor={AC.placeholderText}
+                placeholderTextColor={theme.colors.text.placeholder}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -199,52 +200,52 @@ export default function SignInScreen() {
             </View>
 
             <TouchableOpacity style={styles.forgotPassword}>
-              <Text style={CommonStyles.linkSmall}>{content.forgotPassword}</Text>
+              <Text style={commonStyles.linkSmall}>{content.forgotPassword}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[CommonStyles.primaryButton, isLoading && CommonStyles.disabledButton]}
+              style={[commonStyles.primaryButton, isLoading && commonStyles.disabledButton]}
               onPress={onSignInPress}
               disabled={isLoading}
             >
               {isLoading ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={CommonStyles.primaryButtonText}>{content.signInButton}</Text>
+                <Text style={commonStyles.primaryButtonText}>{content.signInButton}</Text>
               )}
             </TouchableOpacity>
           </View>
 
-          <View style={CommonStyles.divider}>
-            <View style={CommonStyles.dividerLine} />
-            <Text style={CommonStyles.dividerText}>{content.orContinueWith}</Text>
-            <View style={CommonStyles.dividerLine} />
+          <View style={commonStyles.divider}>
+            <View style={commonStyles.dividerLine} />
+            <Text style={commonStyles.dividerText}>{content.orContinueWith}</Text>
+            <View style={commonStyles.dividerLine} />
           </View>
 
           <View style={styles.socialButtons}>
             <TouchableOpacity
-              style={CommonStyles.secondaryButton}
+              style={commonStyles.secondaryButton}
               onPress={() => onOAuthPress("oauth_google")}
             >
-              <Image source="sf:globe" size={24} tintColor={AC.label} />
-              <Text style={CommonStyles.secondaryButtonText}>Google</Text>
+              <Image source="sf:globe" size={24} tintColor={theme.colors.text.primary} />
+              <Text style={commonStyles.secondaryButtonText}>Google</Text>
             </TouchableOpacity>
 
             {Platform.OS === "ios" && (
               <TouchableOpacity
-                style={CommonStyles.secondaryButton}
+                style={commonStyles.secondaryButton}
                 onPress={() => onOAuthPress("oauth_apple")}
               >
-                <Image source="sf:apple.logo" size={24} tintColor={AC.label} />
-                <Text style={CommonStyles.secondaryButtonText}>Apple</Text>
+                <Image source="sf:apple.logo" size={24} tintColor={theme.colors.text.primary} />
+                <Text style={commonStyles.secondaryButtonText}>Apple</Text>
               </TouchableOpacity>
             )}
           </View>
 
-          <View style={CommonStyles.footer}>
-            <Text style={CommonStyles.footerText}>{content.noAccount}</Text>
+          <View style={commonStyles.footer}>
+            <Text style={commonStyles.footerText}>{content.noAccount}</Text>
             <TouchableOpacity onPress={() => router.push("/(auth)/sign-up")}>
-              <Text style={CommonStyles.link}>{content.signUp}</Text>
+              <Text style={commonStyles.link}>{content.signUp}</Text>
             </TouchableOpacity>
           </View>
         </View>

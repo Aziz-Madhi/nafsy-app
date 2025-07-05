@@ -41,7 +41,6 @@ export default function TabsLayout() {
         clerkId: user.id,
         email: user.emailAddresses[0]?.emailAddress,
         name: user.firstName || user.fullName || "User",
-        language: "en",
       }).catch((err) => {
         console.error(err);
         // Allow another attempt if the mutation fails for some reason
@@ -66,7 +65,7 @@ export default function TabsLayout() {
   }
 
   // Redirect to onboarding if user doesn't exist or hasn't completed onboarding
-  if (!userData || !userData.onboardingComplete) {
+  if (!userData || !userData.onboardingCompleted) {
     return <Redirect href="/(auth)/onboarding" />;
   }
 

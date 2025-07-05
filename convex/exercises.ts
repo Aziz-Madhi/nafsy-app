@@ -10,8 +10,39 @@ export const recordExercise = mutation({
     duration: v.optional(v.number()),
     conversationId: v.optional(v.id("conversations")),
     data: v.object({
-      inputs: v.optional(v.any()),
-      outputs: v.optional(v.any()),
+      inputs: v.optional(v.union(
+        v.object({
+          breathingPattern: v.optional(v.string()),
+          duration: v.optional(v.number()),
+          guidedSteps: v.optional(v.array(v.string())),
+        }),
+        v.object({
+          thoughtText: v.optional(v.string()),
+          emotions: v.optional(v.array(v.string())),
+          evidenceFor: v.optional(v.array(v.string())),
+          evidenceAgainst: v.optional(v.array(v.string())),
+          reframedThought: v.optional(v.string()),
+        }),
+        v.object({
+          gratitudeItems: v.optional(v.array(v.string())),
+          reflectionNotes: v.optional(v.string()),
+        }),
+        v.object({
+          senses: v.optional(v.object({
+            see: v.optional(v.array(v.string())),
+            hear: v.optional(v.array(v.string())),
+            feel: v.optional(v.array(v.string())),
+            smell: v.optional(v.array(v.string())),
+            taste: v.optional(v.array(v.string())),
+          })),
+        })
+      )),
+      outputs: v.optional(v.object({
+        moodBefore: v.optional(v.number()),
+        moodAfter: v.optional(v.number()),
+        insights: v.optional(v.array(v.string())),
+        completionNotes: v.optional(v.string()),
+      })),
       effectiveness: v.optional(v.number()),
     }),
   },
@@ -107,8 +138,39 @@ export const recordExerciseByClerkId = mutation({
     type: v.string(),
     duration: v.optional(v.number()),
     data: v.object({
-      inputs: v.optional(v.any()),
-      outputs: v.optional(v.any()),
+      inputs: v.optional(v.union(
+        v.object({
+          breathingPattern: v.optional(v.string()),
+          duration: v.optional(v.number()),
+          guidedSteps: v.optional(v.array(v.string())),
+        }),
+        v.object({
+          thoughtText: v.optional(v.string()),
+          emotions: v.optional(v.array(v.string())),
+          evidenceFor: v.optional(v.array(v.string())),
+          evidenceAgainst: v.optional(v.array(v.string())),
+          reframedThought: v.optional(v.string()),
+        }),
+        v.object({
+          gratitudeItems: v.optional(v.array(v.string())),
+          reflectionNotes: v.optional(v.string()),
+        }),
+        v.object({
+          senses: v.optional(v.object({
+            see: v.optional(v.array(v.string())),
+            hear: v.optional(v.array(v.string())),
+            feel: v.optional(v.array(v.string())),
+            smell: v.optional(v.array(v.string())),
+            taste: v.optional(v.array(v.string())),
+          })),
+        })
+      )),
+      outputs: v.optional(v.object({
+        moodBefore: v.optional(v.number()),
+        moodAfter: v.optional(v.number()),
+        insights: v.optional(v.array(v.string())),
+        completionNotes: v.optional(v.string()),
+      })),
       effectiveness: v.optional(v.number()),
     }),
   },

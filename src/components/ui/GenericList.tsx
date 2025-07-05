@@ -11,8 +11,7 @@ import {
   ViewStyle,
   TouchableOpacity,
 } from 'react-native';
-import * as AC from '@bacons/apple-colors';
-import { CommonStyles } from '@/utils/styles';
+import { useAppTheme } from '@/theme';
 
 /**
  * GenericList - High-performance virtualized list component
@@ -80,19 +79,24 @@ interface GenericListProps<T extends ListItem> extends Omit<FlatListProps<T>, 'd
 /**
  * Memoized separator component for performance
  */
-const Separator = memo(({ style }: { style?: ViewStyle }) => (
-  <View style={[styles.separator, style]} />
-));
+const Separator = memo(({ style }: { style?: ViewStyle }) => {
+  const { theme } = useAppTheme();
+  const styles = createStyles(theme);
+  return <View style={[styles.separator, style]} />;
+});
 
 /**
  * Loading footer component
  */
 const LoadingFooter = memo(({ loading }: { loading: boolean }) => {
+  const { theme } = useAppTheme();
+  const styles = createStyles(theme);
+  
   if (!loading) return null;
   
   return (
     <View style={styles.loadingFooter}>
-      <ActivityIndicator size="small" color={AC.systemBlue} />
+      <ActivityIndicator size="small" color={theme.colors.interactive.primary} />
       <Text style={styles.loadingText}>Loading more...</Text>
     </View>
   );
@@ -113,24 +117,29 @@ const EmptyState = memo(({
   icon?: string;
   onRetry?: () => void;
   error?: string | null;
-}) => (
-  <View style={styles.emptyState}>
-    {/* TODO: Add SF Symbol support when available */}
-    <Text style={styles.emptyTitle}>
-      {error ? "Something went wrong" : title}
-    </Text>
-    {(description || error) && (
-      <Text style={styles.emptyDescription}>
-        {error || description}
+}) => {
+  const { theme, styles: commonStyles } = useAppTheme();
+  const styles = createStyles(theme);
+  
+  return (
+    <View style={styles.emptyState}>
+      {/* TODO: Add SF Symbol support when available */}
+      <Text style={styles.emptyTitle}>
+        {error ? "Something went wrong" : title}
       </Text>
-    )}
-    {error && onRetry && (
-      <TouchableOpacity style={CommonStyles.primaryButton} onPress={onRetry}>
-        <Text style={CommonStyles.primaryButtonText}>Retry</Text>
-      </TouchableOpacity>
-    )}
-  </View>
-));
+      {(description || error) && (
+        <Text style={styles.emptyDescription}>
+          {error || description}
+        </Text>
+      )}
+      {error && onRetry && (
+        <TouchableOpacity style={commonStyles.primaryButton} onPress={onRetry}>
+          <Text style={commonStyles.primaryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+});
 
 const GenericListComponent = memo(function GenericListComponent<T extends ListItem>({
   data,
@@ -177,6 +186,8 @@ const GenericListComponent = memo(function GenericListComponent<T extends ListIt
   // Rest of FlatList props
   ...flatListProps
 }: GenericListProps<T>) {
+  const { theme } = useAppTheme();
+  const styles = createStyles(theme);
 
   // Memoize filtered data to prevent unnecessary re-renders
   const filteredData = useMemo(() => {
@@ -215,7 +226,7 @@ const GenericListComponent = memo(function GenericListComponent<T extends ListIt
     if (loading) {
       return (
         <View style={styles.loadingState}>
-          <ActivityIndicator size="large" color={AC.systemBlue} />
+          <ActivityIndicator size="large" color={theme.colors.interactive.primary} />
           <Text style={styles.loadingText}>Loading...</Text>
         </View>
       );
@@ -255,8 +266,8 @@ const GenericListComponent = memo(function GenericListComponent<T extends ListIt
       <RefreshControl
         refreshing={refreshing}
         onRefresh={onRefresh}
-        tintColor={AC.systemBlue}
-        colors={[AC.systemBlue]}
+        tintColor={theme.colors.interactive.primary}
+        colors={[theme.colors.interactive.primary]}
       />
     );
   }, [onRefresh, refreshing]);
@@ -309,54 +320,54 @@ export const GenericList = GenericListComponent as <T extends ListItem>(
   props: GenericListProps<T>
 ) => React.ReactElement;
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useAppTheme>) => ({
   list: {
     flex: 1,
   },
   separator: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: AC.separator,
-    marginLeft: 16,
+    backgroundColor: theme.colors.divider,
+    marginLeft: theme.spacing.md,
   },
   emptyContentContainer: {
     flexGrow: 1,
   },
   emptyState: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    paddingHorizontal: theme.spacing.xl,
   },
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: AC.label,
-    textAlign: 'center',
-    marginBottom: 8,
+    fontSize: theme.fontSize.lg,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.text.primary,
+    textAlign: 'center' as const,
+    marginBottom: theme.spacing.xs,
   },
   emptyDescription: {
-    fontSize: 16,
-    color: AC.secondaryLabel,
-    textAlign: 'center',
+    fontSize: theme.fontSize.md,
+    color: theme.colors.text.secondary,
+    textAlign: 'center' as const,
     lineHeight: 22,
-    marginBottom: 24,
+    marginBottom: theme.spacing.lg,
   },
   loadingState: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 40,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    paddingVertical: theme.spacing.xl * 2,
   },
   loadingFooter: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 16,
-    gap: 8,
+    flexDirection: 'row' as const,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    paddingVertical: theme.spacing.md,
+    gap: theme.spacing.xs,
   },
   loadingText: {
-    fontSize: 14,
-    color: AC.secondaryLabel,
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text.secondary,
   },
 });
 
@@ -372,51 +383,56 @@ export interface SimpleListItemProps {
   rightText?: string;
 }
 
-export const SimpleListItem = memo<SimpleListItemProps>(({ title, subtitle, icon, rightText }) => (
-  <View style={simpleItemStyles.container}>
-    <View style={simpleItemStyles.content}>
-      <Text style={simpleItemStyles.title} numberOfLines={1}>
-        {title}
-      </Text>
-      {subtitle && (
-        <Text style={simpleItemStyles.subtitle} numberOfLines={2}>
-          {subtitle}
+export const SimpleListItem = memo<SimpleListItemProps>(({ title, subtitle, icon, rightText }) => {
+  const { theme } = useAppTheme();
+  const simpleItemStyles = createSimpleItemStyles(theme);
+  
+  return (
+    <View style={simpleItemStyles.container}>
+      <View style={simpleItemStyles.content}>
+        <Text style={simpleItemStyles.title} numberOfLines={1}>
+          {title}
+        </Text>
+        {subtitle && (
+          <Text style={simpleItemStyles.subtitle} numberOfLines={2}>
+            {subtitle}
+          </Text>
+        )}
+      </View>
+      {rightText && (
+        <Text style={simpleItemStyles.rightText} numberOfLines={1}>
+          {rightText}
         </Text>
       )}
     </View>
-    {rightText && (
-      <Text style={simpleItemStyles.rightText} numberOfLines={1}>
-        {rightText}
-      </Text>
-    )}
-  </View>
-));
+  );
+});
 
-const simpleItemStyles = StyleSheet.create({
+const createSimpleItemStyles = (theme: ReturnType<typeof useAppTheme>) => ({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: AC.systemBackground,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    backgroundColor: theme.colors.background,
   },
   content: {
     flex: 1,
   },
   title: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: AC.label,
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.medium,
+    color: theme.colors.text.primary,
   },
   subtitle: {
-    fontSize: 14,
-    color: AC.secondaryLabel,
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text.secondary,
     marginTop: 2,
   },
   rightText: {
-    fontSize: 14,
-    color: AC.secondaryLabel,
-    marginLeft: 12,
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text.secondary,
+    marginLeft: theme.spacing.sm,
   },
 });
 

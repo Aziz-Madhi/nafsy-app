@@ -1,6 +1,6 @@
 import { v } from "convex/values";
-import { mutation, query, action } from "./_generated/server";
 import { api } from "./_generated/api";
+import { action, mutation, query } from "./_generated/server";
 
 // Add a message to a conversation
 export const addMessage = mutation({
@@ -167,6 +167,24 @@ export const sendMessage = action({
     userId: v.id("users"),
     content: v.string(),
     language: v.string(),
+    recentMessages: v.optional(v.array(v.object({
+      role: v.union(v.literal("user"), v.literal("assistant"), v.literal("system")),
+      content: v.string(),
+      timestamp: v.number(),
+    }))),
+    userInfo: v.optional(v.object({
+      name: v.optional(v.string()),
+      language: v.optional(v.string()),
+      preferences: v.optional(v.object({
+        notifications: v.optional(v.boolean()),
+        reminderTime: v.optional(v.string()),
+        privacy: v.optional(v.string()),
+        dailyCheckInTime: v.optional(v.string()),
+        enableNotifications: v.optional(v.boolean()),
+        theme: v.optional(v.string()),
+        voiceEnabled: v.optional(v.boolean()),
+      })),
+    })),
   },
   handler: async (ctx, args): Promise<void> => {
     // First, add the user's message
@@ -199,23 +217,13 @@ export const sendMessage = action({
       return;
     }
 
-    // Get recent conversation context
-    const recentMessages: any = await ctx.runQuery(api.messages.getRecentMessages, {
-      conversationId: args.conversationId,
-      count: 10,
-    });
+    // Require context to be provided by the client to avoid extra DB round-trips
+    if (!args.recentMessages || !args.userInfo) {
+      throw new Error("sendMessage now requires recentMessages and userInfo to be supplied by the client.");
+    }
 
-    // Get user info for personalization
-    const user: any = await ctx.runQuery(api.users.getUserById, {
-      userId: args.userId,
-    });
-
-    // Map messages to format expected by AI function
-    const formattedMessages = recentMessages.map((msg: any) => ({
-      role: msg.role,
-      content: msg.content,
-      timestamp: msg.timestamp,
-    }));
+    const formattedMessages = args.recentMessages;
+    const user = args.userInfo;
 
     // Call AI action to generate response
     const aiResponse: any = await ctx.runAction(api.ai.generateResponse, {

@@ -8,7 +8,7 @@ import {
   ScrollView,
 } from 'react-native';
 import * as AC from '@bacons/apple-colors';
-import { useTheme } from '@/theme/ThemeProvider';
+import { useTheme } from '@/theme';
 import { useTranslation } from '@/hooks/useLocale';
 
 const { width } = Dimensions.get('window');

@@ -3,14 +3,11 @@ import { FloatingChatMode } from "@/components/ui/FloatingChatMode";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import { TypingIndicator } from "@/components/ui/TypingIndicator";
 import { QuickReplySuggestions } from "@/components/ui/QuickReplySuggestions";
-import { api } from "@/convex/_generated/api";
+import { useChatManager } from "@/hooks/useChatManager";
 import { useTranslation } from "@/hooks/useLocale";
-import { useTheme } from "@/theme/ThemeProvider";
-import { useUser } from "@clerk/clerk-expo";
-import { useAction, useMutation, useQuery } from "convex/react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useTheme } from "@/theme";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  Alert,
   FlatList,
   Keyboard,
   KeyboardAvoidingView,
@@ -27,99 +24,27 @@ import { State, TapGestureHandler } from 'react-native-gesture-handler';
 
 export default function ChatScreen() {
   const { t } = useTranslation();
-  const { user } = useUser();
-  const [messageText, setMessageText] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
   const [isFloatingMode, setIsFloatingMode] = useState(true);
-  const [quickReplies, setQuickReplies] = useState<Array<{
-    id: string;
-    text: string;
-    sentiment: 'positive' | 'neutral' | 'supportive';
-  }>>([]);
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [allMessages, setAllMessages] = useState<any[]>([]);
   const flatListRef = useRef<FlatList>(null);
   const { theme } = useTheme();
   // Use proper timer type that works across platforms
   const autoReturnTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const doubleTapRef = useRef<TapGestureHandler>(null);
 
-  // Test a basic Convex query
-  const testQuery = useQuery(api.users.getUserByClerkId, 
-    user ? { clerkId: user.id } : "skip"
-  );
+  // Use the extracted chat management hook
+  const {
+    messageText,
+    setMessageText,
+    isTyping,
+    quickReplies,
+    messages,
+    floatingMessages,
+    activeConversation,
+    handleSendMessage,
+    handleMessageLongPress,
+    loadOlderMessages,
+  } = useChatManager();
 
-  // Get active conversation
-  const activeConversation = useQuery(api.conversations.getActiveConversation,
-    testQuery ? { userId: testQuery._id } : "skip"
-  );
-
-  // Mutation to create conversation
-  const createConversation = useMutation(api.conversations.createConversation);
-
-  // Action to send message
-  const sendMessage = useAction(api.messages.sendMessage);
-
-  // Action to generate quick replies
-  const generateQuickReplies = useAction(api.ai.generateQuickReplies);
-  
-  // Mutations for message reactions
-  const addReaction = useMutation(api.messages.addReaction);
-  const removeReaction = useMutation(api.messages.removeReaction);
-  
-  // Get messages for the active conversation with pagination
-  const messageData = useQuery(api.messages.getConversationMessages,
-    activeConversation ? { 
-      conversationId: activeConversation._id, 
-      limit: 50,
-      // Don't pass cursor for first page - let it be undefined
-    } : "skip"
-  );
-  
-  // Function to load older messages
-  const loadOlderMessages = useCallback(async () => {
-    if (!activeConversation || !messageData?.hasMore || !messageData.nextCursor) return;
-    
-    try {
-      // This would need a separate query for loading more - for now we'll implement virtual scrolling
-      console.log('Loading older messages...', messageData.nextCursor);
-    } catch (error) {
-      console.error('Error loading older messages:', error);
-    }
-  }, [activeConversation, messageData]);
-  
-  // Handle adding reaction to message
-  const handleAddReaction = useCallback(async (messageId: string, type: 'helpful' | 'not-helpful' | 'emoji', emoji?: string) => {
-    if (!testQuery) return;
-    
-    try {
-      await addReaction({
-        messageId: messageId as any,
-        userId: testQuery._id,
-        type,
-        emoji,
-      });
-    } catch (error) {
-      console.error('Error adding reaction:', error);
-    }
-  }, [testQuery, addReaction]);
-  
-  // Handle long press on message for reactions
-  const handleMessageLongPress = useCallback((messageId: string) => {
-    // For now, just add a helpful reaction - in a full implementation,
-    // this would show a reaction picker
-    handleAddReaction(messageId, 'helpful');
-  }, [handleAddReaction]);
-  
-  // Extract messages from paginated response
-  const messages = messageData?.messages || [];
-
-  // Create conversation if user exists but no conversation
-  useEffect(() => {
-    if (testQuery && !activeConversation && activeConversation !== undefined) {
-      createConversation({ userId: testQuery._id });
-    }
-  }, [testQuery, activeConversation, createConversation]);
 
   // Auto-scroll to bottom when new messages arrive or when typing
   useEffect(() => {
@@ -172,74 +97,6 @@ export default function ChatScreen() {
     };
   }, []);
 
-  // Generate random delay between 1-7 seconds for natural feeling
-  const getRandomDelay = () => {
-    return Math.floor(Math.random() * 6000) + 1000; // 1000ms to 7000ms
-  };
-
-  // Send message function with realistic timing
-  const handleSendMessage = async (message?: string) => {
-    const messageToSend = message || messageText.trim();
-    if (!messageToSend || !activeConversation || !testQuery) return;
-    
-    if (!message) {
-      setMessageText(""); // Clear input immediately only if from traditional chat
-    }
-    
-    try {
-      // Show typing indicator after a brief moment
-      setTimeout(() => {
-        setIsTyping(true);
-      }, 300);
-
-      // Send the message but don't await it immediately
-      const messagePromise = sendMessage({
-        conversationId: activeConversation._id,
-        userId: testQuery._id,
-        content: messageToSend,
-        language: testQuery.language || 'en'
-      });
-
-      // Wait for both the message to be sent AND the random delay
-      const delay = getRandomDelay();
-      await Promise.all([
-        messagePromise,
-        new Promise(resolve => setTimeout(resolve, delay))
-      ]);
-
-      // Hide typing indicator
-      setIsTyping(false);
-      
-      // Generate quick replies based on the conversation
-      if (messages && messages.length > 0) {
-        generateQuickReplies({
-          lastMessage: messages[messages.length - 1]?.content || messageToSend,
-          conversationContext: messages.slice(-3).map(msg => ({
-            role: msg.role as 'user' | 'assistant',
-            content: msg.content,
-          })),
-          userInfo: testQuery,
-          language: testQuery?.language || 'en',
-        }).then(replies => {
-          setQuickReplies(replies);
-        }).catch(error => {
-          console.error('Error generating quick replies:', error);
-        });
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
-      setIsTyping(false);
-      Alert.alert('Error', 'Failed to send message');
-    }
-  };
-
-  // Convert messages to floating format
-  const floatingMessages = (messages || []).map(msg => ({
-    id: msg._id,
-    content: msg.content,
-    role: msg.role as 'user' | 'assistant',
-    timestamp: msg.timestamp || Date.now(),
-  }));
 
   // Render floating mode
   if (isFloatingMode) {

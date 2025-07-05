@@ -1,7 +1,6 @@
 import React, { Component, ReactNode } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import * as AC from '@bacons/apple-colors';
-import { CommonStyles } from '@/utils/styles';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { useAppTheme } from '@/theme';
 
 /**
  * Error Boundary Components for Nafsy app
@@ -132,6 +131,9 @@ interface DefaultErrorFallbackProps {
 }
 
 function DefaultErrorFallback({ error, resetErrorBoundary }: DefaultErrorFallbackProps) {
+  const { theme, styles: commonStyles } = useAppTheme();
+  const styles = createStyles(theme);
+  
   return (
     <View style={styles.errorContainer}>
       <View style={styles.errorContent}>
@@ -149,10 +151,10 @@ function DefaultErrorFallback({ error, resetErrorBoundary }: DefaultErrorFallbac
         )}
         
         <TouchableOpacity
-          style={CommonStyles.primaryButton}
+          style={commonStyles.primaryButton}
           onPress={resetErrorBoundary}
         >
-          <Text style={CommonStyles.primaryButtonText}>Try Again</Text>
+          <Text style={commonStyles.primaryButtonText}>Try Again</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -165,6 +167,9 @@ function DefaultErrorFallback({ error, resetErrorBoundary }: DefaultErrorFallbac
 
 // Screen-level error boundary
 export function ScreenErrorBoundary({ children }: { children: ReactNode }) {
+  const { theme } = useAppTheme();
+  const styles = createStyles(theme);
+  
   return (
     <ErrorBoundary
       onError={(error, errorInfo) => {
@@ -195,6 +200,9 @@ export function ComponentErrorBoundary({
   children: ReactNode;
   componentName?: string;
 }) {
+  const { theme } = useAppTheme();
+  const styles = createStyles(theme);
+  
   return (
     <ErrorBoundary
       onError={(error, errorInfo) => {
@@ -215,6 +223,9 @@ export function ComponentErrorBoundary({
 
 // Network operation error boundary
 export function NetworkErrorBoundary({ children }: { children: ReactNode }) {
+  const { theme } = useAppTheme();
+  const styles = createStyles(theme);
+  
   return (
     <ErrorBoundary
       onError={(error, errorInfo) => {
@@ -311,78 +322,78 @@ export function handleAsyncError(error: Error, context?: string) {
   return 'An unexpected error occurred. Please try again.';
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useAppTheme>) => ({
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: AC.systemBackground,
-    paddingHorizontal: 32,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    backgroundColor: theme.colors.background,
+    paddingHorizontal: theme.spacing.xl,
   },
   errorContent: {
-    alignItems: 'center',
+    alignItems: 'center' as const,
     maxWidth: 300,
   },
   errorEmoji: {
     fontSize: 48,
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
   },
   errorTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: AC.label,
-    textAlign: 'center',
-    marginBottom: 12,
+    fontSize: theme.fontSize.lg,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.text.primary,
+    textAlign: 'center' as const,
+    marginBottom: theme.spacing.sm,
   },
   errorMessage: {
-    fontSize: 16,
-    color: AC.secondaryLabel,
-    textAlign: 'center',
+    fontSize: theme.fontSize.md,
+    color: theme.colors.text.secondary,
+    textAlign: 'center' as const,
     lineHeight: 22,
-    marginBottom: 24,
+    marginBottom: theme.spacing.lg,
   },
   debugInfo: {
-    backgroundColor: AC.secondarySystemGroupedBackground,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 24,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.sm,
+    padding: theme.spacing.sm,
+    marginBottom: theme.spacing.lg,
     width: '100%',
   },
   debugTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: AC.systemRed,
-    marginBottom: 4,
+    fontSize: theme.fontSize.xs,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.status.error,
+    marginBottom: theme.spacing.xs,
   },
   debugText: {
     fontSize: 11,
-    color: AC.secondaryLabel,
+    color: theme.colors.text.secondary,
     fontFamily: 'monospace',
   },
   screenErrorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: AC.systemBackground,
-    paddingHorizontal: 32,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    backgroundColor: theme.colors.background,
+    paddingHorizontal: theme.spacing.xl,
   },
   componentErrorContainer: {
-    backgroundColor: AC.secondarySystemGroupedBackground,
-    borderRadius: 8,
-    padding: 16,
-    margin: 8,
-    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.sm,
+    padding: theme.spacing.md,
+    margin: theme.spacing.xs,
+    alignItems: 'center' as const,
   },
   componentErrorText: {
-    fontSize: 14,
-    color: AC.secondaryLabel,
-    textAlign: 'center',
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text.secondary,
+    textAlign: 'center' as const,
   },
   networkErrorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: AC.systemBackground,
-    paddingHorizontal: 32,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    backgroundColor: theme.colors.background,
+    paddingHorizontal: theme.spacing.xl,
   },
 });

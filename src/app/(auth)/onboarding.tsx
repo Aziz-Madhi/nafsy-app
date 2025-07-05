@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   SafeAreaView,
   TouchableOpacity,
   ScrollView,
@@ -13,8 +12,8 @@ import { useUser } from "@clerk/clerk-expo";
 import { useConvexAuth, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Image } from "@/components/ui/img";
-import * as AC from "@bacons/apple-colors";
 import { useTranslation } from "@/hooks/useLocale";
+import { useAppTheme } from "@/theme";
 import * as Form from "@/components/ui/Form";
 
 export default function OnboardingScreen() {
@@ -22,6 +21,7 @@ export default function OnboardingScreen() {
   const { user } = useUser();
   const { isAuthenticated } = useConvexAuth();
   const { t, tLegacy, locale } = useTranslation();
+  const { theme, styles: commonStyles } = useAppTheme();
   
   const upsertUser = useMutation(api.users.upsertUser);
   const completeOnboarding = useMutation(api.users.completeOnboarding);
@@ -97,7 +97,7 @@ export default function OnboardingScreen() {
               <Image 
                 source="sf:hand.wave.fill" 
                 size={60} 
-                tintColor={AC.systemTeal}
+                tintColor={theme.colors.wellness.calm}
                 style={styles.icon}
               />
               <Text style={styles.stepTitle}>
@@ -173,7 +173,7 @@ export default function OnboardingScreen() {
               <Image 
                 source="sf:lock.shield.fill" 
                 size={60} 
-                tintColor={AC.systemGreen}
+                tintColor={theme.colors.interactive.success}
                 style={styles.icon}
               />
               <Text style={styles.stepTitle}>{content.privacy}</Text>
@@ -182,19 +182,19 @@ export default function OnboardingScreen() {
 
             <View style={styles.privacyFeatures}>
               <View style={styles.privacyFeature}>
-                <Image source="sf:lock.fill" size={24} tintColor={AC.systemBlue} />
+                <Image source="sf:lock.fill" size={24} tintColor={theme.colors.interactive.primary} />
                 <Text style={styles.privacyFeatureText}>
                   {t("auth.onboarding.encrypted")}
                 </Text>
               </View>
               <View style={styles.privacyFeature}>
-                <Image source="sf:hand.raised.fill" size={24} tintColor={AC.systemBlue} />
+                <Image source="sf:hand.raised.fill" size={24} tintColor={theme.colors.interactive.primary} />
                 <Text style={styles.privacyFeatureText}>
                   {t("auth.onboarding.noSharing")}
                 </Text>
               </View>
               <View style={styles.privacyFeature}>
-                <Image source="sf:trash.fill" size={24} tintColor={AC.systemBlue} />
+                <Image source="sf:trash.fill" size={24} tintColor={theme.colors.interactive.primary} />
                 <Text style={styles.privacyFeatureText}>
                   {t("auth.onboarding.deleteAnytime")}
                 </Text>
@@ -205,8 +205,10 @@ export default function OnboardingScreen() {
     }
   };
 
+  const styles = createStyles(theme);
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={commonStyles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         {renderStep()}
 
@@ -244,92 +246,88 @@ export default function OnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: AC.systemBackground,
-  },
+const createStyles = (theme: ReturnType<typeof useAppTheme>) => ({
   content: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 40,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.xl * 2,
   },
   stepContent: {
     flex: 1,
   },
   stepHeader: {
     alignItems: "center",
-    marginBottom: 40,
+    marginBottom: theme.spacing.xl * 2,
   },
   icon: {
-    marginBottom: 24,
+    marginBottom: theme.spacing.lg,
   },
   stepTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: AC.label,
-    marginBottom: 12,
+    fontSize: theme.fontSize.xxl,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.sm,
     textAlign: "center",
   },
   stepSubtitle: {
-    fontSize: 16,
-    color: AC.secondaryLabel,
+    fontSize: theme.fontSize.md,
+    color: theme.colors.text.secondary,
     textAlign: "center",
   },
   stepDescription: {
-    fontSize: 16,
-    color: AC.secondaryLabel,
+    fontSize: theme.fontSize.md,
+    color: theme.colors.text.secondary,
     textAlign: "center",
     lineHeight: 24,
-    paddingHorizontal: 24,
+    paddingHorizontal: theme.spacing.lg,
   },
   form: {
-    marginTop: -20,
+    marginTop: -theme.spacing.lg,
   },
   settingDescription: {
-    fontSize: 14,
-    color: AC.secondaryLabel,
-    marginTop: -8,
-    marginBottom: 16,
-    paddingHorizontal: 16,
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text.secondary,
+    marginTop: -theme.spacing.xs,
+    marginBottom: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
   },
   themeOption: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: theme.spacing.sm,
     alignItems: "center",
-    borderRadius: 8,
-    backgroundColor: AC.secondarySystemGroupedBackground,
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: theme.colors.surface,
   },
   selectedTheme: {
-    backgroundColor: AC.systemBlue,
+    backgroundColor: theme.colors.interactive.primary,
   },
   themeText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: AC.label,
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.medium,
+    color: theme.colors.text.primary,
   },
   privacyFeatures: {
-    gap: 24,
-    marginTop: 40,
+    gap: theme.spacing.lg,
+    marginTop: theme.spacing.xl * 2,
   },
   privacyFeature: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
-    paddingHorizontal: 24,
+    gap: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
   },
   privacyFeatureText: {
-    fontSize: 16,
-    color: AC.label,
+    fontSize: theme.fontSize.md,
+    color: theme.colors.text.primary,
   },
   footer: {
-    paddingVertical: 24,
-    gap: 24,
+    paddingVertical: theme.spacing.lg,
+    gap: theme.spacing.lg,
   },
   continueButton: {
     height: 56,
-    backgroundColor: AC.systemBlue,
-    borderRadius: 12,
+    backgroundColor: theme.colors.interactive.primary,
+    borderRadius: theme.borderRadius.md,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -337,23 +335,23 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   continueButtonText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#FFFFFF",
+    fontSize: theme.fontSize.lg,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.background,
   },
   progress: {
     flexDirection: "row",
     justifyContent: "center",
-    gap: 8,
+    gap: theme.spacing.xs,
   },
   progressDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: AC.quaternaryLabel,
+    backgroundColor: theme.colors.divider,
   },
   progressDotActive: {
-    backgroundColor: AC.systemBlue,
+    backgroundColor: theme.colors.interactive.primary,
     width: 24,
   },
 });

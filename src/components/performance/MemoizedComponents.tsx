@@ -24,8 +24,7 @@ import {
 } from 'react-native';
 import { Image } from '@/components/ui/img';
 import * as AC from '@bacons/apple-colors';
-import { CommonStyles } from '@/utils/styles';
-import { useTheme } from '@/components/ui/ThemeProvider';
+import { useAppTheme } from '@/theme';
 import { 
   formatDate, 
   formatTime, 
@@ -59,14 +58,15 @@ export const MoodCard = memo<MoodCardProps>(function MoodCard({
   compact = false,
   showDetails = true,
 }) {
-  const { colors } = useTheme();
+  const { theme } = useAppTheme();
+  const colors = theme.colors;
   const moodColor = getMoodColor(mood.rating);
   const moodLabel = getMoodLabel(mood.rating, locale);
 
   const cardStyle = [
     styles.card,
     compact && styles.compactCard,
-    { backgroundColor: colors.background.secondary },
+    { backgroundColor: colors.surface },
   ];
 
   const handlePress = () => onPress?.(mood);
@@ -84,10 +84,10 @@ export const MoodCard = memo<MoodCardProps>(function MoodCard({
           <Text style={styles.moodRating}>{mood.rating}</Text>
         </View>
         <View style={styles.moodInfo}>
-          <Text style={[styles.moodLabel, { color: colors.text.primary }]}>
+          <Text style={[styles.moodLabel, { color: colors.text }]}>
             {moodLabel}
           </Text>
-          <Text style={[styles.moodDate, { color: colors.text.secondary }]}>
+          <Text style={[styles.moodDate, { color: colors.secondaryText }]}>
             {formatDate(mood.timestamp, locale)}
           </Text>
         </View>
@@ -98,14 +98,14 @@ export const MoodCard = memo<MoodCardProps>(function MoodCard({
           {mood.emotions.length > 0 && (
             <View style={styles.emotionsContainer}>
               {mood.emotions.slice(0, 3).map((emotion, index) => (
-                <View key={index} style={[styles.emotionChip, { backgroundColor: colors.system.fill }]}>
-                  <Text style={[styles.emotionText, { color: colors.text.secondary }]}>
+                <View key={index} style={[styles.emotionChip, { backgroundColor: colors.surface }]}>
+                  <Text style={[styles.emotionText, { color: colors.secondaryText }]}>
                     {emotion}
                   </Text>
                 </View>
               ))}
               {mood.emotions.length > 3 && (
-                <Text style={[styles.moreEmotions, { color: colors.text.tertiary }]}>
+                <Text style={[styles.moreEmotions, { color: colors.secondaryText }]}>
                   +{mood.emotions.length - 3} more
                 </Text>
               )}
@@ -114,7 +114,7 @@ export const MoodCard = memo<MoodCardProps>(function MoodCard({
 
           {mood.note && (
             <Text 
-              style={[styles.moodNote, { color: colors.text.secondary }]}
+              style={[styles.moodNote, { color: colors.secondaryText }]}
               numberOfLines={2}
             >
               {mood.note}
@@ -142,12 +142,13 @@ export const ExerciseCard = memo<ExerciseCardProps>(function ExerciseCard({
   compact = false,
   showProgress = true,
 }) {
-  const { colors } = useTheme();
+  const { theme } = useAppTheme();
+  const colors = theme.colors;
 
   const cardStyle = [
     styles.card,
     compact && styles.compactCard,
-    { backgroundColor: colors.background.secondary },
+    { backgroundColor: colors.surface },
   ];
 
   const handlePress = () => onPress?.(exercise);
@@ -163,19 +164,19 @@ export const ExerciseCard = memo<ExerciseCardProps>(function ExerciseCard({
       accessibilityLabel={`Exercise: ${exercise.type}, completed ${formatDate(exercise.completedAt, locale)}`}
     >
       <View style={styles.exerciseHeader}>
-        <View style={[styles.exerciseIcon, { backgroundColor: colors.wellness.balance }]}>
+        <View style={[styles.exerciseIcon, { backgroundColor: colors.tint }]}>
           <Image source="sf:figure.mind.and.body" size={24} tintColor={AC.white} />
         </View>
         <View style={styles.exerciseInfo}>
-          <Text style={[styles.exerciseTitle, { color: colors.text.primary }]}>
+          <Text style={[styles.exerciseTitle, { color: colors.text }]}>
             {exercise.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
           </Text>
-          <Text style={[styles.exerciseDate, { color: colors.text.secondary }]}>
+          <Text style={[styles.exerciseDate, { color: colors.secondaryText }]}>
             {formatDate(exercise.completedAt, locale)}
           </Text>
         </View>
         {durationText && (
-          <Text style={[styles.exerciseDuration, { color: colors.text.tertiary }]}>
+          <Text style={[styles.exerciseDuration, { color: colors.secondaryText }]}>
             {durationText}
           </Text>
         )}
@@ -183,7 +184,7 @@ export const ExerciseCard = memo<ExerciseCardProps>(function ExerciseCard({
 
       {showProgress && !compact && effectiveness > 0 && (
         <View style={styles.effectivenessContainer}>
-          <Text style={[styles.effectivenessLabel, { color: colors.text.secondary }]}>
+          <Text style={[styles.effectivenessLabel, { color: colors.secondaryText }]}>
             Effectiveness
           </Text>
           <View style={styles.effectivenessBar}>
@@ -191,13 +192,13 @@ export const ExerciseCard = memo<ExerciseCardProps>(function ExerciseCard({
               style={[
                 styles.effectivenessFill, 
                 { 
-                  backgroundColor: colors.wellness.energy,
+                  backgroundColor: colors.tint,
                   width: `${(effectiveness / 5) * 100}%`
                 }
               ]} 
             />
           </View>
-          <Text style={[styles.effectivenessValue, { color: colors.text.secondary }]}>
+          <Text style={[styles.effectivenessValue, { color: colors.secondaryText }]}>
             {effectiveness}/5
           </Text>
         </View>
@@ -222,12 +223,13 @@ export const ConversationCard = memo<ConversationCardProps>(function Conversatio
   compact = false,
   showMetadata = true,
 }) {
-  const { colors } = useTheme();
+  const { theme } = useAppTheme();
+  const colors = theme.colors;
 
   const cardStyle = [
     styles.card,
     compact && styles.compactCard,
-    { backgroundColor: colors.background.secondary },
+    { backgroundColor: colors.surface },
   ];
 
   const handlePress = () => onPress?.(conversation);
@@ -241,26 +243,26 @@ export const ConversationCard = memo<ConversationCardProps>(function Conversatio
       accessibilityLabel={`Conversation: ${conversation.title || 'Untitled'}`}
     >
       <View style={styles.conversationHeader}>
-        <View style={[styles.conversationIcon, { backgroundColor: colors.interactive.primary }]}>
+        <View style={[styles.conversationIcon, { backgroundColor: colors.tint }]}>
           <Image source="sf:message.fill" size={20} tintColor={AC.white} />
         </View>
         <View style={styles.conversationInfo}>
           <Text 
-            style={[styles.conversationTitle, { color: colors.text.primary }]}
+            style={[styles.conversationTitle, { color: colors.text }]}
             numberOfLines={1}
           >
             {conversation.title || 'Chat Session'}
           </Text>
-          <Text style={[styles.conversationDate, { color: colors.text.secondary }]}>
+          <Text style={[styles.conversationDate, { color: colors.secondaryText }]}>
             {formatRelativeTime(conversation.lastMessageAt, locale)}
           </Text>
         </View>
         <View style={styles.conversationMeta}>
-          <Text style={[styles.messageCount, { color: colors.text.tertiary }]}>
+          <Text style={[styles.messageCount, { color: colors.secondaryText }]}>
             {conversation.messageCount} messages
           </Text>
           {conversation.isActive && (
-            <View style={[styles.activeIndicator, { backgroundColor: colors.wellness.energy }]} />
+            <View style={[styles.activeIndicator, { backgroundColor: colors.tint }]} />
           )}
         </View>
       </View>
@@ -268,12 +270,12 @@ export const ConversationCard = memo<ConversationCardProps>(function Conversatio
       {showMetadata && !compact && conversation.metadata && (
         <View style={styles.conversationMetadata}>
           {conversation.metadata.primaryTopic && (
-            <Text style={[styles.topicText, { color: colors.text.secondary }]}>
+            <Text style={[styles.topicText, { color: colors.secondaryText }]}>
               Topic: {conversation.metadata.primaryTopic}
             </Text>
           )}
           {conversation.metadata.emotionalTone && (
-            <Text style={[styles.toneText, { color: colors.text.tertiary }]}>
+            <Text style={[styles.toneText, { color: colors.secondaryText }]}>
               Tone: {conversation.metadata.emotionalTone}
             </Text>
           )}
@@ -303,19 +305,20 @@ export const MessageBubble = memo<MessageBubbleProps>(function MessageBubble({
   onPress,
   onLongPress,
 }) {
-  const { colors } = useTheme();
+  const { theme } = useAppTheme();
+  const colors = theme.colors;
 
   const bubbleStyle = [
     styles.messageBubble,
     isOwn ? styles.ownMessage : styles.otherMessage,
     {
-      backgroundColor: isOwn ? colors.interactive.primary : colors.background.elevated,
+      backgroundColor: isOwn ? colors.tint : colors.surface,
     },
   ];
 
   const textStyle = [
     styles.messageText,
-    { color: isOwn ? AC.white : colors.text.primary },
+    { color: isOwn ? AC.white : colors.text },
   ];
 
   const handlePress = () => onPress?.(message);
@@ -327,7 +330,7 @@ export const MessageBubble = memo<MessageBubbleProps>(function MessageBubble({
         <UserAvatar 
           name="Assistant" 
           size={32} 
-          backgroundColor={colors.interactive.secondary}
+          backgroundColor={colors.secondary}
         />
       )}
       
@@ -343,7 +346,7 @@ export const MessageBubble = memo<MessageBubbleProps>(function MessageBubble({
         {showTimestamp && (
           <Text style={[
             styles.messageTimestamp, 
-            { color: isOwn ? AC.white : colors.text.tertiary }
+            { color: isOwn ? AC.white : colors.secondaryText }
           ]}>
             {formatTime(message.timestamp, locale)}
           </Text>
@@ -371,7 +374,8 @@ export const UserAvatar = memo<UserAvatarProps>(function UserAvatar({
   textColor,
   onPress,
 }) {
-  const { colors } = useTheme();
+  const { theme } = useAppTheme();
+  const colors = theme.colors;
   const initials = extractInitials(name);
 
   const avatarStyle = [
@@ -380,7 +384,7 @@ export const UserAvatar = memo<UserAvatarProps>(function UserAvatar({
       width: size,
       height: size,
       borderRadius: size / 2,
-      backgroundColor: backgroundColor || colors.interactive.secondary,
+      backgroundColor: backgroundColor || colors.secondary,
     },
   ];
 
@@ -443,14 +447,15 @@ export const StatCard = memo<StatCardProps>(function StatCard({
   trend,
   onPress,
 }) {
-  const { colors } = useTheme();
+  const { theme } = useAppTheme();
+  const colors = theme.colors;
 
   const cardStyle = [
     styles.statCard,
-    { backgroundColor: colors.background.secondary },
+    { backgroundColor: colors.surface },
   ];
 
-  const iconColor = color || colors.interactive.primary;
+  const iconColor = color || colors.tint;
 
   const getTrendIcon = () => {
     switch (trend) {
@@ -462,9 +467,9 @@ export const StatCard = memo<StatCardProps>(function StatCard({
 
   const getTrendColor = () => {
     switch (trend) {
-      case 'up': return colors.wellness.energy;
-      case 'down': return colors.interactive.destructive;
-      default: return colors.text.tertiary;
+      case 'up': return colors.tint;
+      case 'down': return colors.destructive;
+      default: return colors.secondaryText;
     }
   };
 
@@ -483,11 +488,11 @@ export const StatCard = memo<StatCardProps>(function StatCard({
           </View>
         )}
         <View style={styles.statContent}>
-          <Text style={[styles.statTitle, { color: colors.text.secondary }]}>
+          <Text style={[styles.statTitle, { color: colors.secondaryText }]}>
             {title}
           </Text>
           <View style={styles.statValueContainer}>
-            <Text style={[styles.statValue, { color: colors.text.primary }]}>
+            <Text style={[styles.statValue, { color: colors.text }]}>
               {value}
             </Text>
             {trend && (
@@ -499,7 +504,7 @@ export const StatCard = memo<StatCardProps>(function StatCard({
             )}
           </View>
           {subtitle && (
-            <Text style={[styles.statSubtitle, { color: colors.text.tertiary }]}>
+            <Text style={[styles.statSubtitle, { color: colors.secondaryText }]}>
               {subtitle}
             </Text>
           )}
@@ -523,7 +528,8 @@ export const LoadingSkeleton = memo<LoadingSkeletonProps>(function LoadingSkelet
   borderRadius = 4,
   style,
 }) {
-  const { colors } = useTheme();
+  const { theme } = useAppTheme();
+  const colors = theme.colors;
 
   const skeletonStyle = [
     styles.skeleton,
@@ -531,7 +537,7 @@ export const LoadingSkeleton = memo<LoadingSkeletonProps>(function LoadingSkelet
       width,
       height,
       borderRadius,
-      backgroundColor: colors.system.fill,
+      backgroundColor: colors.surface,
     },
     style,
   ];
@@ -557,7 +563,8 @@ export const EmptyState = memo<EmptyStateProps>(function EmptyState({
   action,
   style,
 }) {
-  const { colors } = useTheme();
+  const { theme } = useAppTheme();
+  const colors = theme.colors;
 
   const containerStyle = [
     styles.emptyState,
@@ -567,17 +574,17 @@ export const EmptyState = memo<EmptyStateProps>(function EmptyState({
   return (
     <View style={containerStyle}>
       {illustration || (icon && (
-        <View style={[styles.emptyIcon, { backgroundColor: colors.system.fill }]}>
-          <Image source={icon as any} size={40} tintColor={colors.text.quaternary} />
+        <View style={[styles.emptyIcon, { backgroundColor: colors.surface }]}>
+          <Image source={icon as any} size={40} tintColor={colors.secondaryText} />
         </View>
       ))}
       
-      <Text style={[styles.emptyTitle, { color: colors.text.primary }]}>
+      <Text style={[styles.emptyTitle, { color: colors.text }]}>
         {title}
       </Text>
       
       {subtitle && (
-        <Text style={[styles.emptySubtitle, { color: colors.text.secondary }]}>
+        <Text style={[styles.emptySubtitle, { color: colors.secondaryText }]}>
           {subtitle}
         </Text>
       )}

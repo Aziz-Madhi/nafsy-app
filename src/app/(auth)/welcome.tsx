@@ -2,19 +2,17 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
   Dimensions,
   I18nManager,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Image } from "@/components/ui/img";
-import * as AC from "@bacons/apple-colors";
 import { useLocale } from "@/hooks/useLocale";
 import { CenteredScreen } from "@/components/layout/BaseScreen";
-import { CommonStyles } from "@/utils/styles";
+import { useAppTheme } from "@/theme";
 
-const { width } = Dimensions.get("window");
+// Removed unused width
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -68,20 +66,23 @@ export default function WelcomeScreen() {
 
   const t = content[selectedLanguage];
 
+  const theme = useAppTheme();
+  const styles = createStyles(theme);
+
   return (
     <CenteredScreen contentPadding>
-      <View style={CommonStyles.headerLarge}>
+      <View style={styles.header}>
         <Image 
           source="sf:brain.head.profile" 
           size={80} 
-          tintColor={AC.systemTeal}
-          style={CommonStyles.logoLarge}
+          tintColor={theme.colors.tint}
+          style={styles.logo}
         />
-        <Text style={CommonStyles.titleLarge}>{t.title}</Text>
-        <Text style={CommonStyles.subtitleLarge}>{t.subtitle}</Text>
+        <Text style={styles.title}>{t.title}</Text>
+        <Text style={styles.subtitle}>{t.subtitle}</Text>
       </View>
 
-      <Text style={[CommonStyles.description, CommonStyles.marginBottomXLarge]}>{t.description}</Text>
+      <Text style={styles.description}>{t.description}</Text>
 
       <View style={styles.languageSection}>
         <Text style={styles.languageTitle}>{t.selectLanguage}</Text>
@@ -124,50 +125,89 @@ export default function WelcomeScreen() {
       </View>
 
       <TouchableOpacity
-        style={CommonStyles.primaryButtonFull}
+        style={styles.primaryButton}
         onPress={() => router.push("/(auth)/sign-in")}
       >
-        <Text style={CommonStyles.primaryButtonTextLarge}>{t.continue}</Text>
+        <Text style={styles.primaryButtonText}>{t.continue}</Text>
       </TouchableOpacity>
     </CenteredScreen>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ReturnType<typeof useAppTheme>) => ({
+  header: {
+    alignItems: "center",
+    marginBottom: theme.spacing.xl,
+  },
+  logo: {
+    marginBottom: theme.spacing.lg,
+  },
+  title: {
+    fontSize: theme.fontSize.xxl,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
+    textAlign: "center",
+  },
+  subtitle: {
+    fontSize: theme.fontSize.lg,
+    color: theme.colors.secondaryText,
+    textAlign: "center",
+  },
+  description: {
+    fontSize: theme.fontSize.md,
+    color: theme.colors.secondaryText,
+    textAlign: "center",
+    marginBottom: theme.spacing.xl * 2,
+    lineHeight: 24,
+  },
   languageSection: {
     width: "100%",
-    marginBottom: 48,
+    marginBottom: theme.spacing.xl * 2,
   },
   languageTitle: {
-    fontSize: 16,
-    color: AC.label,
-    marginBottom: 16,
+    fontSize: theme.fontSize.md,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.md,
     textAlign: "center",
   },
   languageButtons: {
     flexDirection: "row",
-    gap: 16,
+    gap: theme.spacing.md,
   },
   languageButton: {
     flex: 1,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 12,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.md,
     borderWidth: 1,
-    borderColor: AC.separator,
-    backgroundColor: AC.secondarySystemGroupedBackground,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
     alignItems: "center",
   },
   selectedLanguage: {
-    backgroundColor: AC.systemTeal,
-    borderColor: AC.systemTeal,
+    backgroundColor: theme.colors.tint,
+    borderColor: theme.colors.tint,
   },
   languageButtonText: {
-    fontSize: 16,
-    color: AC.label,
-    fontWeight: "500",
+    fontSize: theme.fontSize.md,
+    color: theme.colors.text,
+    fontWeight: theme.fontWeight.medium,
   },
   selectedLanguageText: {
-    color: "#FFFFFF",
+    color: theme.colors.background,
+  },
+  primaryButton: {
+    backgroundColor: theme.colors.tint,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.xl,
+    borderRadius: theme.borderRadius.md,
+    alignItems: "center",
+    width: "100%",
+  },
+  primaryButtonText: {
+    color: theme.colors.background,
+    fontSize: theme.fontSize.lg,
+    fontWeight: theme.fontWeight.semibold,
   },
 });

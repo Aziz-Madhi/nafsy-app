@@ -24,6 +24,7 @@ export const upsertUser = mutation({
     name: v.optional(v.string()),
     email: v.optional(v.string()),
     avatar: v.optional(v.string()),
+    language: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const existingUser = await ctx.db
@@ -36,6 +37,7 @@ export const upsertUser = mutation({
         name: args.name,
         email: args.email,
         avatar: args.avatar,
+        language: args.language ?? existingUser.language,
         lastActiveAt: Date.now(),
       });
       return existingUser._id;
@@ -46,7 +48,7 @@ export const upsertUser = mutation({
       name: args.name,
       email: args.email,
       avatar: args.avatar,
-      language: "en",
+      language: args.language || "en",
       onboardingCompleted: false,
       createdAt: Date.now(),
       lastActiveAt: Date.now(),
@@ -56,20 +58,55 @@ export const upsertUser = mutation({
 
 export const completeOnboarding = mutation({
   args: {
-    userId: v.id("users"),
+    userId: v.optional(v.id("users")),
+    clerkId: v.optional(v.string()),
     language: v.string(),
     preferences: v.object({
-      notifications: v.boolean(),
+      notifications: v.optional(v.boolean()),
       reminderTime: v.optional(v.string()),
-      privacy: v.string(),
+      privacy: v.optional(v.string()),
+      dailyCheckInTime: v.optional(v.string()),
+      enableNotifications: v.optional(v.boolean()),
+      theme: v.optional(v.string()),
+      voiceEnabled: v.optional(v.boolean()),
     }),
   },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.userId, {
+    let uid = args.userId;
+    if (!uid && args.clerkId) {
+      uid = await getUserId(ctx, args.clerkId);
+    }
+
+    if (!uid) {
+      throw new Error("User not found for onboarding");
+    }
+
+    await ctx.db.patch(uid, {
       language: args.language,
       preferences: args.preferences,
       onboardingCompleted: true,
     });
+  },
+});
+
+// Migration: Consolidate onboarding fields (one-time operation)
+export const migrateOnboardingFields = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const users = await ctx.db.query("users").collect();
+    let migratedCount = 0;
+
+    for (const user of users) {
+      // If user has the old field but not the new one, migrate
+      if ((user as any).onboardingComplete !== undefined && user.onboardingCompleted === undefined) {
+        await ctx.db.patch(user._id, {
+          onboardingCompleted: (user as any).onboardingComplete,
+        });
+        migratedCount++;
+      }
+    }
+
+    return { migratedUsers: migratedCount };
   },
 });
 
