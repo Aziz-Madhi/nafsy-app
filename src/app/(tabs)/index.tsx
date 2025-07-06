@@ -3,9 +3,13 @@ import { FloatingChatMode } from "@/components/ui/FloatingChatMode";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import { TypingIndicator } from "@/components/ui/TypingIndicator";
 import { QuickReplySuggestions } from "@/components/ui/QuickReplySuggestions";
+import { ChatSearch } from "@/components/ui/ChatSearch";
+import { ReactionPicker } from "@/components/ui/ReactionPicker";
+import { ConversationSummary } from "@/components/ui/ConversationSummary";
 import { useChatManager } from "@/hooks/useChatManager";
-import { useTranslation } from "@/hooks/useLocale";
+import { useTranslation, useLocale } from "@/hooks/useLocale";
 import { useTheme } from "@/theme";
+import { groupMessagesByDate, formatMessageTime } from "@/utils/dateHelpers";
 import React, { useEffect, useRef, useState } from "react";
 import {
   FlatList,
@@ -18,20 +22,29 @@ import {
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  View
+  View,
+  ActivityIndicator,
+  Vibration,
+  Alert
 } from "react-native";
 import { State, TapGestureHandler } from 'react-native-gesture-handler';
 
 export default function ChatScreen() {
   const { t } = useTranslation();
+  const { locale } = useLocale();
   const [isFloatingMode, setIsFloatingMode] = useState(true);
+  const [showSearch, setShowSearch] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
+  const [reactionPickerPosition, setReactionPickerPosition] = useState({ x: 0, y: 0 });
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const flatListRef = useRef<FlatList>(null);
   const { theme } = useTheme();
   // Use proper timer type that works across platforms
   const autoReturnTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const doubleTapRef = useRef<TapGestureHandler>(null);
 
-  // Use the extracted chat management hook
+  // Use the extracted chat management hook with chat mode
   const {
     messageText,
     setMessageText,
@@ -42,8 +55,13 @@ export default function ChatScreen() {
     activeConversation,
     handleSendMessage,
     handleMessageLongPress,
+    handleAddReaction,
     loadOlderMessages,
-  } = useChatManager();
+    handleStartNewChat,
+    isLoadingMore,
+    hasMoreMessages,
+    user,
+  } = useChatManager(isFloatingMode ? 'floating' : 'full');
 
 
   // Auto-scroll to bottom when new messages arrive or when typing
@@ -123,12 +141,60 @@ export default function ChatScreen() {
           <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
             {/* Header without back button - this is a tab screen */}
             <SafeAreaView style={[styles.header, { backgroundColor: theme.colors.background.primary, borderBottomColor: theme.colors.system.border }]}>
-              <Text style={[styles.headerTitle, { color: theme.colors.text.primary }]}>
-                {t("chat.title")}
-              </Text>
-              <Text style={[styles.headerSubtitle, { color: theme.colors.text.secondary }]}>
-                Double-tap to return to floating mode
-              </Text>
+              <View style={styles.headerContent}>
+                <TouchableOpacity 
+                  onPress={() => {
+                    Alert.alert(
+                      t("chat.newChat.title"),
+                      t("chat.newChat.message"),
+                      [
+                        { text: t("cancel"), style: "cancel" },
+                        { 
+                          text: t("chat.newChat.confirm"), 
+                          onPress: handleStartNewChat,
+                          style: "default"
+                        }
+                      ]
+                    );
+                  }}
+                  style={styles.newChatButton}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <IconSymbol name="square.and.pencil" size={22} color={theme.colors.text.primary} />
+                </TouchableOpacity>
+                
+                <View style={styles.headerTextContainer}>
+                  <Text style={[styles.headerTitle, { color: theme.colors.text.primary }]}>
+                    {t("chat.title")}
+                  </Text>
+                  <Text style={[styles.headerSubtitle, { color: theme.colors.text.secondary }]}>
+                    Double-tap to return to floating mode
+                  </Text>
+                </View>
+                
+                <View style={styles.headerButtons}>
+                  <TouchableOpacity 
+                    onPress={() => setShowSummary(true)}
+                    style={styles.headerButton}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    disabled={!messages || messages.length === 0}
+                  >
+                    <IconSymbol 
+                      name="doc.text.magnifyingglass" 
+                      size={22} 
+                      color={messages && messages.length > 0 ? theme.colors.text.primary : theme.colors.text.disabled} 
+                    />
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    onPress={() => setShowSearch(true)}
+                    style={styles.headerButton}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <IconSymbol name="magnifyingglass" size={22} color={theme.colors.text.primary} />
+                  </TouchableOpacity>
+                </View>
+              </View>
             </SafeAreaView>
 
             <KeyboardAvoidingView 
@@ -141,8 +207,8 @@ export default function ChatScreen() {
                 {messages && messages.length > 0 ? (
                   <FlatList
                     ref={flatListRef}
-                    data={messages}
-                    keyExtractor={(item) => item._id}
+                    data={groupMessagesByDate(messages, locale)}
+                    keyExtractor={(item, index) => `group-${index}`}
                     style={styles.messagesList}
                     contentContainerStyle={styles.messagesContent}
                     
@@ -151,48 +217,109 @@ export default function ChatScreen() {
                     maxToRenderPerBatch={10}
                     windowSize={10}
                     initialNumToRender={20}
-                    getItemLayout={(data, index) => ({
-                      length: 80, // Estimated height
-                      offset: 80 * index,
-                      index,
-                    })}
                     onEndReached={loadOlderMessages}
-                    onEndReachedThreshold={0.1}
+                    onEndReachedThreshold={0.5}
+                    inverted={false}
                     
-                    renderItem={({ item }) => (
-                      <TouchableOpacity
-                        onLongPress={() => handleMessageLongPress(item._id)}
-                        activeOpacity={0.8}
-                        style={[
-                          styles.messageBubble,
-                          {
-                            backgroundColor: item.role === 'user' ? theme.colors.interactive.primary : theme.colors.background.secondary,
-                            alignSelf: item.role === 'user' ? 'flex-end' : 'flex-start',
-                            borderColor: item.role === 'user' ? 'transparent' : theme.colors.system.border
-                          }
-                        ]}>
-                        <Text style={[
-                          styles.messageText,
-                          { color: item.role === 'user' ? theme.colors.text.inverse : theme.colors.text.primary }
-                        ]}>
-                          {item.content}
-                        </Text>
+                    // Loading indicator at top
+                    ListHeaderComponent={
+                      hasMoreMessages && isLoadingMore ? (
+                        <View style={styles.loadingContainer}>
+                          <ActivityIndicator size="small" color={theme.colors.interactive.primary} />
+                        </View>
+                      ) : null
+                    }
+                    
+                    renderItem={({ item: group }) => (
+                      <View>
+                        {/* Date Separator */}
+                        <View style={styles.dateSeparator}>
+                          <View style={[styles.dateLine, { backgroundColor: theme.colors.system.separator }]} />
+                          <Text style={[styles.dateText, { color: theme.colors.text.secondary }]}>
+                            {group.date}
+                          </Text>
+                          <View style={[styles.dateLine, { backgroundColor: theme.colors.system.separator }]} />
+                        </View>
                         
-                        {/* LEVER: Extend existing bubble with reactions display */}
-                        {item.reactions && item.reactions.length > 0 && (
-                          <View style={styles.reactionsContainer}>
-                            {item.reactions.map((reaction: any, index: number) => (
-                              <View key={index} style={styles.reactionBadge}>
-                                <Text style={styles.reactionText}>
-                                  {reaction.type === 'helpful' ? '👍' : 
-                                   reaction.type === 'not-helpful' ? '👎' : 
-                                   reaction.emoji || '❤️'}
-                                </Text>
+                        {/* Messages in this date group */}
+                        {group.messages.map((item) => (
+                          <TouchableOpacity
+                            key={item._id}
+                            onLongPress={(event) => {
+                              const { pageX, pageY } = event.nativeEvent;
+                              setReactionPickerPosition({ x: pageX, y: pageY });
+                              setSelectedMessageId(item._id);
+                              setShowReactionPicker(true);
+                              Vibration.vibrate(50);
+                            }}
+                            activeOpacity={0.8}
+                            style={[
+                              styles.messageBubble,
+                              {
+                                backgroundColor: item.role === 'user' ? theme.colors.interactive.primary : theme.colors.background.secondary,
+                                alignSelf: item.role === 'user' ? 'flex-end' : 'flex-start',
+                                borderColor: item.role === 'user' ? 'transparent' : theme.colors.system.border
+                              }
+                            ]}>
+                            <Text style={[
+                              styles.messageText,
+                              { color: item.role === 'user' ? theme.colors.text.inverse : theme.colors.text.primary }
+                            ]}>
+                              {item.content}
+                            </Text>
+                            
+                            {/* Message time */}
+                            <Text style={[
+                              styles.messageTime,
+                              { color: item.role === 'user' ? theme.colors.text.inverse : theme.colors.text.secondary }
+                            ]}>
+                              {formatMessageTime(item.timestamp, locale)}
+                            </Text>
+                            
+                            {/* LEVER: Extend existing bubble with reactions display */}
+                            {item.reactions && item.reactions.length > 0 && (
+                              <View style={styles.reactionsContainer}>
+                                {(() => {
+                                  // Group reactions by type/emoji
+                                  const groupedReactions = item.reactions.reduce((acc: any, reaction: any) => {
+                                    const key = reaction.type === 'emoji' ? reaction.emoji : reaction.type;
+                                    if (!acc[key]) {
+                                      acc[key] = { count: 0, emoji: reaction.type === 'helpful' ? '👍' : reaction.type === 'not-helpful' ? '👎' : reaction.emoji };
+                                    }
+                                    acc[key].count++;
+                                    return acc;
+                                  }, {});
+                                  
+                                  return Object.entries(groupedReactions).map(([key, data]: [string, any]) => (
+                                    <TouchableOpacity
+                                      key={key}
+                                      style={[
+                                        styles.reactionBadge,
+                                        { backgroundColor: theme.colors.system.secondaryBackground }
+                                      ]}
+                                      onPress={() => {
+                                        // Toggle reaction
+                                        const hasUserReacted = item.reactions.some((r: any) => r.userId === user?._id);
+                                        if (hasUserReacted) {
+                                          // Remove reaction
+                                          handleAddReaction(item._id, 'helpful'); // This will toggle off
+                                        } else {
+                                          // Add reaction
+                                          handleAddReaction(item._id, key === '👍' ? 'helpful' : key === '👎' ? 'not-helpful' : 'emoji', key);
+                                        }
+                                      }}
+                                    >
+                                      <Text style={styles.reactionText}>
+                                        {data.emoji} {data.count > 1 && data.count}
+                                      </Text>
+                                    </TouchableOpacity>
+                                  ));
+                                })()}
                               </View>
-                            ))}
-                          </View>
-                        )}
-                      </TouchableOpacity>
+                            )}
+                          </TouchableOpacity>
+                        ))}
+                      </View>
                     )}
                     showsVerticalScrollIndicator={false}
                   />
@@ -259,6 +386,62 @@ export default function ChatScreen() {
             </KeyboardAvoidingView>
           </View>
         </TouchableWithoutFeedback>
+        
+        {/* Search Modal */}
+        <ChatSearch
+          isVisible={showSearch}
+          onClose={() => setShowSearch(false)}
+          conversationId={activeConversation?._id}
+          locale={locale}
+          onSelectMessage={(messageId) => {
+            // Find the message in the current list and scroll to it
+            const messageIndex = messages.findIndex(msg => msg._id === messageId);
+            if (messageIndex !== -1 && flatListRef.current) {
+              // Calculate which group the message is in
+              const groups = groupMessagesByDate(messages, locale);
+              let flatIndex = 0;
+              let found = false;
+              
+              for (let groupIndex = 0; groupIndex < groups.length; groupIndex++) {
+                const group = groups[groupIndex];
+                const messageInGroup = group.messages.findIndex(msg => msg._id === messageId);
+                
+                if (messageInGroup !== -1) {
+                  flatIndex = groupIndex;
+                  found = true;
+                  break;
+                }
+              }
+              
+              if (found) {
+                flatListRef.current.scrollToIndex({ index: flatIndex, animated: true });
+              }
+            }
+          }}
+        />
+        
+        {/* Reaction Picker */}
+        <ReactionPicker
+          isVisible={showReactionPicker}
+          onClose={() => {
+            setShowReactionPicker(false);
+            setSelectedMessageId(null);
+          }}
+          position={reactionPickerPosition}
+          onSelectReaction={(type, emoji) => {
+            if (selectedMessageId) {
+              handleAddReaction(selectedMessageId, type, emoji);
+            }
+          }}
+        />
+        
+        {/* Conversation Summary */}
+        <ConversationSummary
+          isVisible={showSummary}
+          onClose={() => setShowSummary(false)}
+          conversationId={activeConversation?._id}
+          language={locale}
+        />
       </View>
     </TapGestureHandler>
   );
@@ -269,11 +452,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    alignItems: 'center',
-    justifyContent: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  headerTextContainer: {
+    flex: 1,
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
@@ -285,6 +475,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 2,
     fontStyle: 'italic',
+  },
+  searchButton: {
+    padding: 8,
+  },
+  newChatButton: {
+    padding: 8,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  headerButton: {
+    padding: 8,
   },
   chatContainer: {
     flex: 1,
@@ -370,14 +573,44 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   reactionBadge: {
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    borderRadius: 12,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    minWidth: 24,
+    borderRadius: 16,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    minWidth: 32,
     alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 2,
   },
   reactionText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  // Date separator styles
+  dateSeparator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 16,
+    paddingHorizontal: 16,
+  },
+  dateLine: {
+    flex: 1,
+    height: 1,
+  },
+  dateText: {
     fontSize: 12,
+    fontWeight: '500',
+    marginHorizontal: 12,
+  },
+  // Message time
+  messageTime: {
+    fontSize: 11,
+    marginTop: 4,
+    opacity: 0.7,
+  },
+  // Loading indicator
+  loadingContainer: {
+    paddingVertical: 20,
+    alignItems: 'center',
   },
 });

@@ -61,6 +61,9 @@ export const completeOnboarding = mutation({
     userId: v.optional(v.id("users")),
     clerkId: v.optional(v.string()),
     language: v.string(),
+    displayName: v.optional(v.string()),
+    primaryGoal: v.optional(v.string()),
+    initialMood: v.optional(v.string()),
     preferences: v.object({
       notifications: v.optional(v.boolean()),
       reminderTime: v.optional(v.string()),
@@ -81,11 +84,34 @@ export const completeOnboarding = mutation({
       throw new Error("User not found for onboarding");
     }
 
+    // Update user with onboarding data
     await ctx.db.patch(uid, {
       language: args.language,
+      displayName: args.displayName || undefined,
       preferences: args.preferences,
       onboardingCompleted: true,
+      onboardingData: {
+        primaryGoal: args.primaryGoal || undefined,
+        initialMood: args.initialMood || undefined,
+        completedAt: Date.now(),
+      },
     });
+
+    // Create an onboarding conversation to track the chat history
+    const conversationId = await ctx.db.insert("conversations", {
+      userId: uid,
+      title: "Welcome to Nafsy",
+      type: "onboarding",
+      isActive: false, // Mark as inactive after completion
+      lastMessageAt: Date.now(),
+      messageCount: 0,
+      metadata: {
+        onboardingStep: "completed",
+      },
+      createdAt: Date.now(),
+    });
+
+    return { userId: uid, conversationId };
   },
 });
 

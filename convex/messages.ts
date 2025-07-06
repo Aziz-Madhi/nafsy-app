@@ -2,6 +2,42 @@ import { v } from "convex/values";
 import { api } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 
+// Language detection function (duplicated from ai.ts for consistency)
+function detectMessageLanguage(text: string): 'en' | 'ar' {
+  // Arabic character range detection
+  const arabicRegex = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+  
+  // Arabic keywords
+  const arabicKeywords = ['انا', 'هذا', 'هل', 'ماذا', 'كيف', 'متى', 'اين', 'لماذا', 'من', 'الى', 'في', 'على', 'مع', 'بعد', 'قبل'];
+  
+  // English keywords
+  const englishKeywords = ['i', 'am', 'is', 'are', 'was', 'were', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'can', 'may', 'might', 'must', 'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'];
+  
+  const lowerText = text.toLowerCase();
+  
+  // Check for Arabic characters first
+  if (arabicRegex.test(text)) {
+    return 'ar';
+  }
+  
+  // Check for Arabic keywords
+  const arabicCount = arabicKeywords.filter(keyword => lowerText.includes(keyword)).length;
+  const englishCount = englishKeywords.filter(keyword => lowerText.includes(keyword)).length;
+  
+  // If we found Arabic keywords, assume Arabic
+  if (arabicCount > 0) {
+    return 'ar';
+  }
+  
+  // If we found more English keywords, assume English
+  if (englishCount > arabicCount) {
+    return 'en';
+  }
+  
+  // Default to English if unclear
+  return 'en';
+}
+
 // Add a message to a conversation
 export const addMessage = mutation({
   args: {
@@ -18,6 +54,8 @@ export const addMessage = mutation({
       isEmergency: v.optional(v.boolean()),
       exerciseType: v.optional(v.string()),
       language: v.optional(v.string()),
+      chatMode: v.optional(v.string()),
+      chunks: v.optional(v.array(v.string())), // For chunked responses
     })),
   },
   handler: async (ctx, args) => {
@@ -160,6 +198,40 @@ export const getRecentMessages = query({
   },
 });
 
+// Search messages in a conversation
+export const searchMessages = query({
+  args: {
+    conversationId: v.id("conversations"),
+    searchQuery: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit || 50, 100);
+    const searchLower = args.searchQuery.toLowerCase();
+    
+    // Get all messages for the conversation
+    const allMessages = await ctx.db
+      .query("messages")
+      .withIndex("by_conversation", (q) => q.eq("conversationId", args.conversationId))
+      .order("desc")
+      .collect();
+    
+    // Filter messages that contain the search query
+    const matchingMessages = allMessages.filter(message => 
+      message.content.toLowerCase().includes(searchLower)
+    );
+    
+    // Return limited results with metadata
+    const results = matchingMessages.slice(0, limit);
+    
+    return {
+      messages: results,
+      totalMatches: matchingMessages.length,
+      searchQuery: args.searchQuery,
+    };
+  },
+});
+
 // Send message and get AI response
 export const sendMessage = action({
   args: {
@@ -167,6 +239,7 @@ export const sendMessage = action({
     userId: v.id("users"),
     content: v.string(),
     language: v.string(),
+    chatMode: v.optional(v.union(v.literal("floating"), v.literal("full"))), // New chat mode parameter
     recentMessages: v.optional(v.array(v.object({
       role: v.union(v.literal("user"), v.literal("assistant"), v.literal("system")),
       content: v.string(),
@@ -196,13 +269,14 @@ export const sendMessage = action({
       metadata: { language: args.language },
     });
 
-    // Enhanced crisis detection (LEVER: Extending existing emergency check)
-    const isEmergency = await detectCrisisSignals(args.content, args.language);
-    const urgencyLevel = getCrisisUrgencyLevel(args.content, args.language);
+    // Enhanced crisis detection with dynamic language detection
+    const detectedLanguage = detectMessageLanguage(args.content);
+    const isEmergency = await detectCrisisSignals(args.content, detectedLanguage);
+    const urgencyLevel = getCrisisUrgencyLevel(args.content, detectedLanguage);
 
     if (isEmergency) {
       // Enhanced emergency response based on urgency level
-      const emergencyResponse = getCrisisResponse(urgencyLevel, args.language);
+      const emergencyResponse = getCrisisResponse(urgencyLevel, detectedLanguage);
       
       await ctx.runMutation(api.messages.addMessage, {
         conversationId: args.conversationId,
@@ -211,7 +285,7 @@ export const sendMessage = action({
         content: emergencyResponse,
         metadata: { 
           isEmergency: true,
-          language: args.language 
+          language: detectedLanguage 
         },
       });
       return;
@@ -222,24 +296,54 @@ export const sendMessage = action({
       throw new Error("sendMessage now requires recentMessages and userInfo to be supplied by the client.");
     }
 
-    const formattedMessages = args.recentMessages;
+    // Ensure the freshly received user message is included in the context sent to the AI
+    const formattedMessages = (() => {
+      const msgs = [...args.recentMessages];
+      const last = msgs[msgs.length - 1];
+      if (!last || last.role !== 'user' || last.content !== args.content) {
+        msgs.push({
+          role: 'user',
+          content: args.content,
+          timestamp: Date.now(),
+        });
+      }
+      return msgs;
+    })();
+
     const user = args.userInfo;
 
-    // Call AI action to generate response
-    const aiResponse: any = await ctx.runAction(api.ai.generateResponse, {
-      messages: formattedMessages,
-      userInfo: user,
-      language: args.language,
-    });
+    // Route to appropriate AI action based on chat mode
+    const chatMode = args.chatMode || 'full'; // Default to full mode
+    let aiResponse: any;
 
-    // Add AI response to conversation
+    if (chatMode === 'floating') {
+      // Use floating chat AI for brief, conversational responses
+      aiResponse = await ctx.runAction(api.ai.generateFloatingResponse, {
+        messages: formattedMessages,
+        userInfo: user,
+        language: detectedLanguage,
+      });
+    } else {
+      // Use full chat AI for detailed responses
+      aiResponse = await ctx.runAction(api.ai.generateResponse, {
+        messages: formattedMessages,
+        userInfo: user,
+        language: detectedLanguage,
+      });
+    }
+
+    // Add AI response to conversation with chunks if available
     await ctx.runMutation(api.messages.addMessage, {
       conversationId: args.conversationId,
       userId: args.userId,
       role: "assistant",
       content: aiResponse.content,
       sentiment: aiResponse.sentiment,
-      metadata: { language: args.language },
+      metadata: { 
+        language: detectedLanguage,
+        chatMode,
+        chunks: aiResponse.chunks || undefined, // Store chunks for floating mode
+      },
     });
 
     return aiResponse;

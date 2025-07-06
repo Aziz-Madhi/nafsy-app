@@ -94,6 +94,18 @@ export const ar = {
       encrypted: "تشفير من طرف إلى طرف",
       noSharing: "لن تُشارك بدون موافقة",
       deleteAnytime: "احذف بياناتك في أي وقت",
+      // Chat onboarding specific
+      preferences: "تفضيلاتك",
+      notifications: "تذكيرات تسجيل المزاج اليومية",
+      notificationDesc: "احصل على تذكيرات لتتبع مزاجك",
+      voiceChat: "المحادثات الصوتية",
+      voiceChatDesc: "تحدث مع نفسي باستخدام الصوت",
+      theme: "مظهر التطبيق",
+      themeAuto: "تلقائي",
+      themeLight: "فاتح",
+      themeDark: "داكن",
+      privacy: "خصوصيتك مهمة",
+      privacyDesc: "كل ما تشاركه مع نفسي مشفر وخاص. لن نشارك بياناتك أبداً دون إذنك. يمكنك حذف بياناتك في أي وقت.",
     },
   },
   
@@ -116,6 +128,28 @@ export const ar = {
     typing: "نفسي يكتب...",
     error: "خطأ في الرسالة",
     sendError: "فشل في إرسال الرسالة. يرجى المحاولة مرة أخرى.",
+    you: "أنت",
+    assistant: "نفسي",
+    search: {
+      title: "البحث في الرسائل",
+      placeholder: "ابحث في المحادثة...",
+      results: "نتيجة",
+      noResults: "لم يتم العثور على رسائل",
+    },
+    newChat: {
+      title: "بدء محادثة جديدة؟",
+      message: "سيؤدي هذا إلى أرشفة محادثتك الحالية وبدء محادثة جديدة. يمكنك الوصول إلى المحادثات السابقة من سجلك.",
+      confirm: "محادثة جديدة",
+    },
+    summary: {
+      title: "ملخص المحادثة",
+      generating: "جاري تحليل محادثتك...",
+      overview: "نظرة عامة",
+      keyTopics: "المواضيع الرئيسية",
+      moodProgression: "تطور المزاج",
+      insights: "الرؤى العلاجية",
+      nextSteps: "الخطوات المقترحة",
+    },
   },
   
   // Mood tracking

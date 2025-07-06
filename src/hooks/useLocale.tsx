@@ -33,14 +33,14 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
       });
   }, []);
 
-  const setLocale = async (newLocale: Locale) => {
+  const setLocale = React.useCallback(async (newLocale: Locale) => {
     try {
       await AsyncStorage.setItem(LOCALE_KEY, newLocale);
       setLocaleState(newLocale);
     } catch (error) {
       console.error("Error saving locale:", error);
     }
-  };
+  }, []);
 
   // Memoize the context value so React can bail out of unnecessary updates
   const value = React.useMemo(
@@ -50,7 +50,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
       isLoading,
       isRTL: locale === "ar",
     }),
-    [locale, isLoading]
+    [locale, setLocale, isLoading]
   );
 
   return (

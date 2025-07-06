@@ -32,7 +32,7 @@ export default function SignInScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
   const router = useRouter();
   const { t, tLegacy, locale } = useTranslation();
-  const { theme, styles: commonStyles } = useAppTheme();
+  const { theme, styles: commonStyles, colors } = useAppTheme();
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -156,7 +156,7 @@ export default function SignInScreen() {
             <Image
               source={locale === "ar" ? "sf:chevron.right" : "sf:chevron.left"}
               size={24}
-              tintColor={theme.colors.interactive.primary}
+              tintColor={colors.interactive.primary}
             />
           </TouchableOpacity>
 
@@ -164,7 +164,7 @@ export default function SignInScreen() {
             <Image 
               source="sf:brain.head.profile" 
               size={60} 
-              tintColor={theme.colors.wellness.calm}
+              tintColor={colors.wellness.calm}
               style={commonStyles.logo}
             />
             <Text style={commonStyles.title}>{content.title}</Text>
@@ -177,7 +177,7 @@ export default function SignInScreen() {
               <TextInput
                 style={commonStyles.input}
                 placeholder={content.email}
-                placeholderTextColor={theme.colors.text.placeholder}
+                placeholderTextColor={colors.text.placeholder}
                 value={emailAddress}
                 onChangeText={setEmailAddress}
                 autoCapitalize="none"
@@ -191,7 +191,7 @@ export default function SignInScreen() {
               <TextInput
                 style={commonStyles.input}
                 placeholder={content.password}
-                placeholderTextColor={theme.colors.text.placeholder}
+                placeholderTextColor={colors.text.placeholder}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -227,7 +227,7 @@ export default function SignInScreen() {
               style={commonStyles.secondaryButton}
               onPress={() => onOAuthPress("oauth_google")}
             >
-              <Image source="sf:globe" size={24} tintColor={theme.colors.text.primary} />
+              <Image source="sf:globe" size={24} tintColor={colors.text.primary} />
               <Text style={commonStyles.secondaryButtonText}>Google</Text>
             </TouchableOpacity>
 
@@ -236,7 +236,7 @@ export default function SignInScreen() {
                 style={commonStyles.secondaryButton}
                 onPress={() => onOAuthPress("oauth_apple")}
               >
-                <Image source="sf:apple.logo" size={24} tintColor={theme.colors.text.primary} />
+                <Image source="sf:apple.logo" size={24} tintColor={colors.text.primary} />
                 <Text style={commonStyles.secondaryButtonText}>Apple</Text>
               </TouchableOpacity>
             )}

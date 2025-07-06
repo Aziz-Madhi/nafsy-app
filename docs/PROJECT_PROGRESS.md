@@ -85,16 +85,14 @@ Nafsy is an AI-powered mental wellness and coaching app that provides personaliz
 - [x] Create mode switching between floating and traditional chat
 - [x] Add keyboard-aware positioning and animations
 - [x] Optimize AI response length for UI compatibility
-- [ ] Add voice message support (record and transcribe)
-- [ ] Implement crisis detection system
 
 #### 2. **Chat Features**
-- [ ] Quick reply suggestions
 - [ ] Message history with pagination
 - [ ] Conversation search
-- [ ] Export conversation feature
 - [ ] Message reactions/feedback
-
+- [ ] New Chat button
+- [ ] Chat session summarization
+ 
 ### Phase 3: Essential Mental Health Features
 
 #### 3. **Mood Tracking**

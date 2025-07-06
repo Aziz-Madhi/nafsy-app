@@ -94,6 +94,18 @@ export const en = {
       encrypted: "End-to-end encrypted",
       noSharing: "Never shared without consent",
       deleteAnytime: "Delete your data anytime",
+      // Chat onboarding specific
+      preferences: "Your Preferences",
+      notifications: "Daily Mood Check-ins",
+      notificationDesc: "Get reminded to track your mood",
+      voiceChat: "Voice Conversations",
+      voiceChatDesc: "Talk to Nafsy using voice",
+      theme: "App Theme",
+      themeAuto: "Automatic",
+      themeLight: "Light",
+      themeDark: "Dark",
+      privacy: "Your privacy matters",
+      privacyDesc: "Everything you share with Nafsy is encrypted and private. We never share your data without your permission. You can delete your data anytime.",
     },
   },
   
@@ -116,6 +128,28 @@ export const en = {
     typing: "Nafsy is typing...",
     error: "Message Error",
     sendError: "Failed to send message. Please try again.",
+    you: "You",
+    assistant: "Nafsy",
+    search: {
+      title: "Search Messages",
+      placeholder: "Search in conversation...",
+      results: "results found",
+      noResults: "No messages found",
+    },
+    newChat: {
+      title: "Start New Chat?",
+      message: "This will archive your current conversation and start a fresh one. You can still access previous conversations from your history.",
+      confirm: "New Chat",
+    },
+    summary: {
+      title: "Conversation Summary",
+      generating: "Analyzing your conversation...",
+      overview: "Overview",
+      keyTopics: "Key Topics",
+      moodProgression: "Mood Progression",
+      insights: "Therapeutic Insights",
+      nextSteps: "Suggested Next Steps",
+    },
   },
   
   // Mood tracking

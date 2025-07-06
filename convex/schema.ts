@@ -31,11 +31,17 @@ export default defineSchema({
   users: defineTable({
     clerkId: v.string(),
     name: v.optional(v.string()),
+    displayName: v.optional(v.string()), // User's preferred name from onboarding
     email: v.optional(v.string()),
     avatar: v.optional(v.string()),
     language: v.optional(v.string()),
     timezone: v.optional(v.string()),
     onboardingCompleted: v.optional(v.boolean()),
+    onboardingData: v.optional(v.object({
+      primaryGoal: v.optional(v.string()), // What brings them to Nafsy
+      initialMood: v.optional(v.string()), // Their mood during onboarding
+      completedAt: v.optional(v.number()), // When they completed onboarding
+    })),
     preferences: v.optional(v.object({
       notifications: v.optional(v.boolean()),
       reminderTime: v.optional(v.string()),
@@ -52,16 +58,19 @@ export default defineSchema({
   conversations: defineTable({
     userId: v.id("users"),
     title: v.optional(v.string()),
+    type: v.optional(v.union(v.literal("general"), v.literal("onboarding"), v.literal("crisis"))),
     isActive: v.boolean(),
     lastMessageAt: v.optional(v.number()),
     messageCount: v.number(),
     metadata: v.optional(v.object({
       mood: v.optional(v.string()),
       tags: v.optional(v.array(v.string())),
+      onboardingStep: v.optional(v.string()), // Track current onboarding step
     })),
     createdAt: v.optional(v.number()),
   }).index("by_user", ["userId"])
-    .index("by_active", ["isActive"]),
+    .index("by_active", ["isActive"])
+    .index("by_type", ["type"]),
 
   messages: defineTable({
     conversationId: v.id("conversations"),
@@ -78,6 +87,8 @@ export default defineSchema({
       isEmergency: v.optional(v.boolean()),
       exerciseType: v.optional(v.string()),
       language: v.optional(v.string()),
+      chatMode: v.optional(v.string()),
+      chunks: v.optional(v.array(v.string())), // For chunked responses
     })),
     reactions: v.optional(v.array(v.object({
       userId: v.id("users"),
@@ -147,4 +158,41 @@ export default defineSchema({
     relationship: v.string(),
     isPrimary: v.boolean(),
   }).index("by_user", ["userId"]),
+
+  // User summaries for adaptive AI learning
+  userSummaries: defineTable({
+    userId: v.id("users"),
+    summary: v.string(),
+    keyThemes: v.array(v.string()),
+    emotionalPatterns: v.array(v.string()),
+    preferredApproaches: v.array(v.string()),
+    triggerWords: v.array(v.string()),
+    progress: v.object({
+      overallMoodTrend: v.optional(v.string()),
+      commonChallenges: v.array(v.string()),
+      successfulStrategies: v.array(v.string()),
+      areas_of_growth: v.array(v.string()),
+    }),
+    conversationCount: v.number(),
+    lastUpdated: v.number(),
+    version: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // Individual conversation summaries
+  conversationSummaries: defineTable({
+    conversationId: v.id("conversations"),
+    userId: v.id("users"),
+    summary: v.string(),
+    keyTopics: v.array(v.string()),
+    moodProgression: v.string(),
+    therapeuticInsights: v.array(v.string()),
+    suggestedNextSteps: v.array(v.string()),
+    sentimentAnalysis: v.object({
+      overallSentiment: v.string(),
+      emotionalRange: v.array(v.string()),
+      crisisIndicators: v.array(v.string()),
+    }),
+    generatedAt: v.number(),
+  }).index("by_conversation", ["conversationId"])
+    .index("by_user", ["userId"]),
 });

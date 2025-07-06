@@ -17,6 +17,7 @@ import { useAppTheme } from "@/theme";
 export default function WelcomeScreen() {
   const router = useRouter();
   const { locale, setLocale, isLoading } = useLocale();
+  const { theme, styles: commonStyles, spacing, fontSize, fontWeight, colors } = useAppTheme();
   const [selectedLanguage, setSelectedLanguage] = useState<"en" | "ar">("en");
   
   // Update selectedLanguage when locale changes, but only once when component mounts
@@ -66,8 +67,7 @@ export default function WelcomeScreen() {
 
   const t = content[selectedLanguage];
 
-  const theme = useAppTheme();
-  const styles = createStyles(theme);
+  const styles = createStyles({ spacing, fontSize, fontWeight, colors });
 
   return (
     <CenteredScreen contentPadding>
@@ -75,7 +75,7 @@ export default function WelcomeScreen() {
         <Image 
           source="sf:brain.head.profile" 
           size={80} 
-          tintColor={theme.colors.tint}
+          tintColor={colors.interactive.primary}
           style={styles.logo}
         />
         <Text style={styles.title}>{t.title}</Text>
@@ -134,80 +134,85 @@ export default function WelcomeScreen() {
   );
 }
 
-const createStyles = (theme: ReturnType<typeof useAppTheme>) => ({
+const createStyles = ({ spacing, fontSize, fontWeight, colors }: {
+  spacing: ReturnType<typeof useAppTheme>['spacing'];
+  fontSize: ReturnType<typeof useAppTheme>['fontSize'];
+  fontWeight: ReturnType<typeof useAppTheme>['fontWeight'];
+  colors: ReturnType<typeof useAppTheme>['colors'];
+}) => ({
   header: {
-    alignItems: "center",
-    marginBottom: theme.spacing.xl,
+    alignItems: "center" as const,
+    marginBottom: spacing.xl,
   },
   logo: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: spacing.lg,
   },
   title: {
-    fontSize: theme.fontSize.xxl,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.text,
-    marginBottom: theme.spacing.xs,
-    textAlign: "center",
+    fontSize: fontSize.xxl,
+    fontWeight: fontWeight.bold,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+    textAlign: "center" as const,
   },
   subtitle: {
-    fontSize: theme.fontSize.lg,
-    color: theme.colors.secondaryText,
-    textAlign: "center",
+    fontSize: fontSize.lg,
+    color: colors.text.secondary,
+    textAlign: "center" as const,
   },
   description: {
-    fontSize: theme.fontSize.md,
-    color: theme.colors.secondaryText,
-    textAlign: "center",
-    marginBottom: theme.spacing.xl * 2,
+    fontSize: fontSize.md,
+    color: colors.text.secondary,
+    textAlign: "center" as const,
+    marginBottom: spacing.xl * 2,
     lineHeight: 24,
   },
   languageSection: {
     width: "100%",
-    marginBottom: theme.spacing.xl * 2,
+    marginBottom: spacing.xl * 2,
   },
   languageTitle: {
-    fontSize: theme.fontSize.md,
-    color: theme.colors.text,
-    marginBottom: theme.spacing.md,
-    textAlign: "center",
+    fontSize: fontSize.md,
+    color: colors.text.primary,
+    marginBottom: spacing.md,
+    textAlign: "center" as const,
   },
   languageButtons: {
-    flexDirection: "row",
-    gap: theme.spacing.md,
+    flexDirection: "row" as const,
+    gap: spacing.md,
   },
   languageButton: {
     flex: 1,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
-    borderRadius: theme.borderRadius.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
-    alignItems: "center",
+    borderColor: colors.system.border,
+    backgroundColor: colors.background.secondary,
+    alignItems: "center" as const,
   },
   selectedLanguage: {
-    backgroundColor: theme.colors.tint,
-    borderColor: theme.colors.tint,
+    backgroundColor: colors.interactive.primary,
+    borderColor: colors.interactive.primary,
   },
   languageButtonText: {
-    fontSize: theme.fontSize.md,
-    color: theme.colors.text,
-    fontWeight: theme.fontWeight.medium,
+    fontSize: fontSize.md,
+    color: colors.text.primary,
+    fontWeight: fontWeight.medium,
   },
   selectedLanguageText: {
-    color: theme.colors.background,
+    color: colors.text.inverse,
   },
   primaryButton: {
-    backgroundColor: theme.colors.tint,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.xl,
-    borderRadius: theme.borderRadius.md,
-    alignItems: "center",
+    backgroundColor: colors.interactive.primary,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xl,
+    borderRadius: 12,
+    alignItems: "center" as const,
     width: "100%",
   },
   primaryButtonText: {
-    color: theme.colors.background,
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.semibold,
+    color: colors.text.inverse,
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
   },
 });

@@ -1,4 +1,5 @@
 import { useTheme } from '@/theme';
+import { useFloatingChunkedDisplay } from '@/hooks/useChunkedDisplay';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';
@@ -27,6 +28,7 @@ interface FloatingMessage {
   timestamp: number;
   animation?: Animated.Value;
   fadeAnimation?: Animated.Value;
+  chunks?: string[]; // For chunked display of AI responses
 }
 
 interface FloatingChatModeProps {
@@ -48,14 +50,39 @@ export function FloatingChatMode({
   onSwitchToFullChat,
   quickReplies = [],
 }: FloatingChatModeProps) {
-  const { theme } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const [inputText, setInputText] = useState('');
   const [displayedMessages, setDisplayedMessages] = useState<FloatingMessage[]>([]);
+  const [currentDisplayMessage, setCurrentDisplayMessage] = useState<FloatingMessage | null>(null);
+  
+  // Track last processed message to prevent duplicates
+  const lastProcessedMessageId = useRef<string | null>(null);
   
   // Animations
   const keyboardOffset = useRef(new Animated.Value(0)).current;
   const inputPulseAnimation = useRef(new Animated.Value(1)).current;
+
+  // Get the LATEST AI message for chunked display (not first)
+  const latestAIMessage = recentMessages.slice().reverse().find(msg => msg.role === 'assistant');
+  const aiChunks = latestAIMessage?.chunks || (latestAIMessage ? [latestAIMessage.content] : []);
+  
+  // Chunked display for AI responses
+  const {
+    currentChunk,
+    currentIndex,
+    totalChunks,
+    isDisplaying: isDisplayingChunks,
+    nextChunk,
+    pauseChunks,
+    resumeChunks,
+    isPaused,
+  } = useFloatingChunkedDisplay(aiChunks);
+
+  // Gradient colors adapt based on theme
+  const gradientColors = (isDark
+    ? [colors.background.primary, colors.background.secondary, colors.background.tertiary]
+    : ['#F5F7FA', '#EBF0F7', '#E1E9F5']) as [string, string, string];
 
   // Start gentle pulsing animation for input when empty
   useEffect(() => {
@@ -81,61 +108,52 @@ export function FloatingChatMode({
     }
   }, [inputText, inputPulseAnimation]);
 
-  // Handle new messages with floating animation
+  // Handle new messages - simplified and consolidated with chunked display
   useEffect(() => {
-    if (recentMessages.length === 0) return;
+    if (recentMessages.length === 0) {
+      setDisplayedMessages([]);
+      lastProcessedMessageId.current = null;
+      return;
+    }
 
+    // Get the latest message regardless of role
     const latestMessage = recentMessages[recentMessages.length - 1];
     
-    // Only process if this message is new
-    const isNewMessage = displayedMessages.length === 0 || displayedMessages[0].id !== latestMessage.id;
+    // Check if this is truly a new message using ID tracking
+    const isNewMessage = lastProcessedMessageId.current !== latestMessage.id;
     
     if (isNewMessage) {
-      // Create animated message
-      const animatedMessage = {
-        ...latestMessage,
-        animation: new Animated.Value(0), // Stationary; no slide-in
-        fadeAnimation: new Animated.Value(0), // Start invisible
-      };
+      lastProcessedMessageId.current = latestMessage.id;
+      
+      // For user messages, show immediately
+      // For AI messages, let chunked display handle it
+      if (latestMessage.role === 'user') {
+        const animatedMessage = {
+          ...latestMessage,
+          animation: new Animated.Value(0),
+          fadeAnimation: new Animated.Value(0),
+        };
 
-      // If an old message is currently displayed, fade it out and remove it first
-      if (displayedMessages.length === 1) {
-        const old = displayedMessages[0];
-        Animated.parallel([
-          Animated.timing(old.fadeAnimation!, {
-            toValue: 0,
-            duration: 300,
-            easing: Easing.in(Easing.ease),
-            useNativeDriver: true,
-          }),
-        ]).start(() => {
-          // Defer state update to next frame to avoid scheduling during commit
-          requestAnimationFrame(() => {
-            setDisplayedMessages([animatedMessage]);
-            // animate the new message in after state update
-            Animated.parallel([
-              Animated.timing(animatedMessage.fadeAnimation, {
-                toValue: 1,
-                duration: 250,
-                easing: Easing.out(Easing.ease),
-                useNativeDriver: true,
-              }),
-            ]).start();
-          });
-        });
-      } else {
-        // No previous message, just show this one
         setDisplayedMessages([animatedMessage]);
+        
+        // Animate in user message immediately
         setTimeout(() => {
-          Animated.parallel([
-            Animated.timing(animatedMessage.fadeAnimation, {
-              toValue: 1,
-              duration: 250,
-              easing: Easing.out(Easing.ease),
-              useNativeDriver: true,
-            }),
-          ]).start();
+          Animated.timing(animatedMessage.fadeAnimation, {
+            toValue: 1,
+            duration: 250,
+            easing: Easing.out(Easing.ease),
+            useNativeDriver: true,
+          }).start();
         }, 30);
+      } else if (latestMessage.role === 'assistant') {
+        // For AI messages, create animated message but let chunked display control content
+        const animatedMessage = {
+          ...latestMessage,
+          animation: new Animated.Value(0),
+          fadeAnimation: new Animated.Value(1), // Start visible for AI messages
+        };
+
+        setDisplayedMessages([animatedMessage]);
       }
     }
   }, [recentMessages]);
@@ -155,14 +173,23 @@ export function FloatingChatMode({
     return content;
   };
 
-  const MessageBubble = ({ message, index }: { message: FloatingMessage; index: number }) => {
+  const MessageBubble = ({ message, index, isLatestAI }: { 
+    message: FloatingMessage; 
+    index: number; 
+    isLatestAI?: boolean;
+  }) => {
     const isUser = message.role === 'user';
     
     // fadeAnimation: 0 = invisible, 1 = visible
     const opacity = message.fadeAnimation!;
 
+    // Use chunked display for latest AI message, regular display for others
+    const displayText = isLatestAI && message.role === 'assistant' 
+      ? currentChunk 
+      : truncateMessage(message.content, message.role);
+
     return (
-      <Animated.View
+      <TouchableOpacity
         style={[
           styles.floatingMessage,
           {
@@ -170,20 +197,52 @@ export function FloatingChatMode({
             zIndex: 10 - index, // Higher messages have lower z-index
           },
         ]}
-        pointerEvents="none"
+        onPress={isLatestAI && totalChunks > 1 ? nextChunk : undefined}
+        activeOpacity={isLatestAI && totalChunks > 1 ? 0.7 : 1}
       >
         <View style={[
           styles.bubble,
           isUser ? styles.userBubble : styles.assistantBubble,
+          !isUser && isDark && { backgroundColor: 'rgba(60, 60, 60, 0.95)' },
         ]}>
           <Text style={[
             styles.messageText,
             isUser ? styles.userText : styles.assistantText,
+            !isUser && isDark && { color: '#E5E7EB' },
           ]}>
-            {truncateMessage(message.content, message.role)}
+            {displayText}
           </Text>
+          
+          {/* Progress indicator for chunked AI responses */}
+          {isLatestAI && totalChunks > 1 && (
+            <View style={styles.chunkProgress}>
+              <View style={styles.progressDots}>
+                {Array.from({ length: totalChunks }, (_, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.progressDot,
+                      {
+                        backgroundColor: i <= currentIndex 
+                          ? (isDark ? '#6495ED' : '#4F46E5')
+                          : (isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)'),
+                      },
+                    ]}
+                  />
+                ))}
+              </View>
+              {totalChunks > 1 && (
+                <Text style={[
+                  styles.progressText,
+                  { color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)' }
+                ]}>
+                  {isPaused ? 'Tap to continue' : `${currentIndex + 1}/${totalChunks}`}
+                </Text>
+              )}
+            </View>
+          )}
         </View>
-      </Animated.View>
+      </TouchableOpacity>
     );
   };
 
@@ -267,7 +326,7 @@ export function FloatingChatMode({
       onPress={onSwitchToFullChat}
     >
       <LinearGradient
-        colors={['#F5F7FA', '#EBF0F7', '#E1E9F5']}
+        colors={gradientColors}
         style={styles.gradient}
       >
         {/* Tap hint at top */}
@@ -285,13 +344,20 @@ export function FloatingChatMode({
             },
           ]}
         >
-          {displayedMessages.map((message, index) => (
-            <MessageBubble 
-              key={message.id} 
-              message={message} 
-              index={index} 
-            />
-          ))}
+          {displayedMessages.map((message, index) => {
+            // Check if this is the latest AI message for chunked display
+            const isLatestAI = message.role === 'assistant' && 
+                              message.id === latestAIMessage?.id;
+            
+            return (
+              <MessageBubble 
+                key={message.id} 
+                message={message} 
+                index={index}
+                isLatestAI={isLatestAI}
+              />
+            );
+          })}
           
           {/* Typing Indicator as floating bubble */}
           {isTyping && (
@@ -299,6 +365,7 @@ export function FloatingChatMode({
               style={[
                 styles.floatingMessage, 
                 styles.typingBubble,
+                isDark && { backgroundColor: 'rgba(60, 60, 60, 0.95)' },
                 {
                   bottom: displayedMessages.length * 90,
                   opacity: 1,
@@ -320,12 +387,12 @@ export function FloatingChatMode({
               },
             ]}
           >
-            <BlurView intensity={80} tint="light" style={styles.blurContainer}>
-              <View style={styles.inputContainer}>
+            <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={styles.blurContainer}>
+              <View style={[styles.inputContainer, isDark && { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
                 <TextInput
-                  style={styles.textInput}
+                  style={[styles.textInput, isDark && { color: '#E5E7EB' }]}
                   placeholder="What's on your mind?"
-                  placeholderTextColor="rgba(107, 114, 128, 0.6)"
+                  placeholderTextColor={isDark ? 'rgba(156, 163, 175, 0.6)' : 'rgba(107, 114, 128, 0.6)'}
                   value={inputText}
                   onChangeText={setInputText}
                   multiline
@@ -480,5 +547,23 @@ const styles = StyleSheet.create({
     // bottom is animated via style prop
     alignItems: "center",
     paddingHorizontal: 24,
+  },
+  chunkProgress: {
+    marginTop: 8,
+    alignItems: 'center',
+  },
+  progressDots: {
+    flexDirection: 'row',
+    marginBottom: 4,
+  },
+  progressDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginHorizontal: 2,
+  },
+  progressText: {
+    fontSize: 10,
+    fontWeight: '500',
   },
 });

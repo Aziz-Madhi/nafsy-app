@@ -47,7 +47,7 @@ export default function TabsLayout() {
         hasAttemptedUserCreation.current = false;
       });
     }
-  }, [isSignedIn, isAuthenticated, user, userData, upsertUser]);
+  }, [isSignedIn, isAuthenticated, user, userData]);
 
   // Wait for Convex auth to finish loading before deciding what to do
   if (isConvexLoading) {
@@ -66,7 +66,7 @@ export default function TabsLayout() {
 
   // Redirect to onboarding if user doesn't exist or hasn't completed onboarding
   if (!userData || !userData.onboardingCompleted) {
-    return <Redirect href="/(auth)/onboarding" />;
+    return <Redirect href="/(auth)/onboarding-steps" />;
   }
 
   const tabLabels = {

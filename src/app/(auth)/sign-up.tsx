@@ -31,7 +31,7 @@ export default function SignUpScreen() {
   const { isLoaded, signUp, setActive } = useSignUp();
   const router = useRouter();
   const { t, tLegacy, locale } = useTranslation();
-  const { theme, styles: commonStyles } = useAppTheme();
+  const { theme, styles: commonStyles, colors, spacing, fontSize } = useAppTheme();
   
   const { startOAuthFlow: googleAuth } = useOAuth({ strategy: "oauth_google" });
   const { startOAuthFlow: appleAuth } = useOAuth({ strategy: "oauth_apple" });
@@ -209,7 +209,7 @@ export default function SignUpScreen() {
     }
   };
 
-  const styles = createStyles(theme);
+  const styles = createStyles({ spacing, fontSize, colors });
 
   return (
     <SafeAreaView style={commonStyles.container}>
@@ -226,7 +226,7 @@ export default function SignUpScreen() {
               <Image
                 source={locale === "ar" ? "sf:chevron.right" : "sf:chevron.left"}
                 size={24}
-                tintColor={theme.colors.interactive.primary}
+                tintColor={colors.interactive.primary}
               />
             </TouchableOpacity>
 
@@ -234,7 +234,7 @@ export default function SignUpScreen() {
               <Image 
                 source="sf:brain.head.profile" 
                 size={60} 
-                tintColor={theme.colors.wellness.calm}
+                tintColor={colors.wellness.calm}
                 style={commonStyles.logo}
               />
               <Text style={commonStyles.title}>
@@ -253,7 +253,7 @@ export default function SignUpScreen() {
                     <TextInput
                       style={commonStyles.input}
                       placeholder={content.name}
-                      placeholderTextColor={theme.colors.text.placeholder}
+                      placeholderTextColor={colors.text.placeholder}
                       value={firstName}
                       onChangeText={setFirstName}
                       autoCapitalize="words"
@@ -266,7 +266,7 @@ export default function SignUpScreen() {
                     <TextInput
                       style={commonStyles.input}
                       placeholder={content.email}
-                      placeholderTextColor={theme.colors.text.placeholder}
+                      placeholderTextColor={colors.text.placeholder}
                       value={emailAddress}
                       onChangeText={setEmailAddress}
                       autoCapitalize="none"
@@ -280,7 +280,7 @@ export default function SignUpScreen() {
                     <TextInput
                       style={commonStyles.input}
                       placeholder={content.password}
-                      placeholderTextColor={theme.colors.text.placeholder}
+                      placeholderTextColor={colors.text.placeholder}
                       value={password}
                       onChangeText={setPassword}
                       secureTextEntry
@@ -296,7 +296,7 @@ export default function SignUpScreen() {
                     disabled={isLoading}
                   >
                     {isLoading ? (
-                      <ActivityIndicator color={theme.colors.background} />
+                      <ActivityIndicator color={colors.background.primary} />
                     ) : (
                       <Text style={commonStyles.primaryButtonText}>{content.signUpButton}</Text>
                     )}
@@ -317,7 +317,7 @@ export default function SignUpScreen() {
                       <Image
                         source="sf:globe.europe.africa"
                         size={24}
-                        tintColor={theme.colors.text.primary}
+                        tintColor={colors.text.primary}
                       />
                       <Text style={commonStyles.secondaryButtonText}>Google</Text>
                     </TouchableOpacity>
@@ -329,7 +329,7 @@ export default function SignUpScreen() {
                       <Image
                         source="sf:apple.logo"
                         size={24}
-                        tintColor={theme.colors.text.primary}
+                        tintColor={colors.text.primary}
                       />
                       <Text style={commonStyles.secondaryButtonText}>Apple</Text>
                     </TouchableOpacity>
@@ -350,7 +350,7 @@ export default function SignUpScreen() {
                   <TextInput
                     style={commonStyles.input}
                     placeholder="123456"
-                    placeholderTextColor={theme.colors.text.placeholder}
+                    placeholderTextColor={colors.text.placeholder}
                     value={code}
                     onChangeText={setCode}
                     keyboardType="number-pad"
@@ -365,7 +365,7 @@ export default function SignUpScreen() {
                   disabled={isLoading}
                 >
                   {isLoading ? (
-                    <ActivityIndicator color={theme.colors.background} />
+                    <ActivityIndicator color={colors.background.primary} />
                   ) : (
                     <Text style={commonStyles.primaryButtonText}>{content.verify}</Text>
                   )}
@@ -379,7 +379,11 @@ export default function SignUpScreen() {
   );
 }
 
-const createStyles = (theme: ReturnType<typeof useAppTheme>) => ({
+const createStyles = ({ spacing, fontSize, colors }: {
+  spacing: ReturnType<typeof useAppTheme>['spacing'];
+  fontSize: ReturnType<typeof useAppTheme>['fontSize'];
+  colors: ReturnType<typeof useAppTheme>['colors'];
+}) => ({
   keyboardView: {
     flex: 1,
   },
@@ -387,19 +391,19 @@ const createStyles = (theme: ReturnType<typeof useAppTheme>) => ({
     flexGrow: 1,
   },
   backButton: {
-    paddingVertical: theme.spacing.md,
-    alignSelf: "flex-start",
+    paddingVertical: spacing.md,
+    alignSelf: "flex-start" as const,
   },
   terms: {
-    fontSize: theme.fontSize.xs,
-    color: theme.colors.text.secondary,
-    textAlign: "center",
-    marginBottom: theme.spacing.lg,
-    paddingHorizontal: theme.spacing.md,
+    fontSize: fontSize.xs,
+    color: colors.text.secondary,
+    textAlign: "center" as const,
+    marginBottom: spacing.lg,
+    paddingHorizontal: spacing.md,
     lineHeight: 18,
   },
   socialButtons: {
-    flexDirection: "row",
-    gap: theme.spacing.sm,
+    flexDirection: "row" as const,
+    gap: spacing.sm,
   },
 });
