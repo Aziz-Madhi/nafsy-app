@@ -23,7 +23,6 @@ import {
   TextStyle,
 } from 'react-native';
 import { Image } from '@/components/ui/img';
-import * as AC from '@bacons/apple-colors';
 import { useAppTheme } from '@/theme';
 import { 
   formatDate, 
@@ -93,8 +92,7 @@ export const MoodCard = memo<MoodCardProps>(function MoodCard({
         </View>
       </View>
 
-      {showDetails && !compact && (
-        <>
+      {showDetails && !compact ? <>
           {mood.emotions.length > 0 && (
             <View style={styles.emotionsContainer}>
               {mood.emotions.slice(0, 3).map((emotion, index) => (
@@ -112,16 +110,13 @@ export const MoodCard = memo<MoodCardProps>(function MoodCard({
             </View>
           )}
 
-          {mood.note && (
-            <Text 
+          {mood.note ? <Text 
               style={[styles.moodNote, { color: colors.secondaryText }]}
               numberOfLines={2}
             >
               {mood.note}
-            </Text>
-          )}
-        </>
-      )}
+            </Text> : null}
+        </> : null}
     </TouchableOpacity>
   );
 });
@@ -165,7 +160,7 @@ export const ExerciseCard = memo<ExerciseCardProps>(function ExerciseCard({
     >
       <View style={styles.exerciseHeader}>
         <View style={[styles.exerciseIcon, { backgroundColor: colors.tint }]}>
-          <Image source="sf:figure.mind.and.body" size={24} tintColor={AC.white} />
+          <Image source="sf:figure.mind.and.body" size={24} tintColor={'#FFFFFF'} />
         </View>
         <View style={styles.exerciseInfo}>
           <Text style={[styles.exerciseTitle, { color: colors.text }]}>
@@ -175,15 +170,12 @@ export const ExerciseCard = memo<ExerciseCardProps>(function ExerciseCard({
             {formatDate(exercise.completedAt, locale)}
           </Text>
         </View>
-        {durationText && (
-          <Text style={[styles.exerciseDuration, { color: colors.secondaryText }]}>
+        {durationText ? <Text style={[styles.exerciseDuration, { color: colors.secondaryText }]}>
             {durationText}
-          </Text>
-        )}
+          </Text> : null}
       </View>
 
-      {showProgress && !compact && effectiveness > 0 && (
-        <View style={styles.effectivenessContainer}>
+      {showProgress && !compact && effectiveness > 0 ? <View style={styles.effectivenessContainer}>
           <Text style={[styles.effectivenessLabel, { color: colors.secondaryText }]}>
             Effectiveness
           </Text>
@@ -201,8 +193,7 @@ export const ExerciseCard = memo<ExerciseCardProps>(function ExerciseCard({
           <Text style={[styles.effectivenessValue, { color: colors.secondaryText }]}>
             {effectiveness}/5
           </Text>
-        </View>
-      )}
+        </View> : null}
     </TouchableOpacity>
   );
 });
@@ -244,7 +235,7 @@ export const ConversationCard = memo<ConversationCardProps>(function Conversatio
     >
       <View style={styles.conversationHeader}>
         <View style={[styles.conversationIcon, { backgroundColor: colors.tint }]}>
-          <Image source="sf:message.fill" size={20} tintColor={AC.white} />
+          <Image source="sf:message.fill" size={20} tintColor={'#FFFFFF'} />
         </View>
         <View style={styles.conversationInfo}>
           <Text 
@@ -261,26 +252,18 @@ export const ConversationCard = memo<ConversationCardProps>(function Conversatio
           <Text style={[styles.messageCount, { color: colors.secondaryText }]}>
             {conversation.messageCount} messages
           </Text>
-          {conversation.isActive && (
-            <View style={[styles.activeIndicator, { backgroundColor: colors.tint }]} />
-          )}
+          {conversation.isActive ? <View style={[styles.activeIndicator, { backgroundColor: colors.tint }]} /> : null}
         </View>
       </View>
 
-      {showMetadata && !compact && conversation.metadata && (
-        <View style={styles.conversationMetadata}>
-          {conversation.metadata.primaryTopic && (
-            <Text style={[styles.topicText, { color: colors.secondaryText }]}>
+      {showMetadata && !compact && conversation.metadata ? <View style={styles.conversationMetadata}>
+          {conversation.metadata.primaryTopic ? <Text style={[styles.topicText, { color: colors.secondaryText }]}>
               Topic: {conversation.metadata.primaryTopic}
-            </Text>
-          )}
-          {conversation.metadata.emotionalTone && (
-            <Text style={[styles.toneText, { color: colors.secondaryText }]}>
+            </Text> : null}
+          {conversation.metadata.emotionalTone ? <Text style={[styles.toneText, { color: colors.secondaryText }]}>
               Tone: {conversation.metadata.emotionalTone}
-            </Text>
-          )}
-        </View>
-      )}
+            </Text> : null}
+        </View> : null}
     </TouchableOpacity>
   );
 });
@@ -318,7 +301,7 @@ export const MessageBubble = memo<MessageBubbleProps>(function MessageBubble({
 
   const textStyle = [
     styles.messageText,
-    { color: isOwn ? AC.white : colors.text },
+    { color: isOwn ? '#FFFFFF' : colors.text },
   ];
 
   const handlePress = () => onPress?.(message);
@@ -326,13 +309,11 @@ export const MessageBubble = memo<MessageBubbleProps>(function MessageBubble({
 
   return (
     <View style={[styles.messageContainer, isOwn && styles.ownMessageContainer]}>
-      {showAvatar && !isOwn && (
-        <UserAvatar 
+      {showAvatar && !isOwn ? <UserAvatar 
           name="Assistant" 
           size={32} 
           backgroundColor={colors.secondary}
-        />
-      )}
+        /> : null}
       
       <TouchableOpacity
         style={bubbleStyle}
@@ -343,14 +324,12 @@ export const MessageBubble = memo<MessageBubbleProps>(function MessageBubble({
       >
         <Text style={textStyle}>{message.content}</Text>
         
-        {showTimestamp && (
-          <Text style={[
+        {showTimestamp ? <Text style={[
             styles.messageTimestamp, 
-            { color: isOwn ? AC.white : colors.secondaryText }
+            { color: isOwn ? '#FFFFFF' : colors.secondaryText }
           ]}>
             {formatTime(message.timestamp, locale)}
-          </Text>
-        )}
+          </Text> : null}
       </TouchableOpacity>
     </View>
   );
@@ -392,7 +371,7 @@ export const UserAvatar = memo<UserAvatarProps>(function UserAvatar({
     styles.avatarText,
     {
       fontSize: size * 0.4,
-      color: textColor || AC.white,
+      color: textColor || '#FFFFFF',
     },
   ];
 
@@ -482,11 +461,9 @@ export const StatCard = memo<StatCardProps>(function StatCard({
       accessibilityLabel={`${title}: ${value}${subtitle ? `, ${subtitle}` : ''}`}
     >
       <View style={styles.statHeader}>
-        {icon && (
-          <View style={[styles.statIcon, { backgroundColor: iconColor }]}>
-            <Image source={icon as any} size={20} tintColor={AC.white} />
-          </View>
-        )}
+        {icon ? <View style={[styles.statIcon, { backgroundColor: iconColor }]}>
+            <Image source={icon as any} size={20} tintColor={'#FFFFFF'} />
+          </View> : null}
         <View style={styles.statContent}>
           <Text style={[styles.statTitle, { color: colors.secondaryText }]}>
             {title}
@@ -495,19 +472,15 @@ export const StatCard = memo<StatCardProps>(function StatCard({
             <Text style={[styles.statValue, { color: colors.text }]}>
               {value}
             </Text>
-            {trend && (
-              <Image 
+            {trend ? <Image 
                 source={getTrendIcon() as any} 
                 size={16} 
                 tintColor={getTrendColor()} 
-              />
-            )}
+              /> : null}
           </View>
-          {subtitle && (
-            <Text style={[styles.statSubtitle, { color: colors.secondaryText }]}>
+          {subtitle ? <Text style={[styles.statSubtitle, { color: colors.secondaryText }]}>
               {subtitle}
-            </Text>
-          )}
+            </Text> : null}
         </View>
       </View>
     </TouchableOpacity>
@@ -583,11 +556,9 @@ export const EmptyState = memo<EmptyStateProps>(function EmptyState({
         {title}
       </Text>
       
-      {subtitle && (
-        <Text style={[styles.emptySubtitle, { color: colors.secondaryText }]}>
+      {subtitle ? <Text style={[styles.emptySubtitle, { color: colors.secondaryText }]}>
           {subtitle}
-        </Text>
-      )}
+        </Text> : null}
       
       {action}
     </View>
@@ -600,7 +571,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginVertical: 4,
-    shadowColor: AC.black,
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -627,7 +598,7 @@ const styles = StyleSheet.create({
   moodRating: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: AC.white,
+    color: '#FFFFFF',
   },
   moodInfo: {
     flex: 1,
@@ -700,7 +671,7 @@ const styles = StyleSheet.create({
   },
   effectivenessBar: {
     height: 4,
-    backgroundColor: AC.systemFill,
+    backgroundColor: 'rgba(120, 120, 128, 0.16)',
     borderRadius: 2,
     overflow: 'hidden',
   },
@@ -754,7 +725,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: AC.separator,
+    borderTopColor: 'rgba(60, 60, 67, 0.36)',
   },
   topicText: {
     fontSize: 12,
@@ -809,7 +780,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginVertical: 4,
-    shadowColor: AC.black,
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,

@@ -1,5 +1,13 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withRepeat,
+  withSequence,
+  withDelay,
+} from 'react-native-reanimated';
 import { useTheme } from '@/theme';
 
 interface TypingIndicatorProps {
@@ -8,47 +16,53 @@ interface TypingIndicatorProps {
 
 export function TypingIndicator({ visible }: TypingIndicatorProps) {
   const { theme } = useTheme();
-  const dot1 = useRef(new Animated.Value(0)).current;
-  const dot2 = useRef(new Animated.Value(0)).current;
-  const dot3 = useRef(new Animated.Value(0)).current;
+  const dot1Opacity = useSharedValue(0);
+  const dot2Opacity = useSharedValue(0);
+  const dot3Opacity = useSharedValue(0);
 
   useEffect(() => {
     if (visible) {
       // Create staggered animation for the three dots
-      const animateDot = (dot: Animated.Value, delay: number) => {
-        return Animated.loop(
-          Animated.sequence([
-            Animated.delay(delay),
-            Animated.timing(dot, {
-              toValue: 1,
-              duration: 600,
-              useNativeDriver: true,
-            }),
-            Animated.timing(dot, {
-              toValue: 0,
-              duration: 600,
-              useNativeDriver: true,
-            }),
-          ])
+      const animateDot = (opacity: any, delay: number) => {
+        opacity.value = withDelay(
+          delay,
+          withRepeat(
+            withSequence(
+              withTiming(1, { duration: 600 }),
+              withTiming(0, { duration: 600 })
+            ),
+            -1
+          )
         );
       };
 
-      const animation = Animated.parallel([
-        animateDot(dot1, 0),
-        animateDot(dot2, 200),
-        animateDot(dot3, 400),
-      ]);
-
-      animation.start();
-
-      return () => {
-        animation.stop();
-        dot1.setValue(0);
-        dot2.setValue(0);
-        dot3.setValue(0);
-      };
+      animateDot(dot1Opacity, 0);
+      animateDot(dot2Opacity, 200);
+      animateDot(dot3Opacity, 400);
+    } else {
+      dot1Opacity.value = 0;
+      dot2Opacity.value = 0;
+      dot3Opacity.value = 0;
     }
-  }, [visible, dot1, dot2, dot3]);
+  }, [visible, dot1Opacity, dot2Opacity, dot3Opacity]);
+
+  const dot1Style = useAnimatedStyle(() => {
+    return {
+      opacity: dot1Opacity.value,
+    };
+  });
+
+  const dot2Style = useAnimatedStyle(() => {
+    return {
+      opacity: dot2Opacity.value,
+    };
+  });
+
+  const dot3Style = useAnimatedStyle(() => {
+    return {
+      opacity: dot3Opacity.value,
+    };
+  });
 
   if (!visible) return null;
 
@@ -63,8 +77,8 @@ export function TypingIndicator({ visible }: TypingIndicatorProps) {
             styles.dot,
             {
               backgroundColor: theme.colors.text.secondary,
-              opacity: dot1,
             },
+            dot1Style,
           ]}
         />
         <Animated.View
@@ -72,8 +86,8 @@ export function TypingIndicator({ visible }: TypingIndicatorProps) {
             styles.dot,
             {
               backgroundColor: theme.colors.text.secondary,
-              opacity: dot2,
             },
+            dot2Style,
           ]}
         />
         <Animated.View
@@ -81,8 +95,8 @@ export function TypingIndicator({ visible }: TypingIndicatorProps) {
             styles.dot,
             {
               backgroundColor: theme.colors.text.secondary,
-              opacity: dot3,
             },
+            dot3Style,
           ]}
         />
       </View>

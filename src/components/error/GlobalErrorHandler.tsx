@@ -70,28 +70,21 @@ function GlobalErrorFallback({
   error: Error | null;
   resetErrorBoundary: () => void;
 }) {
-  let theme, commonStyles;
-  
-  try {
-    const themeData = useAppTheme();
-    theme = themeData.theme;
-    commonStyles = themeData.styles;
-  } catch (themeError) {
-    // Fallback if theme provider is not available
-    theme = {
-      colors: {
-        background: { primary: '#FFFFFF' },
-        text: { primary: '#000000', secondary: '#666666' },
-        interactive: { primary: '#007AFF', destructive: '#FF3B30' }
-      }
-    };
-    commonStyles = {
-      primaryButton: { backgroundColor: '#007AFF', padding: 12, borderRadius: 8 },
-      secondaryButton: { backgroundColor: '#F2F2F7', padding: 12, borderRadius: 8 },
-      primaryButtonText: { color: '#FFFFFF', fontWeight: '600' },
-      secondaryButtonText: { color: '#000000', fontWeight: '500' }
-    };
-  }
+  // Always call hooks at the top level - no conditional calling
+  const themeData = useAppTheme();
+  const theme = themeData?.theme || {
+    colors: {
+      background: { primary: '#FFFFFF' },
+      text: { primary: '#000000', secondary: '#666666' },
+      interactive: { primary: '#007AFF', destructive: '#FF3B30' }
+    }
+  };
+  const commonStyles = themeData?.styles || {
+    primaryButton: { backgroundColor: '#007AFF', padding: 12, borderRadius: 8 },
+    secondaryButton: { backgroundColor: '#F2F2F7', padding: 12, borderRadius: 8 },
+    primaryButtonText: { color: '#FFFFFF', fontWeight: '600' },
+    secondaryButtonText: { color: '#000000', fontWeight: '500' }
+  };
   
   const handleReportBug = () => {
     Alert.alert(
@@ -122,10 +115,10 @@ function GlobalErrorFallback({
         
         <Text style={styles.globalErrorEmoji}>💙</Text>
         <Text style={[styles.globalErrorTitle, { color: theme.colors.text.primary }]}>
-          We're sorry for the trouble
+          We&apos;re sorry for the trouble
         </Text>
         <Text style={[styles.globalErrorMessage, { color: theme.colors.text.secondary }]}>
-          Nafsy encountered an unexpected error. Don't worry - your data is safe. 
+          Nafsy encountered an unexpected error. Don&apos;t worry - your data is safe. 
           Please restart the app to continue.
         </Text>
 
@@ -149,15 +142,13 @@ function GlobalErrorFallback({
           </TouchableOpacity>
         </View>
 
-        {__DEV__ && error && (
-          <View style={[styles.devInfo, { backgroundColor: theme.colors.interactive.destructive }]}>
+        {__DEV__ && error ? <View style={[styles.devInfo, { backgroundColor: theme.colors.interactive.destructive }]}>
             <Text style={styles.devTitle}>Development Info:</Text>
             <Text style={styles.devError}>{error.message}</Text>
             <Text style={styles.devStack} numberOfLines={5}>
               {error.stack}
             </Text>
-          </View>
-        )}
+          </View> : null}
       </View>
     </View>
   );
@@ -192,18 +183,14 @@ export function GlobalErrorHandler({ children }: GlobalErrorHandlerProps) {
  * Feature error fallback component
  */
 function FeatureErrorFallback({ featureName }: { featureName: string }) {
-  let theme;
-  
-  try {
-    theme = useAppTheme().theme;
-  } catch {
-    theme = {
-      colors: {
-        background: { secondary: '#F2F2F7' },
-        text: { primary: '#000000', secondary: '#666666' }
-      }
-    };
-  }
+  // Always call hooks at the top level
+  const themeData = useAppTheme();
+  const theme = themeData?.theme || {
+    colors: {
+      background: { secondary: '#F2F2F7' },
+      text: { primary: '#000000', secondary: '#666666' }
+    }
+  };
   
   return (
     <View style={[styles.featureErrorContainer, { backgroundColor: theme.colors.background.secondary }]}>
@@ -246,19 +233,15 @@ export function FeatureErrorBoundary({
  * Critical error fallback component
  */
 function CriticalErrorFallback() {
-  let theme;
-  
-  try {
-    theme = useAppTheme().theme;
-  } catch {
-    theme = {
-      colors: {
-        background: { primary: '#FFFFFF' },
-        text: { secondary: '#666666' },
-        interactive: { destructive: '#FF3B30' }
-      }
-    };
-  }
+  // Always call hooks at the top level
+  const themeData = useAppTheme();
+  const theme = themeData?.theme || {
+    colors: {
+      background: { primary: '#FFFFFF' },
+      text: { secondary: '#666666' },
+      interactive: { destructive: '#FF3B30' }
+    }
+  };
   
   return (
     <View style={[styles.criticalErrorContainer, { backgroundColor: theme.colors.background.primary }]}>

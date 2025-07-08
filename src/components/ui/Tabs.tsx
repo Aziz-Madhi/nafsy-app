@@ -57,8 +57,9 @@ export default function Tabs({
         ...screenOptions,
       }}
       {...props}
-      children={processedChildren}
-    />
+    >
+      {processedChildren}
+    </NativeTabs>
   );
 }
 

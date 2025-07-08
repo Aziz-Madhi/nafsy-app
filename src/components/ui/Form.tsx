@@ -1,8 +1,12 @@
 "use client";
 
-import { Image, SFSymbolSource } from "@/components/ui/img";
 import { IconSymbol, IconSymbolName } from "@/components/ui/IconSymbol";
-import * as AppleColors from "@bacons/apple-colors";
+import { Image } from "@/components/ui/img";
+import * as AC from "@bacons/apple-colors";
+import DateTimePicker, {
+  AndroidNativeProps,
+  IOSNativeProps,
+} from "@react-native-community/datetimepicker";
 import { Href, LinkProps, Link as RouterLink, Stack } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import React, { use } from "react";
@@ -25,19 +29,14 @@ import {
   ViewProps,
   ViewStyle,
 } from "react-native";
-import DateTimePicker, {
-  AndroidNativeProps,
-  IOSNativeProps,
-} from "@react-native-community/datetimepicker";
 
 import { Switch, SwitchProps } from "@/components/ui/Switch";
 
-import { HeaderButton } from "./Header";
-import Animated from "react-native-reanimated";
 import { SymbolWeight } from "expo-symbols";
+import Animated from "react-native-reanimated";
+import { HeaderButton } from "./Header";
 
 import { useScrollToTop } from "@/hooks/useTabToTop";
-import * as AC from "@bacons/apple-colors";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabOverflow } from "./TabBarBackground";
 
@@ -58,9 +57,9 @@ export const ListStyleContext = React.createContext<ListStyle>("auto");
 const minItemHeight = 20;
 
 const Colors = {
-  systemGray4: AppleColors.systemGray4, // "rgba(209, 209, 214, 1)",
+  systemGray4: AC.systemGray4, // "rgba(209, 209, 214, 1)",
   secondarySystemGroupedBackground:
-    AppleColors.secondarySystemGroupedBackground, // "rgba(255, 255, 255, 1)",
+    AC.secondarySystemGroupedBackground, // "rgba(255, 255, 255, 1)",
 };
 
 export const styles = StyleSheet.create({
@@ -85,13 +84,13 @@ export const styles = StyleSheet.create({
     marginStart: 60,
     borderBottomWidth: 0.5, //StyleSheet.hairlineWidth,
     marginTop: -0.5, // -StyleSheet.hairlineWidth,
-    borderBottomColor: AppleColors.separator,
+    borderBottomColor: AC.separator,
   },
   groupedList: {
     backgroundColor: Colors.secondarySystemGroupedBackground,
     borderTopWidth: 0.5,
     borderBottomWidth: 0.5,
-    borderColor: AppleColors.separator,
+    borderColor: AC.separator,
   },
   standardList: {
     borderCurve: "continuous",
@@ -101,7 +100,7 @@ export const styles = StyleSheet.create({
   },
 
   hintText: {
-    color: AppleColors.secondaryLabel,
+    color: AC.secondaryLabel,
     paddingVertical: 8,
     fontSize: 14,
   },
@@ -236,9 +235,7 @@ function InnerList({ contentContainerStyle, ...props }: ListProps) {
 
   return (
     <>
-      {props.navigationTitle && (
-        <Stack.Screen options={{ title: props.navigationTitle }} />
-      )}
+      {props.navigationTitle ? <Stack.Screen options={{ title: props.navigationTitle }} /> : null}
       <ListStyleContext value={props.listStyle ?? "auto"}>
         <ScrollView
           contentContainerStyle={mergedStyleProp(
@@ -304,7 +301,7 @@ export function FormItem({
     return (
       <TouchableHighlight
         ref={ref}
-        underlayColor={AppleColors.systemGray4}
+        underlayColor={AC.systemGray4}
         onPress={onPress}
         onLongPress={onLongPress}
       >
@@ -317,7 +314,7 @@ export function FormItem({
 
   return (
     <Link asChild href={href} onPress={onPress} onLongPress={onLongPress}>
-      <TouchableHighlight ref={ref} underlayColor={AppleColors.systemGray4}>
+      <TouchableHighlight ref={ref} underlayColor={AC.systemGray4}>
         <View style={resolvedStyle}>
           <HStack style={{ minHeight: minItemHeight }}>{children}</HStack>
         </View>
@@ -361,7 +358,7 @@ export function TextField({ ...props }: TextInputProps) {
 
   return (
     <TextInput
-      placeholderTextColor={AppleColors.placeholderText}
+      placeholderTextColor={AC.placeholderText}
       {...props}
       style={mergedStyleProp(font, props.style)}
     />
@@ -437,7 +434,7 @@ export function Link({
           return (
             <RNText
               style={mergedStyleProp<TextStyle>(
-                { ...font, color: AppleColors.link },
+                { ...font, color: AC.link },
                 props.style
               )}
             >
@@ -504,8 +501,9 @@ export function Link({
               }
             }
       }
-      children={resolvedChildren}
-    />
+    >
+      {resolvedChildren}
+    </RouterLink>
   );
 }
 
@@ -514,21 +512,21 @@ if (__DEV__) Link.displayName = "FormLink";
 export const FormFont = {
   // From inspecting SwiftUI `List { Text("Foo") }` in Xcode.
   default: {
-    color: AppleColors.label,
+    color: AC.label,
     // 17.00pt is the default font size for a Text in a List.
     fontSize: 17,
     // UICTFontTextStyleBody is the default fontFamily.
   },
   secondary: {
-    color: AppleColors.secondaryLabel,
+    color: AC.secondaryLabel,
     fontSize: 17,
   },
   caption: {
-    color: AppleColors.secondaryLabel,
+    color: AC.secondaryLabel,
     fontSize: 12,
   },
   title: {
-    color: AppleColors.label,
+    color: AC.label,
     fontSize: 17,
     fontWeight: "600",
   },
@@ -539,7 +537,12 @@ function getFlatChildren(children: React.ReactNode) {
 
   React.Children.map(children, (child, index) => {
     if (!React.isValidElement(child)) {
-      return child;
+      // Skip whitespace-only strings to avoid stray <Text> warnings
+      if (typeof child === "string" && child.trim().length === 0) {
+        return;
+      }
+      allChildren.push(child);
+      return;
     }
 
     // If the child is a fragment, unwrap it and add the children to the list
@@ -630,10 +633,10 @@ export function Section({
       resolvedProps.hint ??= resolvedProps.hintBoolean ? (
         <Image
           source="sf:checkmark.circle.fill"
-          tintColor={AppleColors.systemGreen}
+          tintColor={AC.systemGreen}
         />
       ) : (
-        <Image source="sf:slash.circle" tintColor={AppleColors.systemGray} />
+        <Image source="sf:slash.circle" tintColor={AC.systemGray} />
       );
     }
 
@@ -646,7 +649,7 @@ export function Section({
 
       delete resolvedProps.title;
       resolvedProps.style = mergedStyleProp(
-        { color: color ?? AppleColors.link },
+        { color: color ?? AC.link },
         resolvedProps.style
       );
       child = <RNText {...resolvedProps}>{title}</RNText>;
@@ -706,7 +709,7 @@ export function Section({
               style={resolvedProps.style}
             />
             {child}
-            {hintView && <Spacer />}
+            {hintView ? <Spacer /> : null}
             {hintView}
           </HStack>
         );
@@ -800,7 +803,7 @@ export function Section({
           style={{ paddingVertical: 0, paddingHorizontal: 0 }}
         >
           {React.cloneElement(child, {
-            placeholderTextColor: AppleColors.placeholderText,
+            placeholderTextColor: AC.placeholderText,
             ...resolvedProps,
             onPress: undefined,
             onLongPress: undefined,
@@ -810,7 +813,7 @@ export function Section({
                 outline: "none",
                 // outlineWidth: 1,
                 // outlineStyle: "auto",
-                // outlineColor: AppleColors.systemGray4,
+                // outlineColor: AC.systemGray4,
               },
               styles.itemPadding,
               resolvedProps.style
@@ -913,12 +916,11 @@ export function Section({
           justifyContent: "space-between",
         }}
       >
-        {title && (
-          <RNText
+        {title ? <RNText
             dynamicTypeRamp="footnote"
             style={{
               textTransform: "uppercase",
-              color: AppleColors.secondaryLabel,
+              color: AC.secondaryLabel,
               paddingVertical: 8,
               fontSize: 14,
               // use Apple condensed font
@@ -926,26 +928,23 @@ export function Section({
             }}
           >
             {title}
-          </RNText>
-        )}
+          </RNText> : null}
         {titleHintJsx}
       </View>
 
       {contents}
 
-      {footer && (
-        <RNText
+      {footer ? <RNText
           dynamicTypeRamp="footnote"
           style={{
-            color: AppleColors.secondaryLabel,
+            color: AC.secondaryLabel,
             paddingHorizontal: 20,
             paddingTop: 8,
             fontSize: 14,
           }}
         >
           {footer}
-        </RNText>
-      )}
+        </RNText> : null}
     </View>
   );
 }
@@ -982,7 +981,7 @@ function SymbolView({
       size={symbolProps.size ?? 20}
       style={[{ marginRight: 8 }, symbolProps.style]}
       weight={symbolProps.weight}
-      color={color ?? AppleColors.label}
+      color={color ?? AC.label}
     />
   );
 }
@@ -1008,7 +1007,7 @@ function LinkChevronIcon({
         <IconSymbol
           name={systemImage.name}
           size={systemImage.size ?? size}
-          color={systemImage.color ?? AppleColors.tertiaryLabel}
+          color={systemImage.color ?? AC.tertiaryLabel}
         />
       );
     }
@@ -1029,7 +1028,7 @@ function LinkChevronIcon({
       // from xcode, not sure which color is the exact match
       // #BFBFBF
       // #9D9DA0
-      tintColor={AppleColors.tertiaryLabel}
+      tintColor={AC.tertiaryLabel}
     />
   );
 }

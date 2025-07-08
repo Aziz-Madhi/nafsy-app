@@ -174,10 +174,10 @@ export interface GenericListProps<T extends ListItem> extends BaseComponentProps
   maxToRenderPerBatch?: number;
   windowSize?: number;
   ItemSeparatorComponent?: React.ReactNode;
-  sectionListData?: Array<{
+  sectionListData?: {
     title: string;
     data: T[];
-  }>;
+  }[];
 }
 
 // Mental Health specific interfaces
@@ -425,10 +425,10 @@ export interface AccessibilityProps {
     expanded?: boolean;
     busy?: boolean;
   };
-  accessibilityActions?: Array<{
+  accessibilityActions?: {
     name: string;
     label?: string;
-  }>;
+  }[];
   onAccessibilityAction?: (event: any) => void;
 }
 

@@ -65,11 +65,9 @@ export function MoodHistoryList({
         </View>
         <View style={moodItemStyles.content}>
           <Text style={moodItemStyles.date}>{item.date}</Text>
-          {item.notes && (
-            <Text style={moodItemStyles.notes} numberOfLines={2}>
+          {item.notes ? <Text style={moodItemStyles.notes} numberOfLines={2}>
               {item.notes}
-            </Text>
-          )}
+            </Text> : null}
         </View>
       </View>
     );
@@ -133,11 +131,9 @@ export function ExercisesList({
             {item.duration} minutes
           </Text>
         </View>
-        {item.completed && (
-          <View style={exerciseItemStyles.checkmark}>
+        {item.completed ? <View style={exerciseItemStyles.checkmark}>
             <Text style={exerciseItemStyles.checkmarkText}>✓</Text>
-          </View>
-        )}
+          </View> : null}
       </View>
     );
   };
@@ -168,7 +164,7 @@ export function SettingsList({
   settings,
   onSettingPress,
 }: {
-  settings: Array<{ id: string; title: string; subtitle?: string; value?: string }>;
+  settings: { id: string; title: string; subtitle?: string; value?: string }[];
   onSettingPress: (setting: any) => void;
 }) {
   const renderSettingItem = ({ item }: { item: any }) => (

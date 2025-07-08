@@ -193,7 +193,7 @@ export function useDebouncedAction<Args extends Record<string, any>, ReturnValue
 
       setTimeoutId(newTimeoutId);
     },
-    [actionState.execute, delay, timeoutId]
+    [actionState, delay, timeoutId]
   );
 
   const cancel = useCallback(() => {

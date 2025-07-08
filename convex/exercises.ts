@@ -131,6 +131,109 @@ export const getExerciseStats = query({
   },
 });
 
+// Get most effective exercises for a user
+export const getMostEffectiveExercises = query({
+  args: {
+    userId: v.id("users"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 5;
+    
+    // Get all exercises for the user
+    const exercises = await ctx.db
+      .query("exercises")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+    
+    // Group by type and calculate average effectiveness
+    const exerciseStats = new Map<string, {
+      totalEffectiveness: number;
+      count: number;
+      totalDuration: number;
+      lastCompleted?: number;
+    }>();
+    
+    exercises.forEach(exercise => {
+      const effectiveness = exercise.data.effectiveness || 
+                          exercise.data.outputs?.effectiveness || 0;
+      
+      if (!exerciseStats.has(exercise.type)) {
+        exerciseStats.set(exercise.type, {
+          totalEffectiveness: 0,
+          count: 0,
+          totalDuration: 0,
+        });
+      }
+      
+      const stats = exerciseStats.get(exercise.type)!;
+      stats.totalEffectiveness += effectiveness;
+      stats.count += 1;
+      stats.totalDuration += exercise.duration || 0;
+      stats.lastCompleted = Math.max(
+        stats.lastCompleted || 0, 
+        exercise.completedAt
+      );
+    });
+    
+    // Convert to array and calculate averages
+    const exerciseList = Array.from(exerciseStats.entries()).map(([type, stats]) => ({
+      type,
+      averageEffectiveness: stats.count > 0 ? stats.totalEffectiveness / stats.count : 0,
+      completionCount: stats.count,
+      totalDuration: stats.totalDuration,
+      averageDuration: stats.count > 0 ? stats.totalDuration / stats.count : 0,
+      lastCompleted: stats.lastCompleted,
+    }));
+    
+    // Sort by average effectiveness (highest first)
+    exerciseList.sort((a, b) => b.averageEffectiveness - a.averageEffectiveness);
+    
+    // Return top exercises
+    return exerciseList.slice(0, limit);
+  },
+});
+
+// Record exercise completion (alias for recordExercise for consistency)
+export const recordExerciseCompletion = mutation({
+  args: {
+    userId: v.id("users"),
+    type: v.string(),
+    duration: v.optional(v.number()),
+    conversationId: v.optional(v.id("conversations")),
+    data: v.object({
+      inputs: v.optional(v.any()),
+      outputs: v.optional(v.object({
+        moodBefore: v.optional(v.number()),
+        moodAfter: v.optional(v.number()),
+        insights: v.optional(v.array(v.string())),
+        completionNotes: v.optional(v.string()),
+        effectiveness: v.optional(v.number()),
+      })),
+    }),
+  },
+  handler: async (ctx, args) => {
+    // Extract effectiveness from outputs for backward compatibility
+    const effectiveness = args.data.outputs?.effectiveness;
+    
+    const exerciseData = {
+      ...args.data,
+      effectiveness: effectiveness || args.data.outputs?.effectiveness,
+    };
+    
+    const exerciseId = await ctx.db.insert("exercises", {
+      userId: args.userId,
+      type: args.type,
+      completedAt: Date.now(),
+      duration: args.duration,
+      conversationId: args.conversationId,
+      data: exerciseData,
+    });
+
+    return exerciseId;
+  },
+});
+
 // Record exercise by Clerk ID (helper for frontend)
 export const recordExerciseByClerkId = mutation({
   args: {

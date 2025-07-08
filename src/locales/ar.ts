@@ -18,7 +18,6 @@ export const ar = {
   retry: "إعادة المحاولة",
   loading: "جاري التحميل...",
   error: "خطأ",
-  success: "نجح",
   
   // Authentication
   auth: {
@@ -149,6 +148,44 @@ export const ar = {
       moodProgression: "تطور المزاج",
       insights: "الرؤى العلاجية",
       nextSteps: "الخطوات المقترحة",
+    },
+    history: {
+      title: "سجل المحادثات",
+      loading: "جاري تحميل المحادثات...",
+      empty: {
+        title: "لا توجد محادثات بعد",
+        description: "ابدأ المحادثة لترى سجل محادثاتك هنا",
+      },
+      message: "رسالة",
+      messages: "رسائل",
+      active: "الحالية",
+      switchConversation: {
+        title: "تبديل المحادثة؟",
+        message: "سيؤدي هذا إلى التبديل إلى محادثة مختلفة. يمكنك العودة إلى هذه المحادثة لاحقاً.",
+        confirm: "تبديل",
+      },
+    },
+    management: {
+      title: "أدوات المحادثة",
+      features: "الميزات",
+      stats: "الإحصائيات",
+      totalConversations: "إجمالي المحادثات",
+      newChat: {
+        title: "بدء محادثة جديدة",
+        description: "ابدأ محادثة جديدة",
+      },
+      search: {
+        title: "البحث في الرسائل",
+        description: "ابحث عن رسائل محددة في محادثتك",
+      },
+      history: {
+        title: "سجل المحادثات",
+        description: "تصفح محادثاتك السابقة",
+      },
+      summary: {
+        title: "ملخص المحادثة",
+        description: "احصل على رؤى من هذه المحادثة",
+      },
     },
   },
   

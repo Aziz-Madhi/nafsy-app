@@ -269,14 +269,49 @@ export const sendMessage = action({
       metadata: { language: args.language },
     });
 
-    // Enhanced crisis detection with dynamic language detection
+    // Enhanced crisis detection with AI
     const detectedLanguage = detectMessageLanguage(args.content);
-    const isEmergency = await detectCrisisSignals(args.content, detectedLanguage);
-    const urgencyLevel = getCrisisUrgencyLevel(args.content, detectedLanguage);
+    
+    // Use comprehensive AI-powered crisis detection
+    const crisisAnalysis = await ctx.runAction(api.ai.detectCrisis, {
+      message: args.content,
+      language: detectedLanguage,
+      userId: args.userId,
+      conversationId: args.conversationId,
+    });
 
-    if (isEmergency) {
-      // Enhanced emergency response based on urgency level
-      const emergencyResponse = getCrisisResponse(urgencyLevel, detectedLanguage);
+    if (crisisAnalysis.isCrisis) {
+      // Build emergency response based on severity
+      let emergencyResponse = '';
+      
+      if (detectedLanguage === 'ar') {
+        emergencyResponse = crisisAnalysis.severity === 'critical' 
+          ? '🚨 أرى أنك تمر بوقت عصيب جداً. سلامتك هي الأولوية القصوى.\n\n'
+          : crisisAnalysis.severity === 'high'
+          ? '💙 أشعر بألمك وأريد أن أساعدك. أنت لست وحدك.\n\n'
+          : '💛 أفهم أنك تواجه صعوبات. دعني أساعدك.\n\n';
+      } else {
+        emergencyResponse = crisisAnalysis.severity === 'critical'
+          ? '🚨 I can see you\'re going through an extremely difficult time. Your safety is the top priority.\n\n'
+          : crisisAnalysis.severity === 'high'
+          ? '💙 I can feel your pain and I want to help. You\'re not alone.\n\n'
+          : '💛 I understand you\'re facing difficulties. Let me help you.\n\n';
+      }
+      
+      // Add suggested actions
+      if (crisisAnalysis.suggestedActions.length > 0) {
+        emergencyResponse += crisisAnalysis.suggestedActions.join('\n') + '\n\n';
+      }
+      
+      // Add resources if available
+      if (crisisAnalysis.resources && crisisAnalysis.resources.length > 0) {
+        emergencyResponse += detectedLanguage === 'ar' ? '📞 موارد المساعدة:\n' : '📞 Help Resources:\n';
+        crisisAnalysis.resources.forEach(resource => {
+          emergencyResponse += `• ${resource.title}`;
+          if (resource.phone) emergencyResponse += ` - ${resource.phone}`;
+          emergencyResponse += '\n';
+        });
+      }
       
       await ctx.runMutation(api.messages.addMessage, {
         conversationId: args.conversationId,
@@ -285,10 +320,16 @@ export const sendMessage = action({
         content: emergencyResponse,
         metadata: { 
           isEmergency: true,
-          language: detectedLanguage 
+          language: detectedLanguage,
+          crisisSeverity: crisisAnalysis.severity,
+          crisisIndicators: crisisAnalysis.indicators,
         },
       });
-      return;
+      
+      // For critical cases, also continue with AI response for therapeutic support
+      if (crisisAnalysis.severity !== 'critical') {
+        return;
+      }
     }
 
     // Require context to be provided by the client to avoid extra DB round-trips

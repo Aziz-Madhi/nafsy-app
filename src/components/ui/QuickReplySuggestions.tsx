@@ -38,7 +38,7 @@ interface QuickReplySuggestionsProps {
  * - Accessibility support
  * - Smooth animations
  */
-export const QuickReplySuggestions = memo<QuickReplySuggestionsProps>(({
+const QuickReplySuggestionsComponent: React.FC<QuickReplySuggestionsProps> = ({
   suggestions,
   onSelect,
   mode,
@@ -121,7 +121,11 @@ export const QuickReplySuggestions = memo<QuickReplySuggestionsProps>(({
       </ScrollView>
     </View>
   );
-});
+};
+
+QuickReplySuggestionsComponent.displayName = 'QuickReplySuggestions';
+
+export const QuickReplySuggestions = memo(QuickReplySuggestionsComponent);
 
 // Helper functions for floating mode positioning
 function getFloatingPosition(index: number) {

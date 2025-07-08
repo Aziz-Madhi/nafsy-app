@@ -67,6 +67,7 @@ export default function RootLayout() {
               tokenCache={tokenCache} 
               publishableKey={publishableKey}
             >
+              {/* eslint-disable-next-line react-compiler/react-compiler */}
               <ConvexProviderWithClerk client={convex} useAuth={useClerkAuth}>
                 <ClerkLoaded>
                   <Stack>

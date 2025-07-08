@@ -2,14 +2,21 @@
 
 import React from "react";
 import {
-  Animated,
-  Easing,
   StyleProp,
   StyleSheet,
   View,
   ViewStyle,
   useColorScheme,
 } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withRepeat,
+  withSequence,
+  Easing,
+  interpolate,
+} from "react-native-reanimated";
 
 const BASE_COLORS = {
   dark: { primary: "rgb(17, 17, 17)", secondary: "rgb(51, 51, 51)" },
@@ -74,32 +81,39 @@ const Skeleton = ({
   delay?: number;
   dark?: boolean;
 } = {}) => {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const dark = inputDark ?? useColorScheme() !== "light";
-  const translateX = React.useRef(new Animated.Value(-1)).current;
+  const colorScheme = useColorScheme();
+  const dark = inputDark ?? colorScheme !== "light";
+  const translateX = useSharedValue(-1);
   const [width, setWidth] = React.useState(150);
 
   const colors = dark ? DARK_COLORS : LIGHT_COLORS;
   const targetRef = React.useRef<View>(null);
 
   React.useEffect(() => {
-    const anim = Animated.loop(
-      Animated.sequence([
-        Animated.timing(translateX, {
-          delay: delay || 0,
-          toValue: 1,
+    translateX.value = withRepeat(
+      withSequence(
+        withTiming(1, {
           duration: 5000,
-          useNativeDriver: process.env.EXPO_OS !== "web",
-          // Ease in
           easing: Easing.in(Easing.ease),
-        }),
-      ])
+        })
+      ),
+      -1
     );
-    anim.start();
-    return () => {
-      anim.stop();
-    };
   }, [translateX, delay]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        {
+          translateX: interpolate(
+            translateX.value,
+            [-1, 1],
+            [-width * 8, width]
+          ),
+        },
+      ],
+    };
+  });
 
   return (
     <View
@@ -121,19 +135,14 @@ const Skeleton = ({
       }}
     >
       <Animated.View
-        style={{
-          transform: [
-            {
-              translateX: translateX.interpolate({
-                inputRange: [-1, 1],
-                outputRange: [-width * 8, width],
-              }),
-            },
-          ],
-          width: "800%",
-          height: "100%",
-          backgroundColor: "transparent",
-        }}
+        style={[
+          {
+            width: "800%",
+            height: "100%",
+            backgroundColor: "transparent",
+          },
+          animatedStyle,
+        ]}
       >
         <Animated.View
           style={[

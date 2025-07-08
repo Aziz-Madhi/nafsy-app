@@ -5,7 +5,7 @@ import * as Font from "expo-font";
 function wrapPromise<T>(promise: Promise<T>) {
   let status: "pending" | "success" | "error" = "pending";
   let result: T | unknown;
-  let suspender = promise.then(
+  const suspender = promise.then(
     (r: T) => {
       //   console.log("font loaded", r);
       status = "success";

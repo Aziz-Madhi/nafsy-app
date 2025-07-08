@@ -29,15 +29,13 @@ export function FormItem({
       disabled && styles.disabled,
       style
     ]}>
-      {systemImage && (
-        <View style={styles.iconContainer}>
+      {systemImage ? <View style={styles.iconContainer}>
           <IconSymbol
             name={systemImage as any}
             size={systemImageProps?.size || 24}
             color={systemImageProps?.color || theme.colors.interactive.primary}
           />
-        </View>
-      )}
+        </View> : null}
       <View style={styles.content}>
         {children}
       </View>

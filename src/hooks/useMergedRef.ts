@@ -10,7 +10,8 @@ export default function useMergedRef<T>(
 ): CallbackRef<T> {
   return useCallback(
     (current: T) => {
-      for (const ref of refs) {
+      const refArray = [...refs];
+      for (const ref of refArray) {
         if (ref != null) {
           if (typeof ref === "function") {
             ref(current);
@@ -20,7 +21,6 @@ export default function useMergedRef<T>(
         }
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [...refs]
+    [refs]
   );
 }

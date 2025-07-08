@@ -4,6 +4,10 @@
  */
 
 // Core theme types and colors
+// Import required for the convenience hook
+import { useTheme } from './ThemeProvider';
+import { createThemedCommonStyles, Spacing, BorderRadius, FontSize, FontWeight } from './themedStyles';
+
 export type { ThemeColors, Theme, ThemeMode } from './colors';
 export {
   lightTheme,
@@ -35,10 +39,6 @@ export {
   FontSize,
   FontWeight,
 } from './themedStyles';
-
-// Import required for the convenience hook
-import { useTheme } from './ThemeProvider';
-import { createThemedCommonStyles, Spacing, BorderRadius, FontSize, FontWeight } from './themedStyles';
 
 /**
  * Convenience hook that combines common usage patterns

@@ -85,6 +85,8 @@ const Separator = memo(({ style }: { style?: ViewStyle }) => {
   return <View style={[styles.separator, style]} />;
 });
 
+Separator.displayName = 'GenericList.Separator';
+
 /**
  * Loading footer component
  */
@@ -101,6 +103,8 @@ const LoadingFooter = memo(({ loading }: { loading: boolean }) => {
     </View>
   );
 });
+
+LoadingFooter.displayName = 'GenericList.LoadingFooter';
 
 /**
  * Empty state component
@@ -127,19 +131,20 @@ const EmptyState = memo(({
       <Text style={styles.emptyTitle}>
         {error ? "Something went wrong" : title}
       </Text>
-      {(description || error) && (
-        <Text style={styles.emptyDescription}>
+      {(description || error) ? <Text style={styles.emptyDescription}>
           {error || description}
-        </Text>
-      )}
-      {error && onRetry && (
-        <TouchableOpacity style={commonStyles.primaryButton} onPress={onRetry}>
+        </Text> : null}
+      {error && onRetry ? <TouchableOpacity style={commonStyles.primaryButton} onPress={onRetry}>
           <Text style={commonStyles.primaryButtonText}>Retry</Text>
-        </TouchableOpacity>
-      )}
+        </TouchableOpacity> : null}
     </View>
   );
 });
+
+EmptyState.displayName = 'GenericList.EmptyState';
+
+// Stable wrapper components to avoid inline definitions
+// Note: These need to be external to avoid nested component issues
 
 const GenericListComponent = memo(function GenericListComponent<T extends ListItem>({
   data,
@@ -245,7 +250,7 @@ const GenericListComponent = memo(function GenericListComponent<T extends ListIt
         onRetry={onRetry}
       />
     );
-  }, [loading, EmptyComponent, emptyTitle, emptyDescription, emptyIcon, error, onRetry]);
+  }, [loading, EmptyComponent, emptyTitle, emptyDescription, emptyIcon, error, onRetry, styles.loadingState, styles.loadingText, theme.colors.interactive.primary]);
 
   // Performance: Get item layout for better scrolling performance
   const getItemLayout = useMemo(() => {
@@ -270,7 +275,9 @@ const GenericListComponent = memo(function GenericListComponent<T extends ListIt
         colors={[theme.colors.interactive.primary]}
       />
     );
-  }, [onRefresh, refreshing]);
+  }, [onRefresh, refreshing, theme.colors.interactive.primary]);
+
+  // Use conditional rendering instead of inline components
 
   return (
     <FlatList
@@ -285,10 +292,10 @@ const GenericListComponent = memo(function GenericListComponent<T extends ListIt
       initialNumToRender={10}
       getItemLayout={getItemLayout}
       
-      // UI components
-      ItemSeparatorComponent={showSeparators ? () => <Separator style={separatorStyle} /> : undefined}
+      // UI components - using base components directly
+      ItemSeparatorComponent={showSeparators ? Separator : undefined}
       ListEmptyComponent={EmptyListComponent}
-      ListFooterComponent={() => <LoadingFooter loading={loadingMore} />}
+      ListFooterComponent={LoadingFooter}
       refreshControl={refreshControl}
       
       // Event handlers
@@ -393,20 +400,18 @@ export const SimpleListItem = memo<SimpleListItemProps>(({ title, subtitle, icon
         <Text style={simpleItemStyles.title} numberOfLines={1}>
           {title}
         </Text>
-        {subtitle && (
-          <Text style={simpleItemStyles.subtitle} numberOfLines={2}>
+        {subtitle ? <Text style={simpleItemStyles.subtitle} numberOfLines={2}>
             {subtitle}
-          </Text>
-        )}
+          </Text> : null}
       </View>
-      {rightText && (
-        <Text style={simpleItemStyles.rightText} numberOfLines={1}>
+      {rightText ? <Text style={simpleItemStyles.rightText} numberOfLines={1}>
           {rightText}
-        </Text>
-      )}
+        </Text> : null}
     </View>
   );
 });
+
+SimpleListItem.displayName = 'SimpleListItem';
 
 const createSimpleItemStyles = (theme: ReturnType<typeof useAppTheme>) => ({
   container: {

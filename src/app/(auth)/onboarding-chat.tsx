@@ -9,19 +9,21 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Animated,
-  Dimensions,
 } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import { useUser } from "@clerk/clerk-expo";
-import { useConvexAuth, useMutation, useQuery } from "convex/react";
+import { useConvexAuth, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Image } from "@/components/ui/img";
 import { useTranslation } from "@/hooks/useLocale";
 import { useAppTheme } from "@/theme";
 import { QuickReplySuggestions } from "@/components/ui/QuickReplySuggestions";
 import { TypingIndicator } from "@/components/ui/TypingIndicator";
-import { Id } from "@/convex/_generated/dataModel";
 
 interface OnboardingStep {
   id: string;
@@ -46,8 +48,8 @@ export default function OnboardingChatScreen() {
   const router = useRouter();
   const { user } = useUser();
   const { isAuthenticated } = useConvexAuth();
-  const { t, locale } = useTranslation();
-  const { theme, styles: commonStyles, spacing, fontSize, fontWeight, colors, borderRadius } = useAppTheme();
+  const { t: _t, locale } = useTranslation();
+  const { theme: _theme, styles: commonStyles, spacing, fontSize, fontWeight, colors, borderRadius } = useAppTheme();
   
   const completeOnboardingMutation = useMutation(api.users.completeOnboarding);
   
@@ -59,8 +61,8 @@ export default function OnboardingChatScreen() {
   const [isLoading, setIsLoading] = useState(false);
   
   const scrollViewRef = useRef<ScrollView>(null);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
+  const fadeAnim = useSharedValue(0);
+  const slideAnim = useSharedValue(50);
 
   // Define onboarding conversation flow
   const onboardingSteps: OnboardingStep[] = [
@@ -176,23 +178,13 @@ export default function OnboardingChatScreen() {
         addBotMessage(onboardingSteps[0]);
       }, 500);
     }
-  }, []);
+  }, [messages.length, addBotMessage, onboardingSteps]);
 
   // Animate message entrance
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [messages.length]);
+    fadeAnim.value = withTiming(1, { duration: 300 });
+    slideAnim.value = withTiming(0, { duration: 300 });
+  }, [messages.length, fadeAnim, slideAnim]);
 
   const addBotMessage = (step: OnboardingStep) => {
     setIsTyping(true);
@@ -311,6 +303,13 @@ export default function OnboardingChatScreen() {
     }, 100);
   };
 
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: fadeAnim.value,
+      transform: [{ translateY: slideAnim.value }],
+    };
+  });
+
   const renderMessage = (message: Message) => {
     const isRTL = locale === "ar";
     
@@ -321,21 +320,16 @@ export default function OnboardingChatScreen() {
           styles.messageContainer,
           message.isBot ? styles.botMessageContainer : styles.userMessageContainer,
           isRTL && styles.rtlContainer,
-          {
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }],
-          },
+          animatedStyle,
         ]}
       >
-        {message.isBot && (
-          <View style={[styles.botAvatar, isRTL && styles.rtlAvatar]}>
+        {message.isBot ? <View style={[styles.botAvatar, isRTL && styles.rtlAvatar]}>
             <Image 
               source="sf:heart.circle.fill" 
               size={32} 
               tintColor={colors.wellness.calm}
             />
-          </View>
-        )}
+          </View> : null}
         
         <View style={[
           styles.messageBubble,
@@ -390,18 +384,15 @@ export default function OnboardingChatScreen() {
         >
           {messages.map(renderMessage)}
           
-          {isTyping && (
-            <View style={styles.typingContainer}>
+          {isTyping ? <View style={styles.typingContainer}>
               <TypingIndicator visible={true} />
-            </View>
-          )}
+            </View> : null}
         </ScrollView>
 
         {/* Quick Replies */}
         {messages.length > 0 && 
          messages[messages.length - 1].quickReplies && 
-         !isTyping && (
-          <View style={styles.quickRepliesContainer}>
+         !isTyping ? <View style={styles.quickRepliesContainer}>
             <QuickReplySuggestions
               suggestions={messages[messages.length - 1].quickReplies!.map((text, index) => ({
                 id: `suggestion-${index}`,
@@ -414,8 +405,7 @@ export default function OnboardingChatScreen() {
               mode="traditional"
               isVisible={true}
             />
-          </View>
-        )}
+          </View> : null}
 
         {/* Input */}
         {messages.length > 0 && 

@@ -79,8 +79,7 @@ export const BaseScreen = React.memo<BaseScreenProps>(function BaseScreen({
     return (
       <View style={styles.headerContainer}>
         <View style={styles.headerLeft}>
-          {showBackButton && (
-            <TouchableOpacity
+          {showBackButton ? <TouchableOpacity
               style={commonStyles.button}
               onPress={() => router.back()}
               accessibilityLabel="Go back"
@@ -91,13 +90,12 @@ export const BaseScreen = React.memo<BaseScreenProps>(function BaseScreen({
                 size={24}
                 tintColor={theme.colors.interactive.primary}
               />
-            </TouchableOpacity>
-          )}
+            </TouchableOpacity> : null}
         </View>
 
         <View style={styles.headerCenter}>
-          {title && <Text style={commonStyles.title}>{title}</Text>}
-          {subtitle && <Text style={commonStyles.subtitle}>{subtitle}</Text>}
+          {title ? <Text style={commonStyles.title}>{title}</Text> : null}
+          {subtitle ? <Text style={commonStyles.subtitle}>{subtitle}</Text> : null}
         </View>
 
         <View style={styles.headerRight}>

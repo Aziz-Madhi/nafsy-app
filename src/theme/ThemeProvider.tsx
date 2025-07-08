@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Appearance, ColorSchemeName } from 'react-native';
+import { Appearance, ColorSchemeName, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Theme, ThemeMode, themes, ThemeColors } from './colors';
 
@@ -152,11 +152,6 @@ export function withTheme<P extends object>(
   ThemedComponent.displayName = `withTheme(${Component.displayName || Component.name})`;
   return ThemedComponent;
 }
-
-/**
- * Theme-aware StyleSheet creator
- */
-import { StyleSheet } from 'react-native';
 
 export function createThemedStyles<T extends Record<string, any>>(
   styleFactory: (colors: ThemeColors, isDark: boolean) => T

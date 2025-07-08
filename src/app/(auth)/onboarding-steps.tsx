@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,9 +6,13 @@ import {
   TouchableOpacity,
   TextInput,
   ScrollView,
-  Animated,
   Alert,
 } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import { useUser } from "@clerk/clerk-expo";
 import { useConvexAuth, useMutation } from "convex/react";
@@ -35,6 +39,36 @@ type OnboardingStep =
   | "privacy"
   | "complete";
 
+const StepContent = ({
+  fadeAnim,
+  slideAnim,
+  renderStepContent,
+  styles,
+}: {
+  fadeAnim: any;
+  slideAnim: any;
+  renderStepContent: () => React.ReactNode;
+  styles: any;
+}) => {
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: fadeAnim.value,
+      transform: [{ translateY: slideAnim.value }],
+    };
+  });
+
+  return (
+    <Animated.View style={[styles.stepContainer, animatedStyle]}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {renderStepContent()}
+      </ScrollView>
+    </Animated.View>
+  );
+};
+
 export default function OnboardingStepsScreen() {
   const router = useRouter();
   const { user } = useUser();
@@ -54,8 +88,8 @@ export default function OnboardingStepsScreen() {
   });
   const [isLoading, setIsLoading] = useState(false);
   
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
+  const fadeAnim = useSharedValue(0);
+  const slideAnim = useSharedValue(50);
 
   const steps: OnboardingStep[] = React.useMemo(() => [
     "welcome", "name", "mood", "goals", "notifications", "notificationTime", "privacy", "complete"
@@ -66,22 +100,12 @@ export default function OnboardingStepsScreen() {
 
   // Animation when step changes
   React.useEffect(() => {
-    fadeAnim.setValue(0);
-    slideAnim.setValue(50);
+    fadeAnim.value = 0;
+    slideAnim.value = 50;
     
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [currentStep]);
+    fadeAnim.value = withTiming(1, { duration: 300 });
+    slideAnim.value = withTiming(0, { duration: 300 });
+  }, [currentStep, fadeAnim, slideAnim]);
 
   const updateData = React.useCallback((key: keyof OnboardingData, value: any) => {
     setData(prev => ({ ...prev, [key]: value }));
@@ -180,7 +204,7 @@ export default function OnboardingStepsScreen() {
       {/* Progress Bar */}
       <View style={styles.progressContainer}>
         <View style={styles.progressBackground}>
-          <Animated.View 
+          <View 
             style={[
               styles.progressFill,
               { width: `${Math.round(progress * 100)}%` }
@@ -193,22 +217,12 @@ export default function OnboardingStepsScreen() {
       </View>
 
       {/* Step Content */}
-      <Animated.View 
-        style={[
-          styles.stepContainer,
-          {
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }],
-          },
-        ]}
-      >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {renderStepContent()}
-        </ScrollView>
-      </Animated.View>
+      <StepContent 
+        fadeAnim={fadeAnim}
+        slideAnim={slideAnim}
+        renderStepContent={renderStepContent}
+        styles={styles}
+      />
 
       {/* Navigation */}
       <View style={styles.navigationContainer}>

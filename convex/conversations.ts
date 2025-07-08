@@ -175,3 +175,72 @@ export const startNewConversationWithSummary = action({
     };
   },
 });
+
+export const getUserConversationsWithPreview = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const conversations = await ctx.db
+      .query("conversations")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .collect();
+
+    // Get the first and last message for each conversation
+    const conversationsWithPreview = await Promise.all(
+      conversations.map(async (conversation) => {
+        const messages = await ctx.db
+          .query("messages")
+          .withIndex("by_conversation", (q) => q.eq("conversationId", conversation._id))
+          .order("asc")
+          .collect();
+
+        const firstMessage = messages[0];
+        const lastMessage = messages[messages.length - 1];
+
+        return {
+          ...conversation,
+          firstMessage: firstMessage ? {
+            content: firstMessage.content,
+            timestamp: firstMessage.timestamp,
+            role: firstMessage.role,
+          } : null,
+          lastMessage: lastMessage ? {
+            content: lastMessage.content,
+            timestamp: lastMessage.timestamp,
+            role: lastMessage.role,
+          } : null,
+          messageCount: messages.length,
+        };
+      })
+    );
+
+    return conversationsWithPreview;
+  },
+});
+
+export const switchToConversation = mutation({
+  args: {
+    userId: v.id("users"),
+    conversationId: v.id("conversations"),
+  },
+  handler: async (ctx, args) => {
+    // First, deactivate all conversations for this user
+    const userConversations = await ctx.db
+      .query("conversations")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    await Promise.all(
+      userConversations.map(async (conversation) => {
+        if (conversation.isActive) {
+          await ctx.db.patch(conversation._id, { isActive: false });
+        }
+      })
+    );
+
+    // Then activate the selected conversation
+    await ctx.db.patch(args.conversationId, { isActive: true });
+
+    return { success: true };
+  },
+});

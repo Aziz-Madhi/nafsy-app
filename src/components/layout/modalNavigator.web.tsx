@@ -32,7 +32,7 @@ type MyModalStackNavigationOptions = NativeStackNavigationOptions & {
    * you might do something like:
    *
    * supportedOrientations?: string[];
-   * sheetAllowedDetents?: Array<number>;
+   * sheetAllowedDetents?: number[];
    * sheetInitialDetentIndex?: number;
    *
    * But here we specifically pass them for the web side via vaul:
@@ -139,8 +139,7 @@ function MyModalStackView({
       />
 
       {/* Render vaul Drawer for active "modal" route on web, with snap points */}
-      {isWeb &&
-        state.routes.map((route, i) => {
+      {isWeb ? state.routes.map((route, i) => {
           const descriptor = descriptors[route.key];
           const { presentation, sheetAllowedDetents, sheetGrabberVisible } =
             descriptor.options || {};
@@ -186,8 +185,7 @@ function MyModalStackView({
                 >
                   <div className={modalStyles.modal}>
                     {/* Optional "grabber" */}
-                    {sheetGrabberVisible && (
-                      <div
+                    {sheetGrabberVisible ? <div
                         style={{
                           padding: 16,
                           width: "100%",
@@ -206,8 +204,7 @@ function MyModalStackView({
                             backgroundColor: AC.separator as unknown as string,
                           }}
                         />
-                      </div>
-                    )}
+                      </div> : null}
 
                     {/* Render the actual screen */}
                     {descriptor.render()}
@@ -216,7 +213,7 @@ function MyModalStackView({
               </Drawer.Portal>
             </Drawer.Root>
           );
-        })}
+        }) : null}
     </div>
   );
 }

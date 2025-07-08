@@ -2,7 +2,6 @@ import { Image } from "@/components/ui/img";
 import { useTranslation } from "@/hooks/useLocale";
 import { useAppTheme } from "@/theme";
 import { useOAuth, useSignIn } from "@clerk/clerk-expo";
-import * as AC from "@bacons/apple-colors";
 import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
@@ -31,8 +30,8 @@ const REDIRECT_URL = Linking.createURL("sso-callback", { scheme: APP_SCHEME });
 export default function SignInScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
   const router = useRouter();
-  const { t, tLegacy, locale } = useTranslation();
-  const { theme, styles: commonStyles, colors } = useAppTheme();
+  const { t, tLegacy: _tLegacy, locale } = useTranslation();
+  const { theme: _theme, styles: commonStyles, colors } = useAppTheme();
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -109,7 +108,7 @@ export default function SignInScreen() {
         return;
       }
 
-      const { createdSessionId, setActive: oauthSetActive, signIn, signUp } = await flow({ 
+      const { createdSessionId, setActive: _oauthSetActive, signIn, signUp } = await flow({ 
         redirectUrl: REDIRECT_URL 
       });
       

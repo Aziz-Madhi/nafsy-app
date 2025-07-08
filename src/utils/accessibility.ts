@@ -407,7 +407,7 @@ export function setAccessibilityFocus(reactTag: number) {
 /**
  * Create accessibility actions for common patterns
  */
-export function createAccessibilityActions(actions: Array<{ name: string; label: string; onPress: () => void }>) {
+export function createAccessibilityActions(actions: { name: string; label: string; onPress: () => void }[]) {
   return {
     accessibilityActions: actions.map(({ name, label }) => ({ name, label })),
     onAccessibilityAction: (event: { nativeEvent: { actionName: string } }) => {
@@ -500,11 +500,6 @@ export function getCrisisResourceAccessibilityProps(
     accessibilityHint: `Double tap to access this ${type}`,
   };
 }
-
-/**
- * Export accessibility role constants
- */
-export { AccessibilityRoles };
 
 /**
  * Export accessibility state interface

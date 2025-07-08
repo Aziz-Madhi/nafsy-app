@@ -87,11 +87,11 @@ Nafsy is an AI-powered mental wellness and coaching app that provides personaliz
 - [x] Optimize AI response length for UI compatibility
 
 #### 2. **Chat Features**
-- [ ] Message history with pagination
-- [ ] Conversation search
-- [ ] Message reactions/feedback
-- [ ] New Chat button
-- [ ] Chat session summarization
+- [x] Message history with pagination
+- [x] Conversation search
+- [x] Message reactions/feedback
+- [x] New Chat button
+- [x] Chat session summarization
  
 ### Phase 3: Essential Mental Health Features
 
@@ -178,36 +178,7 @@ Nafsy is an AI-powered mental wellness and coaching app that provides personaliz
 - [ ] Increase touch targets
 - [ ] Add high contrast mode
 
-## Project Structure
-```
-nafsy-app/
-├── src/
-│   ├── app/                    # Expo Router screens
-│   │   ├── (auth)/            # Authentication flow
-│   │   ├── (tabs)/            # Main app tabs
-│   │   ├── _layout.tsx        # Root layout with providers
-│   │   └── index.tsx          # Entry point
-│   ├── components/            
-│   │   └── ui/                # Reusable UI components
-│   ├── hooks/                 # Custom React hooks
-│   │   └── useLocale.ts      # Localization hook
-│   └── utils/                 # Utility functions
-│       └── cache.ts           # Secure token storage
-├── convex/                    # Backend functions
-│   ├── schema.ts              # Database schema
-│   ├── users.ts               # User management
-│   ├── conversations.ts       # Chat sessions
-│   ├── messages.ts            # Message handling
-│   ├── moods.ts               # Mood tracking
-│   ├── exercises.ts           # Exercise tracking
-│   ├── resources.ts           # Crisis resources
-│   ├── emergencyContacts.ts   # Emergency contacts
-│   └── ai.ts                  # AI integration
-├── assets/                    # Images and assets
-├── .env.local                 # Environment variables
-└── package.json               # Dependencies
 
-```
 
 ## Key Dependencies
 - **Frontend**: React Native, Expo SDK 53, React 19
@@ -222,19 +193,19 @@ nafsy-app/
 ## Development Commands
 ```bash
 # Start development
-bun expo start
+bun start
 
 # Start with tunnel
-bun expo start --tunnel
+bun start --tunnel
 
 # Clear cache
-bun expo start --clear
+bun start --clear
 
 # Run Convex backend
-bunx convex dev
+bun convex dev
 
 # Deploy Convex
-bunx convex deploy
+bun convex deploy
 
 # Lint code
 bun lint

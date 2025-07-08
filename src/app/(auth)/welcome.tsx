@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Dimensions,
   I18nManager,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -17,7 +16,7 @@ import { useAppTheme } from "@/theme";
 export default function WelcomeScreen() {
   const router = useRouter();
   const { locale, setLocale, isLoading } = useLocale();
-  const { theme, styles: commonStyles, spacing, fontSize, fontWeight, colors } = useAppTheme();
+  const { theme: _theme, styles: _commonStyles, spacing, fontSize, fontWeight, colors } = useAppTheme();
   const [selectedLanguage, setSelectedLanguage] = useState<"en" | "ar">("en");
   
   // Update selectedLanguage when locale changes, but only once when component mounts

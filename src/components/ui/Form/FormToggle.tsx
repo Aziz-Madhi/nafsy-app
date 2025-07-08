@@ -37,14 +37,12 @@ export function FormToggle({
         ]}>
           {label}
         </Text>
-        {description && (
-          <Text style={[
+        {description ? <Text style={[
             styles.description,
             { color: theme.colors.text.secondary }
           ]}>
             {description}
-          </Text>
-        )}
+          </Text> : null}
       </View>
       <Switch
         value={value}

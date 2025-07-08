@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleProp, ViewStyle, TextStyle } from "react-native";
+import { StyleProp, TextStyle, ViewStyle } from "react-native";
 
 export function mergedStyleProp<TStyle extends ViewStyle | TextStyle>(
   ...styleProps: (StyleProp<TStyle> | null | undefined)[]
@@ -22,7 +22,12 @@ export function getFlatChildren(children: React.ReactNode) {
 
   React.Children.map(children, (child, index) => {
     if (!React.isValidElement(child)) {
-      return child;
+      // Skip whitespace-only strings to avoid stray <Text> warnings
+      if (typeof child === "string" && child.trim().length === 0) {
+        return;
+      }
+      allChildren.push(child);
+      return;
     }
 
     // If the child is a fragment, unwrap it and add the children to the list

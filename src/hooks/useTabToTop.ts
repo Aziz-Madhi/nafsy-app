@@ -62,7 +62,7 @@ export function useScrollToTop(
   const route = useRoute();
 
   React.useEffect(() => {
-    let tabNavigations: NavigationProp<ReactNavigation.RootParamList>[] = [];
+    const tabNavigations: NavigationProp<ReactNavigation.RootParamList>[] = [];
     let currentNavigation = navigation;
 
     // If the screen is nested inside multiple tab navigators, we should scroll to top for any of them

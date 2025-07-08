@@ -30,7 +30,7 @@ interface ErrorBoundaryProps {
   fallback?: ReactNode;
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
   resetOnPropsChange?: boolean;
-  resetKeys?: Array<string | number>;
+  resetKeys?: (string | number)[];
 }
 
 /**
@@ -140,15 +140,13 @@ function DefaultErrorFallback({ error, resetErrorBoundary }: DefaultErrorFallbac
         <Text style={styles.errorEmoji}>😔</Text>
         <Text style={styles.errorTitle}>Something went wrong</Text>
         <Text style={styles.errorMessage}>
-          We're sorry, but something unexpected happened. Please try again.
+          We&apos;re sorry, but something unexpected happened. Please try again.
         </Text>
         
-        {__DEV__ && error && (
-          <View style={styles.debugInfo}>
+        {__DEV__ && error ? <View style={styles.debugInfo}>
             <Text style={styles.debugTitle}>Debug Info:</Text>
             <Text style={styles.debugText}>{error.message}</Text>
-          </View>
-        )}
+          </View> : null}
         
         <TouchableOpacity
           style={commonStyles.primaryButton}

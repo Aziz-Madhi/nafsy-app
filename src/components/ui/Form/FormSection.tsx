@@ -171,7 +171,7 @@ export function Section({
               style={resolvedProps.style}
             />
             {child}
-            {hintView && <Spacer />}
+            {hintView ? <Spacer /> : null}
             {hintView}
           </HStack>
         );
@@ -378,8 +378,7 @@ export function Section({
           justifyContent: "space-between",
         }}
       >
-        {title && (
-          <RNText
+        {title ? <RNText
             dynamicTypeRamp="footnote"
             style={{
               textTransform: "uppercase",
@@ -391,15 +390,13 @@ export function Section({
             }}
           >
             {title}
-          </RNText>
-        )}
+          </RNText> : null}
         {titleHintJsx}
       </View>
 
       {contents}
 
-      {footer && (
-        <RNText
+      {footer ? <RNText
           dynamicTypeRamp="footnote"
           style={{
             color: AppleColors.secondaryLabel,
@@ -409,8 +406,7 @@ export function Section({
           }}
         >
           {footer}
-        </RNText>
-      )}
+        </RNText> : null}
     </View>
   );
 }

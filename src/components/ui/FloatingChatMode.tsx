@@ -4,9 +4,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Animated,
   Dimensions,
-  Easing,
   Keyboard,
   Platform,
   SafeAreaView,
@@ -16,6 +14,15 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withRepeat,
+  withSequence,
+  interpolate,
+  runOnJS,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconSymbol } from './IconSymbol';
 
@@ -26,8 +33,8 @@ interface FloatingMessage {
   content: string;
   role: 'user' | 'assistant';
   timestamp: number;
-  animation?: Animated.Value;
-  fadeAnimation?: Animated.Value;
+  animation?: number;
+  fadeAnimation?: number;
   chunks?: string[]; // For chunked display of AI responses
 }
 
@@ -36,11 +43,171 @@ interface FloatingChatModeProps {
   isTyping: boolean;
   recentMessages: FloatingMessage[];
   onSwitchToFullChat: () => void;
-  quickReplies?: Array<{
+  quickReplies?: {
     id: string;
     text: string;
     sentiment: 'positive' | 'neutral' | 'supportive';
-  }>;
+  }[];
+}
+
+// MessageBubble component extracted to avoid nested component error
+function MessageBubble({ 
+  message, 
+  index, 
+  isLatestAI,
+  currentChunk,
+  totalChunks,
+  currentIndex,
+  nextChunk,
+  isPaused,
+  isDark,
+  truncateMessage
+}: { 
+  message: FloatingMessage; 
+  index: number; 
+  isLatestAI?: boolean;
+  currentChunk: string;
+  totalChunks: number;
+  currentIndex: number;
+  nextChunk: () => void;
+  isPaused: boolean;
+  isDark: boolean;
+  truncateMessage: (content: string, role: string) => string;
+}) {
+  const isUser = message.role === 'user';
+  
+  // fadeAnimation: 0 = invisible, 1 = visible
+  const opacity = message.fadeAnimation!;
+
+  // Use chunked display for latest AI message, regular display for others
+  const displayText = isLatestAI && message.role === 'assistant' 
+    ? currentChunk 
+    : truncateMessage(message.content, message.role);
+
+  return (
+    <TouchableOpacity
+      style={[
+        styles.floatingMessage,
+        {
+          opacity,
+          zIndex: 10 - index, // Higher messages have lower z-index
+        },
+      ]}
+      onPress={isLatestAI && totalChunks > 1 ? nextChunk : undefined}
+      activeOpacity={isLatestAI && totalChunks > 1 ? 0.7 : 1}
+    >
+      <View style={[
+        styles.bubble,
+        isUser ? styles.userBubble : styles.assistantBubble,
+        !isUser && isDark && { backgroundColor: 'rgba(60, 60, 60, 0.95)' },
+      ]}>
+        <Text style={[
+          styles.messageText,
+          isUser ? styles.userText : styles.assistantText,
+          !isUser && isDark && { color: '#E5E7EB' },
+        ]}>
+          {displayText}
+        </Text>
+        
+        {/* Progress indicator for chunked AI responses */}
+        {isLatestAI && totalChunks > 1 ? <View style={styles.chunkProgress}>
+            <View style={styles.progressDots}>
+              {Array.from({ length: totalChunks }, (_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.progressDot,
+                    {
+                      backgroundColor: i <= currentIndex 
+                        ? (isDark ? '#6495ED' : '#4F46E5')
+                        : (isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)'),
+                    },
+                  ]}
+                />
+              ))}
+            </View>
+            {totalChunks > 1 && (
+              <Text style={[
+                styles.progressText,
+                { color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)' }
+              ]}>
+                {isPaused ? 'Tap to continue' : `${currentIndex + 1}/${totalChunks}`}
+              </Text>
+            )}
+          </View> : null}
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+// SimpleTyping component extracted to avoid nested component error
+function SimpleTyping() {
+  const dot1 = useSharedValue(0);
+  const dot2 = useSharedValue(0);
+  const dot3 = useSharedValue(0);
+
+  useEffect(() => {
+    // Start animations with delays using withSequence and withTiming
+    dot1.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 400 }),
+        withTiming(0, { duration: 400 })
+      ),
+      -1,
+      false
+    );
+    
+    setTimeout(() => {
+      dot2.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 400 }),
+          withTiming(0, { duration: 400 })
+        ),
+        -1,
+        false
+      );
+    }, 150);
+    
+    setTimeout(() => {
+      dot3.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 400 }),
+          withTiming(0, { duration: 400 })
+        ),
+        -1,
+        false
+      );
+    }, 300);
+  }, [dot1, dot2, dot3]);
+
+  // Create animated styles at component level
+  const dot1Style = useAnimatedStyle(() => ({
+    opacity: dot1.value,
+  }));
+  
+  const dot2Style = useAnimatedStyle(() => ({
+    opacity: dot2.value,
+  }));
+  
+  const dot3Style = useAnimatedStyle(() => ({
+    opacity: dot3.value,
+  }));
+
+  const dotBaseStyle = {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginHorizontal: 2,
+    backgroundColor: '#C0C5D0',
+  };
+
+  return (
+    <View style={{ flexDirection: 'row', padding: 6 }}>
+      <Animated.View style={[dotBaseStyle, dot1Style]} />
+      <Animated.View style={[dotBaseStyle, dot2Style]} />
+      <Animated.View style={[dotBaseStyle, dot3Style]} />
+    </View>
+  );
 }
 
 export function FloatingChatMode({
@@ -60,8 +227,8 @@ export function FloatingChatMode({
   const lastProcessedMessageId = useRef<string | null>(null);
   
   // Animations
-  const keyboardOffset = useRef(new Animated.Value(0)).current;
-  const inputPulseAnimation = useRef(new Animated.Value(1)).current;
+  const keyboardOffset = useSharedValue(0);
+  const inputPulseAnimation = useSharedValue(1);
 
   // Get the LATEST AI message for chunked display (not first)
   const latestAIMessage = recentMessages.slice().reverse().find(msg => msg.role === 'assistant');
@@ -84,27 +251,34 @@ export function FloatingChatMode({
     ? [colors.background.primary, colors.background.secondary, colors.background.tertiary]
     : ['#F5F7FA', '#EBF0F7', '#E1E9F5']) as [string, string, string];
 
+  // Animated styles for containers
+  const messagesContainerStyle = useAnimatedStyle(() => ({
+    bottom: insets.bottom + 140 + keyboardOffset.value,
+  }));
+
+  const inputAreaStyle = useAnimatedStyle(() => ({
+    bottom: insets.bottom + 20 + keyboardOffset.value,
+  }));
+
+  const inputWrapperStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: inputPulseAnimation.value }],
+  }));
+
   // Start gentle pulsing animation for input when empty
   useEffect(() => {
+    // Animate based on input state
     if (!inputText) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(inputPulseAnimation, {
-            toValue: 1.05,
-            duration: 2000,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
-          Animated.timing(inputPulseAnimation, {
-            toValue: 1,
-            duration: 2000,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
+      // eslint-disable-next-line react-compiler/react-compiler
+      inputPulseAnimation.value = withRepeat(
+        withSequence(
+          withTiming(1.05, { duration: 2000 }),
+          withTiming(1, { duration: 2000 })
+        ),
+        -1,
+        false
+      );
     } else {
-      inputPulseAnimation.setValue(1);
+      inputPulseAnimation.value = withTiming(1, { duration: 200 });
     }
   }, [inputText, inputPulseAnimation]);
 
@@ -130,27 +304,19 @@ export function FloatingChatMode({
       if (latestMessage.role === 'user') {
         const animatedMessage = {
           ...latestMessage,
-          animation: new Animated.Value(0),
-          fadeAnimation: new Animated.Value(0),
+          animation: 0,
+          fadeAnimation: 0,
         };
 
         setDisplayedMessages([animatedMessage]);
         
-        // Animate in user message immediately
-        setTimeout(() => {
-          Animated.timing(animatedMessage.fadeAnimation, {
-            toValue: 1,
-            duration: 250,
-            easing: Easing.out(Easing.ease),
-            useNativeDriver: true,
-          }).start();
-        }, 30);
+        // Animate in user message immediately - this will be handled by the MessageBubble component
       } else if (latestMessage.role === 'assistant') {
         // For AI messages, create animated message but let chunked display control content
         const animatedMessage = {
           ...latestMessage,
-          animation: new Animated.Value(0),
-          fadeAnimation: new Animated.Value(1), // Start visible for AI messages
+          animation: 0,
+          fadeAnimation: 1, // Start visible for AI messages
         };
 
         setDisplayedMessages([animatedMessage]);
@@ -173,78 +339,6 @@ export function FloatingChatMode({
     return content;
   };
 
-  const MessageBubble = ({ message, index, isLatestAI }: { 
-    message: FloatingMessage; 
-    index: number; 
-    isLatestAI?: boolean;
-  }) => {
-    const isUser = message.role === 'user';
-    
-    // fadeAnimation: 0 = invisible, 1 = visible
-    const opacity = message.fadeAnimation!;
-
-    // Use chunked display for latest AI message, regular display for others
-    const displayText = isLatestAI && message.role === 'assistant' 
-      ? currentChunk 
-      : truncateMessage(message.content, message.role);
-
-    return (
-      <TouchableOpacity
-        style={[
-          styles.floatingMessage,
-          {
-            opacity,
-            zIndex: 10 - index, // Higher messages have lower z-index
-          },
-        ]}
-        onPress={isLatestAI && totalChunks > 1 ? nextChunk : undefined}
-        activeOpacity={isLatestAI && totalChunks > 1 ? 0.7 : 1}
-      >
-        <View style={[
-          styles.bubble,
-          isUser ? styles.userBubble : styles.assistantBubble,
-          !isUser && isDark && { backgroundColor: 'rgba(60, 60, 60, 0.95)' },
-        ]}>
-          <Text style={[
-            styles.messageText,
-            isUser ? styles.userText : styles.assistantText,
-            !isUser && isDark && { color: '#E5E7EB' },
-          ]}>
-            {displayText}
-          </Text>
-          
-          {/* Progress indicator for chunked AI responses */}
-          {isLatestAI && totalChunks > 1 && (
-            <View style={styles.chunkProgress}>
-              <View style={styles.progressDots}>
-                {Array.from({ length: totalChunks }, (_, i) => (
-                  <View
-                    key={i}
-                    style={[
-                      styles.progressDot,
-                      {
-                        backgroundColor: i <= currentIndex 
-                          ? (isDark ? '#6495ED' : '#4F46E5')
-                          : (isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)'),
-                      },
-                    ]}
-                  />
-                ))}
-              </View>
-              {totalChunks > 1 && (
-                <Text style={[
-                  styles.progressText,
-                  { color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)' }
-                ]}>
-                  {isPaused ? 'Tap to continue' : `${currentIndex + 1}/${totalChunks}`}
-                </Text>
-              )}
-            </View>
-          )}
-        </View>
-      </TouchableOpacity>
-    );
-  };
 
   // Adjust UI when keyboard shows/hides (real devices)
   useEffect(() => {
@@ -252,72 +346,18 @@ export function FloatingChatMode({
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
     const showSub = Keyboard.addListener(showEvent, (e) => {
-      Animated.timing(keyboardOffset, {
-        toValue: e.endCoordinates.height,
-        duration: 250,
-        useNativeDriver: false,
-      }).start();
+      keyboardOffset.value = withTiming(e.endCoordinates.height, { duration: 250 });
     });
     const hideSub = Keyboard.addListener(hideEvent, () => {
-      Animated.timing(keyboardOffset, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: false,
-      }).start();
+      keyboardOffset.value = withTiming(0, { duration: 250 });
     });
 
     return () => {
       showSub.remove();
       hideSub.remove();
     };
-  }, []);
+  }, [keyboardOffset]);
 
-  // Simple three-dot typing indicator
-  const SimpleTyping = () => {
-    const dot1 = useRef(new Animated.Value(0)).current;
-    const dot2 = useRef(new Animated.Value(0)).current;
-    const dot3 = useRef(new Animated.Value(0)).current;
-
-    useEffect(() => {
-      const createAnim = (dot: Animated.Value, delay: number) => {
-        const anim = Animated.loop(
-          Animated.sequence([
-            Animated.delay(delay),
-            Animated.timing(dot, { toValue: 1, duration: 400, useNativeDriver: true }),
-            Animated.timing(dot, { toValue: 0, duration: 400, useNativeDriver: true }),
-          ])
-        );
-        anim.start();
-        return anim;
-      };
-
-      const a1 = createAnim(dot1, 0);
-      const a2 = createAnim(dot2, 150);
-      const a3 = createAnim(dot3, 300);
-      return () => { a1.stop(); a2.stop(); a3.stop(); };
-    }, []);
-
-    const renderDot = (opacity: Animated.Value) => (
-      <Animated.View
-        style={{
-          width: 6,
-          height: 6,
-          borderRadius: 3,
-          marginHorizontal: 2,
-          backgroundColor: '#C0C5D0',
-          opacity,
-        }}
-      />
-    );
-
-    return (
-      <View style={{ flexDirection: 'row', padding: 6 }}>
-        {renderDot(dot1)}
-        {renderDot(dot2)}
-        {renderDot(dot3)}
-      </View>
-    );
-  };
 
   return (
     <TouchableOpacity 
@@ -338,10 +378,7 @@ export function FloatingChatMode({
         <Animated.View
           style={[
             styles.messagesContainer,
-            {
-              // Push the container up so that the bubble never overlaps the input.
-              bottom: Animated.add(insets.bottom + 140, keyboardOffset),
-            },
+            messagesContainerStyle,
           ]}
         >
           {displayedMessages.map((message, index) => {
@@ -355,13 +392,19 @@ export function FloatingChatMode({
                 message={message} 
                 index={index}
                 isLatestAI={isLatestAI}
+                currentChunk={currentChunk}
+                totalChunks={totalChunks}
+                currentIndex={currentIndex}
+                nextChunk={nextChunk}
+                isPaused={isPaused}
+                isDark={isDark}
+                truncateMessage={truncateMessage}
               />
             );
           })}
           
           {/* Typing Indicator as floating bubble */}
-          {isTyping && (
-            <Animated.View 
+          {isTyping ? <Animated.View 
               style={[
                 styles.floatingMessage, 
                 styles.typingBubble,
@@ -373,18 +416,15 @@ export function FloatingChatMode({
               ]}
             >
               <SimpleTyping />
-            </Animated.View>
-          )}
+            </Animated.View> : null}
         </Animated.View>
 
         {/* Central Input Area */}
-        <Animated.View style={[styles.inputArea, { bottom: Animated.add(insets.bottom + 20, keyboardOffset) }]}>
+        <Animated.View style={[styles.inputArea, inputAreaStyle]}>
           <Animated.View
             style={[
               styles.inputWrapper,
-              {
-                transform: [{ scale: inputPulseAnimation }],
-              },
+              inputWrapperStyle,
             ]}
           >
             <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={styles.blurContainer}>
@@ -395,7 +435,6 @@ export function FloatingChatMode({
                   placeholderTextColor={isDark ? 'rgba(156, 163, 175, 0.6)' : 'rgba(107, 114, 128, 0.6)'}
                   value={inputText}
                   onChangeText={setInputText}
-                  multiline
                   maxLength={200}
                   textAlign="center"
                   returnKeyType="send"

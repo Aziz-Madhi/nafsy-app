@@ -92,8 +92,7 @@ export function ContentUnavailable({
         >
           {resolvedTitle}
         </Text>
-        {resolvedDescription && (
-          <Text
+        {resolvedDescription ? <Text
             dynamicTypeRamp="body"
             style={{
               color: AC.secondaryLabel,
@@ -102,8 +101,7 @@ export function ContentUnavailable({
             }}
           >
             {resolvedDescription}
-          </Text>
-        )}
+          </Text> : null}
       </View>
       {actions}
     </View>

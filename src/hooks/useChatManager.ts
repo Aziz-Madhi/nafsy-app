@@ -10,12 +10,12 @@ export interface ChatMessage {
   content: string;
   role: 'user' | 'assistant' | 'system';
   timestamp: number;
-  reactions?: Array<{
+  reactions?: {
     userId: string;
     type: 'helpful' | 'not-helpful' | 'emoji';
     emoji?: string;
     timestamp: number;
-  }>;
+  }[];
   metadata?: {
     isEmergency?: boolean;
     exerciseType?: string;
@@ -55,6 +55,12 @@ export function useChatManager(chatMode: 'floating' | 'full' = 'full') {
   const sendMessage = useAction(api.messages.sendMessage);
   const addReaction = useMutation(api.messages.addReaction);
   const removeReaction = useMutation(api.messages.removeReaction);
+  const switchToConversation = useMutation(api.conversations.switchToConversation);
+  
+  // New query for conversation history
+  const conversationsWithPreview = useQuery(api.conversations.getUserConversationsWithPreview,
+    testQuery ? { userId: testQuery._id } : "skip"
+  );
 
   const messageData = useQuery(api.messages.getConversationMessages,
     activeConversation ? { 
@@ -94,7 +100,7 @@ export function useChatManager(chatMode: 'floating' | 'full' = 'full') {
         setCursor(messageData.nextCursor);
       }
     }
-  }, [messageData?.messages, isLoadingMore]);
+  }, [messageData?.messages, messageData?.nextCursor, isLoadingMore, allMessages]);
 
   // Reset when conversation changes
   useEffect(() => {
@@ -103,7 +109,7 @@ export function useChatManager(chatMode: 'floating' | 'full' = 'full') {
       setCursor(null);
       hasLoadedInitial.current = false;
     }
-  }, [activeConversation?._id]);
+  }, [activeConversation]);
 
   const messages = allMessages;
 
@@ -196,7 +202,7 @@ export function useChatManager(chatMode: 'floating' | 'full' = 'full') {
       setIsTyping(false);
       Alert.alert('Error', 'Failed to send message');
     }
-  }, [messageText, activeConversation, testQuery, allMessages, sendMessage]);
+  }, [messageText, activeConversation, testQuery, allMessages, sendMessage, chatMode, detectLanguage]);
 
   // Handle adding reaction to message
   const handleAddReaction = useCallback(async (messageId: string, type: 'helpful' | 'not-helpful' | 'emoji', emoji?: string) => {
@@ -248,6 +254,26 @@ export function useChatManager(chatMode: 'floating' | 'full' = 'full') {
     }
   }, [testQuery, activeConversation, startNewConversation]);
 
+  // Handle switching to a different conversation
+  const handleSwitchConversation = useCallback(async (conversationId: string) => {
+    if (!testQuery) return;
+    
+    try {
+      await switchToConversation({
+        userId: testQuery._id,
+        conversationId: conversationId as any,
+      });
+      
+      // Clear local state to force reload of new conversation
+      setAllMessages([]);
+      setCursor(null);
+      hasLoadedInitial.current = false;
+    } catch (error) {
+      console.error('Error switching conversation:', error);
+      Alert.alert('Error', 'Failed to switch conversation');
+    }
+  }, [testQuery, switchToConversation]);
+
   // Convert messages to floating format with chunks support
   const floatingMessages = (allMessages || []).map((msg: ChatMessage) => ({
     id: msg._id,
@@ -268,6 +294,7 @@ export function useChatManager(chatMode: 'floating' | 'full' = 'full') {
     floatingMessages,
     activeConversation,
     user: testQuery,
+    conversations: conversationsWithPreview,
 
     // Actions
     handleSendMessage,
@@ -275,11 +302,13 @@ export function useChatManager(chatMode: 'floating' | 'full' = 'full') {
     handleMessageLongPress,
     loadOlderMessages,
     handleStartNewChat,
+    handleSwitchConversation,
 
     // Query states
     isLoadingUser: testQuery === undefined,
     isLoadingConversation: activeConversation === undefined,
     isLoadingMessages: messageData === undefined,
+    isLoadingConversations: conversationsWithPreview === undefined,
     isLoadingMore,
     hasMoreMessages: messageData?.hasMore || false,
   };

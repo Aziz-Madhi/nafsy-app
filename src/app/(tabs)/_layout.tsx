@@ -8,6 +8,23 @@ import { Redirect, Tabs } from "expo-router";
 import { useEffect, useRef } from "react";
 import { Platform } from "react-native";
 
+// Tab icon components to avoid nested components during render
+const ChatIcon = ({ color, size }: { color: string; size: number }) => (
+  <Image source="sf:message.fill" size={size} tintColor={color} />
+);
+
+const MoodIcon = ({ color, size }: { color: string; size: number }) => (
+  <Image source="sf:face.smiling" size={size} tintColor={color} />
+);
+
+const ExercisesIcon = ({ color, size }: { color: string; size: number }) => (
+  <Image source="sf:heart.circle.fill" size={size} tintColor={color} />
+);
+
+const ProfileIcon = ({ color, size }: { color: string; size: number }) => (
+  <Image source="sf:person.fill" size={size} tintColor={color} />
+);
+
 export default function TabsLayout() {
   const { isSignedIn } = useAuth();
   const { isAuthenticated, isLoading: isConvexLoading } = useConvexAuth();
@@ -47,7 +64,7 @@ export default function TabsLayout() {
         hasAttemptedUserCreation.current = false;
       });
     }
-  }, [isSignedIn, isAuthenticated, user, userData]);
+  }, [isSignedIn, isAuthenticated, user, userData, upsertUser]);
 
   // Wait for Convex auth to finish loading before deciding what to do
   if (isConvexLoading) {
@@ -93,36 +110,28 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: tabLabels.chat,
-          tabBarIcon: ({ color, size }) => (
-            <Image source="sf:message.fill" size={size} tintColor={color} />
-          ),
+          tabBarIcon: ChatIcon,
         }}
       />
       <Tabs.Screen
         name="mood"
         options={{
           title: tabLabels.mood,
-          tabBarIcon: ({ color, size }) => (
-            <Image source="sf:face.smiling" size={size} tintColor={color} />
-          ),
+          tabBarIcon: MoodIcon,
         }}
       />
       <Tabs.Screen
         name="exercises"
         options={{
           title: tabLabels.exercises,
-          tabBarIcon: ({ color, size }) => (
-            <Image source="sf:heart.circle.fill" size={size} tintColor={color} />
-          ),
+          tabBarIcon: ExercisesIcon,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: tabLabels.profile,
-          tabBarIcon: ({ color, size }) => (
-            <Image source="sf:person.fill" size={size} tintColor={color} />
-          ),
+          tabBarIcon: ProfileIcon,
         }}
       />
     </Tabs>

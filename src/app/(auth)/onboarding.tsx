@@ -20,10 +20,10 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const { user } = useUser();
   const { isAuthenticated } = useConvexAuth();
-  const { t, tLegacy, locale } = useTranslation();
+  const { t, tLegacy: _tLegacy, locale } = useTranslation();
   const { theme, styles: commonStyles } = useAppTheme();
   
-  const upsertUser = useMutation(api.users.upsertUser);
+  const _upsertUser = useMutation(api.users.upsertUser);
   const completeOnboarding = useMutation(api.users.completeOnboarding);
   
   const [step, setStep] = useState(1);

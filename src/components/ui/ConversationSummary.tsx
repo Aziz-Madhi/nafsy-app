@@ -35,7 +35,7 @@ export function ConversationSummary({ isVisible, onClose, conversationId, langua
     if (isVisible && conversationId && !summary) {
       loadSummary();
     }
-  }, [isVisible, conversationId]);
+  }, [isVisible, conversationId, loadSummary, summary]);
 
   const loadSummary = async () => {
     if (!conversationId) return;
@@ -133,16 +133,14 @@ export function ConversationSummary({ isVisible, onClose, conversationId, langua
               )}
 
               {/* Mood Progression */}
-              {summary.moodProgression && (
-                <View style={styles.section}>
+              {summary.moodProgression ? <View style={styles.section}>
                   <Text style={[styles.sectionTitle, { color: theme.colors.text.primary }]}>
                     {t('chat.summary.moodProgression')}
                   </Text>
                   <Text style={[styles.sectionContent, { color: theme.colors.text.secondary }]}>
                     {summary.moodProgression}
                   </Text>
-                </View>
-              )}
+                </View> : null}
 
               {/* Therapeutic Insights */}
               {summary.therapeuticInsights.length > 0 && (

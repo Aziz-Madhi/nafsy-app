@@ -1,6 +1,9 @@
 // Form component exports
 // Modularized Form components
 
+// Re-export remaining components from the original file
+import * as OriginalForm from '../Form';
+
 export { FormItem } from './FormItem';
 export { FormText } from './FormText';
 export { FormToggle } from './FormToggle';
@@ -10,9 +13,6 @@ export { Link } from './FormLink';
 export { Section, HStack, VStack, Spacer } from './FormSection';
 export * from './types';
 export { mergedStyleProp, getFlatChildren, isStringishNode } from './utils';
-
-// Re-export remaining components from the original file
-import * as OriginalForm from '../Form';
 
 export const List = OriginalForm.List;
 export const ScrollView = OriginalForm.ScrollView;

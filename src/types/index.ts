@@ -88,7 +88,7 @@ export interface FormField {
   value: any;
   error?: string;
   validation?: ValidationRule;
-  options?: Array<{ label: string; value: any }>;
+  options?: { label: string; value: any }[];
   disabled?: boolean;
   required?: boolean;
 }
@@ -161,10 +161,10 @@ export interface CacheItem<T = any> {
 // Navigation types (to be updated when we have proper navigation typing)
 export interface NavigationState {
   index: number;
-  routes: Array<{
+  routes: {
     name: string;
     params?: Record<string, any>;
-  }>;
+  }[];
 }
 
 export interface RouteParams {
@@ -271,11 +271,11 @@ export interface Goal {
     unit: string;
     percentage: number;
   };
-  milestones?: Array<{
+  milestones?: {
     title: string;
     completed: boolean;
     date?: number;
-  }>;
+  }[];
 }
 
 // Notification types
@@ -304,11 +304,11 @@ export interface PushNotification {
   deliveredAt?: number;
   readAt?: number;
   actionable?: boolean;
-  actions?: Array<{
+  actions?: {
     id: string;
     title: string;
     type: 'default' | 'destructive';
-  }>;
+  }[];
 }
 
 // Export utility type guards

@@ -522,7 +522,7 @@ export const calculateStreak = (timestamps: number[]): number => {
   today.setHours(0, 0, 0, 0);
   
   let streak = 0;
-  let currentDate = new Date(today);
+  const currentDate = new Date(today);
   
   for (const timestamp of sortedTimestamps) {
     const entryDate = new Date(timestamp);

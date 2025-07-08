@@ -7,11 +7,10 @@ import {
   Modal,
   Pressable,
   Dimensions,
-} from 'react-native';
+ Platform } from 'react-native';
 import { useTheme } from '@/theme';
 import { useTranslation } from '@/hooks/useLocale';
 import { BlurView } from 'expo-blur';
-import { Platform } from 'react-native';
 
 interface ReactionPickerProps {
   isVisible: boolean;

@@ -30,8 +30,8 @@ const REDIRECT_URL = Linking.createURL("sso-callback", { scheme: APP_SCHEME });
 export default function SignUpScreen() {
   const { isLoaded, signUp, setActive } = useSignUp();
   const router = useRouter();
-  const { t, tLegacy, locale } = useTranslation();
-  const { theme, styles: commonStyles, colors, spacing, fontSize } = useAppTheme();
+  const { t, tLegacy: _tLegacy, locale } = useTranslation();
+  const { theme: _theme, styles: commonStyles, colors, spacing, fontSize } = useAppTheme();
   
   const { startOAuthFlow: googleAuth } = useOAuth({ strategy: "oauth_google" });
   const { startOAuthFlow: appleAuth } = useOAuth({ strategy: "oauth_apple" });
@@ -147,7 +147,7 @@ export default function SignUpScreen() {
         return;
       }
 
-      const { createdSessionId, setActive: oauthSetActive, signIn, signUp } = await flow({ 
+      const { createdSessionId, setActive: _oauthSetActive, signIn, signUp } = await flow({ 
         redirectUrl: REDIRECT_URL 
       });
       

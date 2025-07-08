@@ -18,7 +18,6 @@ export const en = {
   retry: "Retry",
   loading: "Loading...",
   error: "Error",
-  success: "Success",
   
   // Authentication
   auth: {
@@ -149,6 +148,44 @@ export const en = {
       moodProgression: "Mood Progression",
       insights: "Therapeutic Insights",
       nextSteps: "Suggested Next Steps",
+    },
+    history: {
+      title: "Chat History",
+      loading: "Loading conversations...",
+      empty: {
+        title: "No conversations yet",
+        description: "Start chatting to see your conversation history here",
+      },
+      message: "message",
+      messages: "messages",
+      active: "Current",
+      switchConversation: {
+        title: "Switch Conversation?",
+        message: "This will switch to a different conversation. You can always come back to this one later.",
+        confirm: "Switch",
+      },
+    },
+    management: {
+      title: "Chat Tools",
+      features: "Features",
+      stats: "Statistics",
+      totalConversations: "Total Conversations",
+      newChat: {
+        title: "Start New Chat",
+        description: "Begin a fresh conversation",
+      },
+      search: {
+        title: "Search Messages",
+        description: "Find specific messages in your chat",
+      },
+      history: {
+        title: "Chat History",
+        description: "Browse your past conversations",
+      },
+      summary: {
+        title: "Conversation Summary",
+        description: "Get insights from this chat",
+      },
     },
   },
   

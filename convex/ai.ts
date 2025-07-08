@@ -96,11 +96,16 @@ Remember: You are a supportive coach, not a licensed therapist.`;
           : `\n\nUser Profile:\n- Summary: ${userSummary.summary}\n- Key themes: ${userSummary.keyThemes.join(", ")}\n- Emotional patterns: ${userSummary.emotionalPatterns.join(", ")}\n- Preferred approaches: ${userSummary.preferredApproaches.join(", ")}\n- Common challenges: ${userSummary.progress.commonChallenges.join(", ")}\n- Successful strategies: ${userSummary.progress.successfulStrategies.join(", ")}\n- Previous conversations: ${userSummary.conversationCount}`;
       }
       
-      // TODO: Implement getMoodInsights query in moods.ts
-      // const moodInsights = await ctx.runQuery(api.moods.getMoodInsights, {
-      //   userId: args.userInfo.userId,
-      // });
-      // ... rest of mood insights logic
+      // Get mood insights
+      const moodInsights = await ctx.runQuery(api.moods.getMoodInsights, {
+        userId: args.userInfo.userId,
+      });
+      
+      if (moodInsights) {
+        contextualInfo += args.language === "ar"
+          ? `\n\nرؤى المزاج:\n- المزاج الحالي: ${moodInsights.currentMood}/10\n- متوسط المزاج: ${moodInsights.averageRating.toFixed(1)}/10\n- التقلب: ${moodInsights.volatility > 2 ? 'عالي' : moodInsights.volatility > 1 ? 'متوسط' : 'منخفض'}\n- أفضل وقت في اليوم: ${moodInsights.bestTimeOfDay || 'غير محدد'}\n- العوامل الإيجابية: ${moodInsights.positiveMoodFactors.join(", ") || 'لا يوجد'}\n- العوامل السلبية: ${moodInsights.negativeMoodFactors.join(", ") || 'لا يوجد'}`
+          : `\n\nMood Insights:\n- Current mood: ${moodInsights.currentMood}/10\n- Average mood: ${moodInsights.averageRating.toFixed(1)}/10\n- Volatility: ${moodInsights.volatility > 2 ? 'High' : moodInsights.volatility > 1 ? 'Moderate' : 'Low'}\n- Best time of day: ${moodInsights.bestTimeOfDay || 'Not determined'}\n- Positive factors: ${moodInsights.positiveMoodFactors.join(", ") || 'None'}\n- Negative factors: ${moodInsights.negativeMoodFactors.join(", ") || 'None'}`;
+      }
     }
 
     try {
@@ -183,11 +188,10 @@ export const suggestExercise = action({
   }),
   handler: async (ctx, args) => {
     // Get user's exercise history
-    // TODO: Implement getMostEffectiveExercises query in exercises.ts
-    // const exerciseStats = await ctx.runQuery(api.exercises.getMostEffectiveExercises, {
-    //   userId: args.userId,
-    // });
-    const exerciseStats: any[] = [];
+    const exerciseStats = await ctx.runQuery(api.exercises.getMostEffectiveExercises, {
+      userId: args.userId,
+      limit: 5,
+    });
 
     // Logic to suggest appropriate exercise
     let suggestedType = "breathing"; // Default
@@ -818,3 +822,273 @@ export const upsertUserSummary = mutation({
     }
   },
 });
+
+// Detect crisis or emergency situations in messages
+export const detectCrisis = action({
+  args: {
+    message: v.string(),
+    language: v.string(),
+    userId: v.optional(v.id("users")),
+    conversationId: v.optional(v.id("conversations")),
+  },
+  returns: v.object({
+    isCrisis: v.boolean(),
+    severity: v.union(v.literal("low"), v.literal("medium"), v.literal("high"), v.literal("critical")),
+    indicators: v.array(v.string()),
+    suggestedActions: v.array(v.string()),
+    resources: v.optional(v.array(v.object({
+      type: v.string(),
+      title: v.string(),
+      description: v.string(),
+      url: v.optional(v.string()),
+      phone: v.optional(v.string()),
+    }))),
+  }),
+  handler: async (ctx, args) => {
+    const openaiApiKey = process.env.OPENAI_API_KEY;
+    if (!openaiApiKey) {
+      throw new Error("OpenAI API key not configured");
+    }
+
+    // Crisis detection keywords for immediate flagging
+    const crisisKeywords = {
+      en: {
+        critical: [
+          'kill myself', 'suicide', 'suicidal', 'end my life', 'want to die',
+          'better off dead', 'no reason to live', 'can\'t go on', 'end it all',
+          'harm myself', 'self harm', 'cutting myself', 'overdose'
+        ],
+        high: [
+          'hopeless', 'worthless', 'no point', 'give up', 'can\'t take it',
+          'unbearable', 'too much pain', 'nobody cares', 'all alone',
+          'panic attack', 'can\'t breathe', 'dying', 'heart attack'
+        ],
+        medium: [
+          'depressed', 'anxious', 'scared', 'overwhelmed', 'breaking down',
+          'falling apart', 'can\'t cope', 'losing control', 'desperate'
+        ]
+      },
+      ar: {
+        critical: [
+          'انتحر', 'اقتل نفسي', 'انهي حياتي', 'اموت', 'الموت',
+          'لا أريد العيش', 'لا فائدة من الحياة', 'أؤذي نفسي'
+        ],
+        high: [
+          'يائس', 'لا أمل', 'لا قيمة', 'لا فائدة', 'لا أستطيع',
+          'لا أتحمل', 'ألم شديد', 'لا أحد يهتم', 'وحيد',
+          'نوبة هلع', 'لا أستطيع التنفس', 'أموت'
+        ],
+        medium: [
+          'مكتئب', 'قلق', 'خائف', 'مرهق', 'انهار',
+          'أتفكك', 'لا أستطيع التأقلم', 'أفقد السيطرة'
+        ]
+      }
+    };
+
+    // Quick keyword check for immediate response
+    const messageLower = args.message.toLowerCase();
+    const keywords = crisisKeywords[args.language as keyof typeof crisisKeywords] || crisisKeywords.en;
+    
+    let immediateSeverity: "low" | "medium" | "high" | "critical" = "low";
+    const foundIndicators: string[] = [];
+    
+    // Check for crisis keywords
+    for (const keyword of keywords.critical) {
+      if (messageLower.includes(keyword)) {
+        immediateSeverity = "critical";
+        foundIndicators.push(keyword);
+      }
+    }
+    
+    if (immediateSeverity !== "critical") {
+      for (const keyword of keywords.high) {
+        if (messageLower.includes(keyword)) {
+          immediateSeverity = "high";
+          foundIndicators.push(keyword);
+        }
+      }
+    }
+    
+    if (immediateSeverity === "low") {
+      for (const keyword of keywords.medium) {
+        if (messageLower.includes(keyword)) {
+          immediateSeverity = "medium";
+          foundIndicators.push(keyword);
+        }
+      }
+    }
+
+    // Use AI for more nuanced analysis
+    const systemPrompt = args.language === "ar"
+      ? `أنت خبير في الصحة النفسية متخصص في تقييم المخاطر. قم بتحليل الرسالة التالية لتحديد ما إذا كانت تشير إلى أزمة أو حالة طوارئ.
+
+يجب عليك تقديم JSON يحتوي على:
+- isCrisis: true إذا كانت الرسالة تشير إلى أزمة
+- severity: "low", "medium", "high", أو "critical"
+- indicators: قائمة بالمؤشرات المحددة في الرسالة
+- suggestedActions: إجراءات مقترحة للاستجابة
+
+معايير التقييم:
+- critical: تهديدات فورية بإيذاء النفس أو الانتحار
+- high: أفكار انتحارية، نوبات هلع شديدة، يأس شديد
+- medium: اكتئاب شديد، قلق شديد، صعوبة في التأقلم
+- low: ضائقة عامة دون مخاطر فورية`
+      : `You are a mental health expert specializing in risk assessment. Analyze the following message to determine if it indicates a crisis or emergency situation.
+
+You must provide JSON containing:
+- isCrisis: true if the message indicates a crisis
+- severity: "low", "medium", "high", or "critical"
+- indicators: list of specific indicators found in the message
+- suggestedActions: suggested response actions
+
+Assessment criteria:
+- critical: Immediate threats of self-harm or suicide
+- high: Suicidal ideation, severe panic attacks, extreme hopelessness
+- medium: Severe depression, severe anxiety, difficulty coping
+- low: General distress without immediate risk`;
+
+    try {
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${openaiApiKey}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: args.message },
+          ],
+          temperature: 0.3, // Lower temperature for more consistent crisis detection
+          max_tokens: 500,
+          response_format: { type: "json_object" },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const analysis = JSON.parse(data.choices[0].message.content);
+
+      // Combine keyword detection with AI analysis
+      const finalSeverity = immediateSeverity === "critical" ? "critical" : 
+                           (analysis.severity === "critical" ? "critical" : 
+                            immediateSeverity === "high" || analysis.severity === "high" ? "high" :
+                            immediateSeverity === "medium" || analysis.severity === "medium" ? "medium" : "low");
+      
+      const allIndicators = [...new Set([...foundIndicators, ...(analysis.indicators || [])])];
+
+      // Get emergency resources based on severity
+      let resources: any[] = [];
+      if (finalSeverity === "critical" || finalSeverity === "high") {
+        // Fetch emergency resources from the database
+        const emergencyResources = await ctx.runQuery(api.resources.getEmergencyResources, {
+          language: args.language,
+          limit: 5,
+        });
+        
+        resources = emergencyResources.map(r => ({
+          type: r.type,
+          title: r.title,
+          description: r.description,
+          url: r.url,
+          phone: r.phone,
+        }));
+      }
+
+      // Prepare suggested actions based on severity and language
+      const suggestedActions = args.language === "ar" 
+        ? getSuggestedActionsAr(finalSeverity)
+        : getSuggestedActionsEn(finalSeverity);
+
+      return {
+        isCrisis: finalSeverity !== "low",
+        severity: finalSeverity,
+        indicators: allIndicators,
+        suggestedActions: [...suggestedActions, ...(analysis.suggestedActions || [])],
+        resources,
+      };
+    } catch (error) {
+      console.error("Crisis detection error:", error);
+      
+      // In case of error, use keyword-based detection only
+      return {
+        isCrisis: immediateSeverity !== "low",
+        severity: immediateSeverity,
+        indicators: foundIndicators,
+        suggestedActions: args.language === "ar" 
+          ? getSuggestedActionsAr(immediateSeverity)
+          : getSuggestedActionsEn(immediateSeverity),
+        resources: [],
+      };
+    }
+  },
+});
+
+// Helper functions for suggested actions
+function getSuggestedActionsEn(severity: string): string[] {
+  switch (severity) {
+    case "critical":
+      return [
+        "Immediately contact emergency services (911) or crisis hotline",
+        "Stay with someone you trust",
+        "Remove any means of self-harm",
+        "Go to the nearest emergency room if in immediate danger"
+      ];
+    case "high":
+      return [
+        "Contact a mental health professional today",
+        "Call a crisis helpline for immediate support",
+        "Reach out to a trusted friend or family member",
+        "Practice emergency coping strategies"
+      ];
+    case "medium":
+      return [
+        "Schedule an appointment with a mental health professional",
+        "Use coping strategies and self-care techniques",
+        "Connect with your support network",
+        "Monitor your symptoms closely"
+      ];
+    default:
+      return [
+        "Continue using self-care strategies",
+        "Maintain regular check-ins with support system",
+        "Consider preventive mental health care"
+      ];
+  }
+}
+
+function getSuggestedActionsAr(severity: string): string[] {
+  switch (severity) {
+    case "critical":
+      return [
+        "اتصل فوراً بخدمات الطوارئ أو خط الأزمات",
+        "ابق مع شخص تثق به",
+        "أزل أي وسائل لإيذاء النفس",
+        "اذهب إلى أقرب غرفة طوارئ إذا كنت في خطر فوري"
+      ];
+    case "high":
+      return [
+        "اتصل بأخصائي صحة نفسية اليوم",
+        "اتصل بخط المساعدة في الأزمات للحصول على دعم فوري",
+        "تواصل مع صديق موثوق أو أحد أفراد العائلة",
+        "مارس استراتيجيات التأقلم الطارئة"
+      ];
+    case "medium":
+      return [
+        "حدد موعداً مع أخصائي صحة نفسية",
+        "استخدم استراتيجيات التأقلم والرعاية الذاتية",
+        "تواصل مع شبكة الدعم الخاصة بك",
+        "راقب أعراضك عن كثب"
+      ];
+    default:
+      return [
+        "استمر في استخدام استراتيجيات الرعاية الذاتية",
+        "حافظ على التواصل المنتظم مع نظام الدعم",
+        "فكر في الرعاية الصحية النفسية الوقائية"
+      ];
+  }
+}

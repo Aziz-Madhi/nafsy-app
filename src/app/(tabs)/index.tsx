@@ -6,6 +6,8 @@ import { QuickReplySuggestions } from "@/components/ui/QuickReplySuggestions";
 import { ChatSearch } from "@/components/ui/ChatSearch";
 import { ReactionPicker } from "@/components/ui/ReactionPicker";
 import { ConversationSummary } from "@/components/ui/ConversationSummary";
+import { ConversationHistory } from "@/components/ui/ConversationHistory";
+import { ChatManagement } from "@/components/ui/ChatManagement";
 import { useChatManager } from "@/hooks/useChatManager";
 import { useTranslation, useLocale } from "@/hooks/useLocale";
 import { useTheme } from "@/theme";
@@ -35,6 +37,8 @@ export default function ChatScreen() {
   const [isFloatingMode, setIsFloatingMode] = useState(true);
   const [showSearch, setShowSearch] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [showManagement, setShowManagement] = useState(false);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
   const [reactionPickerPosition, setReactionPickerPosition] = useState({ x: 0, y: 0 });
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
@@ -58,7 +62,10 @@ export default function ChatScreen() {
     handleAddReaction,
     loadOlderMessages,
     handleStartNewChat,
+    handleSwitchConversation,
+    conversations,
     isLoadingMore,
+    isLoadingConversations,
     hasMoreMessages,
     user,
   } = useChatManager(isFloatingMode ? 'floating' : 'full');
@@ -142,27 +149,6 @@ export default function ChatScreen() {
             {/* Header without back button - this is a tab screen */}
             <SafeAreaView style={[styles.header, { backgroundColor: theme.colors.background.primary, borderBottomColor: theme.colors.system.border }]}>
               <View style={styles.headerContent}>
-                <TouchableOpacity 
-                  onPress={() => {
-                    Alert.alert(
-                      t("chat.newChat.title"),
-                      t("chat.newChat.message"),
-                      [
-                        { text: t("cancel"), style: "cancel" },
-                        { 
-                          text: t("chat.newChat.confirm"), 
-                          onPress: handleStartNewChat,
-                          style: "default"
-                        }
-                      ]
-                    );
-                  }}
-                  style={styles.newChatButton}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <IconSymbol name="square.and.pencil" size={22} color={theme.colors.text.primary} />
-                </TouchableOpacity>
-                
                 <View style={styles.headerTextContainer}>
                   <Text style={[styles.headerTitle, { color: theme.colors.text.primary }]}>
                     {t("chat.title")}
@@ -172,28 +158,13 @@ export default function ChatScreen() {
                   </Text>
                 </View>
                 
-                <View style={styles.headerButtons}>
-                  <TouchableOpacity 
-                    onPress={() => setShowSummary(true)}
-                    style={styles.headerButton}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    disabled={!messages || messages.length === 0}
-                  >
-                    <IconSymbol 
-                      name="doc.text.magnifyingglass" 
-                      size={22} 
-                      color={messages && messages.length > 0 ? theme.colors.text.primary : theme.colors.text.disabled} 
-                    />
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    onPress={() => setShowSearch(true)}
-                    style={styles.headerButton}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  >
-                    <IconSymbol name="magnifyingglass" size={22} color={theme.colors.text.primary} />
-                  </TouchableOpacity>
-                </View>
+                <TouchableOpacity 
+                  onPress={() => setShowManagement(true)}
+                  style={styles.menuButton}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <IconSymbol name="ellipsis" size={22} color={theme.colors.text.primary} />
+                </TouchableOpacity>
               </View>
             </SafeAreaView>
 
@@ -277,8 +248,7 @@ export default function ChatScreen() {
                             </Text>
                             
                             {/* LEVER: Extend existing bubble with reactions display */}
-                            {item.reactions && item.reactions.length > 0 && (
-                              <View style={styles.reactionsContainer}>
+                            {item.reactions && item.reactions.length > 0 ? <View style={styles.reactionsContainer}>
                                 {(() => {
                                   // Group reactions by type/emoji
                                   const groupedReactions = item.reactions.reduce((acc: any, reaction: any) => {
@@ -315,8 +285,7 @@ export default function ChatScreen() {
                                     </TouchableOpacity>
                                   ));
                                 })()}
-                              </View>
-                            )}
+                              </View> : null}
                           </TouchableOpacity>
                         ))}
                       </View>
@@ -334,11 +303,9 @@ export default function ChatScreen() {
                 )}
                 
                 {/* Typing Indicator */}
-                {isTyping && (
-                  <View style={styles.typingContainer}>
+                {isTyping ? <View style={styles.typingContainer}>
                     <TypingIndicator visible={isTyping} />
-                  </View>
-                )}
+                  </View> : null}
               </View>
               
               
@@ -355,8 +322,7 @@ export default function ChatScreen() {
               />
               
               {/* Message Input */}
-              {activeConversation && (
-                <View style={[styles.inputContainer, { backgroundColor: theme.colors.background.secondary, borderTopColor: theme.colors.system.separator }]}>
+              {activeConversation ? <View style={[styles.inputContainer, { backgroundColor: theme.colors.background.secondary, borderTopColor: theme.colors.system.separator }]}>
                   <TextInput
                     style={[styles.textInput, { 
                       backgroundColor: theme.colors.background.primary,
@@ -381,8 +347,7 @@ export default function ChatScreen() {
                   >
                     <IconSymbol name="paperplane.fill" size={20} color={theme.colors.text.inverse} />
                   </TouchableOpacity>
-                </View>
-              )}
+                </View> : null}
             </KeyboardAvoidingView>
           </View>
         </TouchableWithoutFeedback>
@@ -435,6 +400,31 @@ export default function ChatScreen() {
           }}
         />
         
+        {/* Chat Management */}
+        <ChatManagement
+          isVisible={showManagement}
+          onClose={() => setShowManagement(false)}
+          onNewChat={handleStartNewChat}
+          conversations={conversations}
+          isLoadingConversations={isLoadingConversations}
+          onSelectConversation={handleSwitchConversation}
+          activeConversationId={activeConversation?._id}
+          onRequestSummary={(conversationId) => {
+            setShowManagement(false);
+            setShowSummary(true);
+          }}
+        />
+
+        {/* Conversation History */}
+        <ConversationHistory
+          isVisible={showHistory}
+          onClose={() => setShowHistory(false)}
+          conversations={conversations}
+          isLoading={isLoadingConversations}
+          onSelectConversation={handleSwitchConversation}
+          activeConversationId={activeConversation?._id}
+        />
+
         {/* Conversation Summary */}
         <ConversationSummary
           isVisible={showSummary}
@@ -459,10 +449,10 @@ const styles = StyleSheet.create({
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    position: 'relative',
   },
   headerTextContainer: {
-    flex: 1,
     alignItems: 'center',
   },
   headerTitle: {
@@ -476,18 +466,11 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontStyle: 'italic',
   },
-  searchButton: {
+  menuButton: {
+    position: 'absolute',
+    right: 0,
     padding: 8,
-  },
-  newChatButton: {
-    padding: 8,
-  },
-  headerButtons: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  headerButton: {
-    padding: 8,
+    borderRadius: 20,
   },
   chatContainer: {
     flex: 1,

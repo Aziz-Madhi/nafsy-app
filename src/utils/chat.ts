@@ -10,7 +10,7 @@ export interface SimpleMessage {
  * and appends the newly typed user message so the LLM always sees it.
  */
 export function buildRecentMessages(
-  allMessages: Array<{ role: string; content: string; timestamp: number }>,
+  allMessages: { role: string; content: string; timestamp: number }[],
   userMessage: string,
   now: number = Date.now()
 ): SimpleMessage[] {

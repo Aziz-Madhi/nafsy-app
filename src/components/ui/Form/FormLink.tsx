@@ -117,8 +117,9 @@ export function Link({
               }
             }
       }
-      children={resolvedChildren}
-    />
+    >
+      {resolvedChildren}
+    </RouterLink>
   );
 }
 
