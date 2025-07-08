@@ -2,11 +2,11 @@ import React from "react";
 import { Href, LinkProps, Link as RouterLink } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { Text as RNText, Share, TextStyle } from "react-native";
-import * as AppleColors from "@bacons/apple-colors";
-import { FormFont } from "../Form";
 import { HeaderButton } from "../Header";
 import { mergedStyleProp } from "./utils";
 import { SystemImageProps } from "./types";
+import { useAppTheme } from "@/theme";
+import { useFormFont } from "./fontHelpers";
 
 export type FormLinkProps = LinkProps & {
   /** Value displayed on the right side of the form item. */
@@ -31,8 +31,10 @@ export function Link({
   hintImage,
   ...props
 }: FormLinkProps) {
+  const { colors } = useAppTheme();
+  const formFont = useFormFont();
   const font: TextStyle = {
-    ...FormFont.default,
+    ...formFont.default,
     fontWeight: bold ? "600" : "normal",
   };
 
@@ -50,7 +52,7 @@ export function Link({
           return (
             <RNText
               style={mergedStyleProp<TextStyle>(
-                { ...font, color: AppleColors.link },
+                { ...font, color: colors.interactive.primary },
                 props.style
               )}
             >

@@ -7,7 +7,6 @@ import {
   Dimensions,
   ScrollView,
 } from 'react-native';
-import * as AC from '@bacons/apple-colors';
 import { useTheme } from '@/theme';
 import { useTranslation } from '@/hooks/useLocale';
 
@@ -175,7 +174,7 @@ const styles = StyleSheet.create({
   traditionalContainer: {
     paddingVertical: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: AC.separator,
+    borderTopColor: "#C6C6C8",
   },
   scrollContent: {
     paddingHorizontal: 16,

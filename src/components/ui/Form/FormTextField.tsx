@@ -1,17 +1,19 @@
 import React from "react";
 import { TextInput, TextInputProps, TextStyle } from "react-native";
-import * as AppleColors from "@bacons/apple-colors";
-import { FormFont } from "../Form";
 import { mergedStyleProp } from "./utils";
+import { useAppTheme } from "@/theme";
+import { useFormFont } from "./fontHelpers";
 
 export function TextField({ ...props }: TextInputProps) {
+  const { colors } = useAppTheme();
+  const formFont = useFormFont();
   const font: TextStyle = {
-    ...FormFont.default,
+    ...formFont.default,
   };
 
   return (
     <TextInput
-      placeholderTextColor={AppleColors.placeholderText}
+      placeholderTextColor={colors.text.placeholder}
       {...props}
       style={mergedStyleProp(font, props.style)}
     />

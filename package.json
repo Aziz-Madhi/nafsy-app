@@ -15,12 +15,18 @@
     "prepare": "npx patch-package",
     "deploy:ios": "npx testflight",
     "deploy:web": "expo export -p web && npx eas-cli@latest deploy",
-    "test": "jest"
+    "test": "jest",
+    "test:e2e": "detox test",
+    "test:e2e:ios": "detox test --configuration ios.sim.debug",
+    "test:e2e:android": "detox test --configuration android.emu.debug",
+    "build:e2e:ios": "detox build --configuration ios.sim.debug",
+    "build:e2e:android": "detox build --configuration android.emu.debug"
   },
   "dependencies": {
     "@bacons/apple-colors": "^0.0.8",
     "@clerk/clerk-expo": "^2.14.2",
     "@clerk/clerk-react": "^5.32.4",
+    "@edge-runtime/vm": "^5.0.0",
     "@expo-google-fonts/source-code-pro": "^0.3.0",
     "@expo/vector-icons": "^14.1.0",
     "@react-native-async-storage/async-storage": "2.1.2",
@@ -29,9 +35,12 @@
     "@react-native-masked-view/masked-view": "0.3.2",
     "@react-native-segmented-control/segmented-control": "2.5.7",
     "@tanstack/react-query": "^5.81.5",
+    "@testing-library/react-native": "^13.2.0",
     "convex": "^1.25.2",
     "convex-helpers": "^0.1.96",
+    "convex-test": "^0.0.37",
     "date-fns": "^4.1.0",
+    "detox": "^20.40.0",
     "expo": "53.0.17",
     "expo-application": "~6.1.5",
     "expo-blur": "~14.1.5",
@@ -67,6 +76,7 @@
     "sonner": "^2.0.5",
     "sonner-native": "^0.21.0",
     "vaul": "^1.1.2",
+    "vitest": "^3.2.4",
     "zustand": "^5.0.6"
   },
   "devDependencies": {

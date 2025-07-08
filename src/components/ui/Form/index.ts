@@ -1,8 +1,16 @@
 // Form component exports
 // Modularized Form components
 
-// Re-export remaining components from the original file
-import * as OriginalForm from '../Form';
+import { FormText } from './FormText';
+import { FormToggle } from './FormToggle';
+import { FormItem } from './FormItem';
+import { Section, HStack, VStack, Spacer } from './FormSection';
+import { List } from './FormList';
+import { ScrollView } from './FormScrollView';
+import { TextField } from './FormTextField';
+import { DatePicker } from './FormDatePicker';
+import { Link } from './FormLink';
+import { FormFont } from './contexts';
 
 export { FormItem } from './FormItem';
 export { FormText } from './FormText';
@@ -11,33 +19,26 @@ export { DatePicker } from './FormDatePicker';
 export { TextField } from './FormTextField';
 export { Link } from './FormLink';
 export { Section, HStack, VStack, Spacer } from './FormSection';
+export { List, useListRefresh } from './FormList';
+export { ScrollView } from './FormScrollView';
 export * from './types';
 export { mergedStyleProp, getFlatChildren, isStringishNode } from './utils';
+export { ListStyleContext, SectionStyleContext, RefreshContext, FormFont, styles } from './contexts';
 
-export const List = OriginalForm.List;
-export const ScrollView = OriginalForm.ScrollView;
 export const Text = FormText;
 export const Toggle = FormToggle;
-export const FormFont = OriginalForm.FormFont;
-export const useListRefresh = OriginalForm.useListRefresh;
-
-// Context exports
-export const ListStyleContext = OriginalForm.ListStyleContext;
-export const SectionStyleContext = OriginalForm.SectionStyleContext;
-export const RefreshContext = OriginalForm.RefreshContext;
-export const styles = OriginalForm.styles;
 
 // Default export maintains compatibility
 const Form = {
-  List: OriginalForm.List,
-  ScrollView: OriginalForm.ScrollView,
+  List,
+  ScrollView,
   Section,
   Text: FormText,
   TextField,
   Toggle: FormToggle,
   DatePicker,
   Link,
-  FormFont: OriginalForm.FormFont,
+  FormFont,
   HStack,
   VStack,
   Spacer,

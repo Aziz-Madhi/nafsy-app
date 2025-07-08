@@ -1,5 +1,6 @@
 import { api } from "@/convex/_generated/api";
 import { buildRecentMessages } from "@/utils/chat";
+import { recordChatMetric } from "@/utils/metrics";
 import { useUser } from "@clerk/clerk-expo";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -165,16 +166,36 @@ export function useChatManager(chatMode: 'floating' | 'full' = 'full') {
       setMessageText(""); // Clear input immediately only if from traditional chat
     }
     
+    // Performance logging - start timing
+    const startTime = performance.now();
+    const performanceMetrics = {
+      messageLength: messageToSend.length,
+      contextSize: allMessages.length,
+      language: '',
+      chatMode: chatMode,
+      startTime,
+      endTime: 0,
+      totalDuration: 0,
+      languageDetectionTime: 0,
+      contextBuildingTime: 0,
+      sendMessageTime: 0,
+      error: null as string | null,
+    };
+    
     try {
       // Show typing indicator immediately when user sends message
       setIsTyping(true);
 
-      // Detect language from user input
+      // Detect language from user input - with timing
+      const langDetectionStart = performance.now();
       const detectedLanguage = detectLanguage(messageToSend);
+      performanceMetrics.languageDetectionTime = performance.now() - langDetectionStart;
+      performanceMetrics.language = detectedLanguage;
 
-      // Prepare context for optimized sendMessage
-      // Include the new message itself so that the server/LLM sees it immediately
+      // Prepare context for optimized sendMessage - with timing
+      const contextBuildingStart = performance.now();
       const recentMessages = buildRecentMessages(allMessages, messageToSend);
+      performanceMetrics.contextBuildingTime = performance.now() - contextBuildingStart;
 
       const userInfo = {
         name: testQuery.name,
@@ -182,7 +203,8 @@ export function useChatManager(chatMode: 'floating' | 'full' = 'full') {
         preferences: testQuery.preferences,
       };
 
-      // Send the message with detected language and chat mode
+      // Send the message with detected language and chat mode - with timing
+      const sendMessageStart = performance.now();
       await sendMessage({
         conversationId: activeConversation._id,
         userId: testQuery._id,
@@ -192,6 +214,7 @@ export function useChatManager(chatMode: 'floating' | 'full' = 'full') {
         recentMessages,
         userInfo,
       });
+      performanceMetrics.sendMessageTime = performance.now() - sendMessageStart;
 
       // Hide typing indicator after message is processed
       setIsTyping(false);
@@ -199,8 +222,55 @@ export function useChatManager(chatMode: 'floating' | 'full' = 'full') {
       // QuickReply generation disabled for now
     } catch (error) {
       console.error('Error sending message:', error);
+      performanceMetrics.error = error instanceof Error ? error.message : 'Unknown error';
       setIsTyping(false);
       Alert.alert('Error', 'Failed to send message');
+    } finally {
+      // Performance logging - end timing and log metrics
+      performanceMetrics.endTime = performance.now();
+      performanceMetrics.totalDuration = performanceMetrics.endTime - performanceMetrics.startTime;
+      
+      // Record comprehensive metrics
+      recordChatMetric({
+        messageLength: performanceMetrics.messageLength,
+        language: performanceMetrics.language as 'en' | 'ar',
+        chatMode: performanceMetrics.chatMode as 'floating' | 'full',
+        contextSize: performanceMetrics.contextSize,
+        hasRecentMessages: true, // Always true since we build recent messages
+        hasUserInfo: !!testQuery,
+        totalDuration: performanceMetrics.totalDuration,
+        languageDetectionTime: performanceMetrics.languageDetectionTime,
+        contextBuildingTime: performanceMetrics.contextBuildingTime,
+        sendMessageTime: performanceMetrics.sendMessageTime,
+        crisisDetected: false, // Will be updated if crisis is detected
+        error: performanceMetrics.error || undefined,
+        errorType: performanceMetrics.error ? 'unknown' : undefined,
+        userId: testQuery?._id,
+        conversationId: activeConversation?._id,
+      });
+      
+      // Log performance metrics for monitoring
+      console.log('Chat Performance Metrics:', {
+        messageLength: performanceMetrics.messageLength,
+        contextSize: performanceMetrics.contextSize,
+        language: performanceMetrics.language,
+        chatMode: performanceMetrics.chatMode,
+        totalDuration: `${performanceMetrics.totalDuration.toFixed(2)}ms`,
+        languageDetectionTime: `${performanceMetrics.languageDetectionTime.toFixed(2)}ms`,
+        contextBuildingTime: `${performanceMetrics.contextBuildingTime.toFixed(2)}ms`,
+        sendMessageTime: `${performanceMetrics.sendMessageTime.toFixed(2)}ms`,
+        error: performanceMetrics.error,
+        timestamp: new Date().toISOString(),
+      });
+      
+      // Log warning if performance is slow
+      if (performanceMetrics.totalDuration > 5000) {
+        console.warn('Slow chat performance detected:', {
+          totalDuration: `${performanceMetrics.totalDuration.toFixed(2)}ms`,
+          messageLength: performanceMetrics.messageLength,
+          contextSize: performanceMetrics.contextSize,
+        });
+      }
     }
   }, [messageText, activeConversation, testQuery, allMessages, sendMessage, chatMode, detectLanguage]);
 

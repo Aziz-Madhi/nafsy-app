@@ -1,6 +1,5 @@
 import { Link, Stack } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
-import * as AC from "@bacons/apple-colors";
 
 export default function NotFoundScreen() {
   return (
@@ -22,12 +21,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 20,
-    backgroundColor: AC.systemBackground,
+    backgroundColor: "#FFFFFF",
   },
   title: {
     fontSize: 20,
     fontWeight: "bold",
-    color: AC.label,
+    color: "#000000",
   },
   link: {
     marginTop: 15,
@@ -35,6 +34,6 @@ const styles = StyleSheet.create({
   },
   linkText: {
     fontSize: 14,
-    color: AC.systemBlue,
+    color: "#007AFF",
   },
 });

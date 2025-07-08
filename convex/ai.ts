@@ -850,73 +850,213 @@ export const detectCrisis = action({
       throw new Error("OpenAI API key not configured");
     }
 
-    // Crisis detection keywords for immediate flagging
+    // Enhanced crisis detection keywords with severity scoring
     const crisisKeywords = {
       en: {
         critical: [
+          // Direct self-harm and suicide threats
           'kill myself', 'suicide', 'suicidal', 'end my life', 'want to die',
           'better off dead', 'no reason to live', 'can\'t go on', 'end it all',
-          'harm myself', 'self harm', 'cutting myself', 'overdose'
+          'harm myself', 'self harm', 'cutting myself', 'overdose', 'take my life',
+          'not worth living', 'ready to die', 'planning to die', 'goodbye forever',
+          'final message', 'last words', 'won\'t be here tomorrow', 'pills to end it',
+          // Self-harm methods
+          'razor blade', 'jump off', 'hang myself', 'rope around neck', 'gas in car',
+          'sleeping pills', 'bridge jump', 'train tracks', 'gun to head',
+          // Immediate danger phrases
+          'doing it tonight', 'can\'t wait anymore', 'this is it', 'final decision',
+          'made my choice', 'peace at last', 'time to go', 'had enough'
         ],
         high: [
+          // Severe hopelessness and despair
           'hopeless', 'worthless', 'no point', 'give up', 'can\'t take it',
           'unbearable', 'too much pain', 'nobody cares', 'all alone',
-          'panic attack', 'can\'t breathe', 'dying', 'heart attack'
+          'meaningless life', 'waste of space', 'burden to everyone',
+          'failed at everything', 'nothing left', 'empty inside',
+          // Physical crisis symptoms
+          'panic attack', 'can\'t breathe', 'dying', 'heart attack', 'chest pain',
+          'hyperventilating', 'losing consciousness', 'going crazy',
+          'out of control', 'can\'t stop shaking', 'vision blurry',
+          // Severe emotional distress
+          'completely broken', 'destroyed inside', 'can\'t function',
+          'lost my mind', 'going insane', 'mental breakdown',
+          'psychotic episode', 'hearing voices', 'seeing things',
+          // Isolation and abandonment
+          'no one understands', 'completely alone', 'abandoned by all',
+          'no friends left', 'family hates me', 'everyone left me'
         ],
         medium: [
+          // Depression and anxiety indicators
           'depressed', 'anxious', 'scared', 'overwhelmed', 'breaking down',
-          'falling apart', 'can\'t cope', 'losing control', 'desperate'
+          'falling apart', 'can\'t cope', 'losing control', 'desperate',
+          'struggling daily', 'hard to breathe', 'constant worry',
+          'sleepless nights', 'no energy', 'feel numb', 'emotionally drained',
+          // Stress and pressure
+          'under pressure', 'too much stress', 'can\'t handle', 'burning out',
+          'at breaking point', 'need help', 'don\'t know what to do',
+          'losing hope', 'giving up hope', 'things getting worse',
+          // Relationship and social issues
+          'relationship problems', 'family issues', 'work stress',
+          'financial problems', 'health concerns', 'feeling stuck',
+          'no direction', 'lost and confused', 'need support'
         ]
       },
       ar: {
         critical: [
+          // Direct self-harm and suicide threats
           'انتحر', 'اقتل نفسي', 'انهي حياتي', 'اموت', 'الموت',
-          'لا أريد العيش', 'لا فائدة من الحياة', 'أؤذي نفسي'
+          'لا أريد العيش', 'لا فائدة من الحياة', 'أؤذي نفسي',
+          'أقتل نفسي', 'أنهي حياتي', 'أريد الموت', 'الحياة لا تستحق',
+          'وداعاً للأبد', 'رسالة أخيرة', 'كلمات أخيرة', 'لن أكون هنا غداً',
+          'حبوب لإنهاء الأمر', 'قررت الانتحار', 'هذا هو الوقت',
+          // Self-harm methods in Arabic
+          'شفرة حلاقة', 'أقفز من', 'أشنق نفسي', 'حبل حول رقبتي',
+          'غاز في السيارة', 'حبوب منومة', 'قفز من الجسر', 'خطوط القطار',
+          'مسدس في رأسي', 'سكين في قلبي',
+          // Immediate danger phrases
+          'سأفعلها الليلة', 'لا أستطيع الانتظار', 'هذا هو الأمر',
+          'قرار نهائي', 'اتخذت قراري', 'السلام أخيراً', 'وقت الذهاب',
+          'لقد سئمت', 'انتهيت من كل شيء'
         ],
         high: [
+          // Severe hopelessness and despair
           'يائس', 'لا أمل', 'لا قيمة', 'لا فائدة', 'لا أستطيع',
           'لا أتحمل', 'ألم شديد', 'لا أحد يهتم', 'وحيد',
-          'نوبة هلع', 'لا أستطيع التنفس', 'أموت'
+          'حياة لا معنى لها', 'مضيعة مساحة', 'عبء على الجميع',
+          'فشلت في كل شيء', 'لا شيء متبقي', 'فارغ من الداخل',
+          // Physical crisis symptoms
+          'نوبة هلع', 'لا أستطيع التنفس', 'أموت', 'نوبة قلبية',
+          'ألم في الصدر', 'أتنفس بصعوبة', 'أفقد الوعي', 'أصبح مجنوناً',
+          'خارج السيطرة', 'لا أستطيع التوقف عن الاهتزاز', 'رؤية ضبابية',
+          // Severe emotional distress
+          'منكسر تماماً', 'مدمر من الداخل', 'لا أستطيع العمل',
+          'فقدت عقلي', 'أصبح مجنوناً', 'انهيار عصبي',
+          'نوبة ذهانية', 'أسمع أصواتاً', 'أرى أشياء',
+          // Isolation and abandonment
+          'لا أحد يفهم', 'وحيد تماماً', 'هجرني الجميع',
+          'لا أصدقاء متبقين', 'عائلتي تكرهني', 'الجميع تركني'
         ],
         medium: [
+          // Depression and anxiety indicators
           'مكتئب', 'قلق', 'خائف', 'مرهق', 'انهار',
-          'أتفكك', 'لا أستطيع التأقلم', 'أفقد السيطرة'
+          'أتفكك', 'لا أستطيع التأقلم', 'أفقد السيطرة', 'يائس',
+          'أكافح يومياً', 'صعب في التنفس', 'قلق مستمر',
+          'ليالي بلا نوم', 'لا طاقة', 'أشعر بالخدر', 'منهك عاطفياً',
+          // Stress and pressure
+          'تحت ضغط', 'ضغط كبير', 'لا أستطيع التعامل', 'أحترق',
+          'في نقطة الانهيار', 'أحتاج مساعدة', 'لا أعرف ماذا أفعل',
+          'أفقد الأمل', 'أستسلم للأمل', 'الأمور تزداد سوءاً',
+          // Relationship and social issues
+          'مشاكل في العلاقة', 'مشاكل عائلية', 'ضغط العمل',
+          'مشاكل مالية', 'مخاوف صحية', 'أشعر بالعجز',
+          'لا اتجاه', 'ضائع ومرتبك', 'أحتاج دعماً'
         ]
       }
     };
 
-    // Quick keyword check for immediate response
+    // Enhanced keyword detection with severity scoring
     const messageLower = args.message.toLowerCase();
     const keywords = crisisKeywords[args.language as keyof typeof crisisKeywords] || crisisKeywords.en;
     
+    // Severity scoring system
+    const severityScores = {
+      critical: 100,
+      high: 50,
+      medium: 10,
+      low: 1
+    };
+    
+    let totalScore = 0;
     let immediateSeverity: "low" | "medium" | "high" | "critical" = "low";
     const foundIndicators: string[] = [];
     
-    // Check for crisis keywords
+    // Check for critical keywords (any critical keyword triggers critical severity)
     for (const keyword of keywords.critical) {
       if (messageLower.includes(keyword)) {
         immediateSeverity = "critical";
         foundIndicators.push(keyword);
+        totalScore += severityScores.critical;
       }
     }
     
+    // Check for high severity keywords
+    for (const keyword of keywords.high) {
+      if (messageLower.includes(keyword)) {
+        foundIndicators.push(keyword);
+        totalScore += severityScores.high;
+      }
+    }
+    
+    // Check for medium severity keywords
+    for (const keyword of keywords.medium) {
+      if (messageLower.includes(keyword)) {
+        foundIndicators.push(keyword);
+        totalScore += severityScores.medium;
+      }
+    }
+    
+    // Calculate final severity based on total score if not already critical
     if (immediateSeverity !== "critical") {
-      for (const keyword of keywords.high) {
-        if (messageLower.includes(keyword)) {
-          immediateSeverity = "high";
-          foundIndicators.push(keyword);
-        }
+      if (totalScore >= 100) {
+        immediateSeverity = "critical";
+      } else if (totalScore >= 50) {
+        immediateSeverity = "high";
+      } else if (totalScore >= 10) {
+        immediateSeverity = "medium";
+      } else {
+        immediateSeverity = "low";
       }
     }
     
-    if (immediateSeverity === "low") {
-      for (const keyword of keywords.medium) {
-        if (messageLower.includes(keyword)) {
-          immediateSeverity = "medium";
-          foundIndicators.push(keyword);
-        }
+    // Language-specific contextual analysis for severity escalation
+    const contextualFactors = args.language === "ar" ? {
+      // Arabic time references
+      hasTimeReference: /\b(الليلة|اليوم|الآن|قريباً|غداً|هذا الأسبوع|هذه الليلة|الليلة|اليوم|فوراً|حالاً|الآن|سريعاً)\b/i.test(args.message),
+      // Arabic method references
+      hasMethodReference: /\b(حبوب|حبل|شفرة|أقفز|قفز|مسدس|سكين|جسر|قطار|غاز|أشنق|أقتل|أطعن|أرمي)\b/i.test(args.message),
+      // Arabic isolation indicators
+      hasIsolationIndicators: /\b(وحيد|لا أحد|لا يوجد أحد|معزول|مهجور|متروك|وحدي|بمفردي|لا أصدقاء|لا عائلة)\b/i.test(args.message),
+      // Arabic hopelessness indicators
+      hasHopelessnessIndicators: /\b(يائس|لا أمل|لا قيمة|لا معنى|لا فائدة|عديم الفائدة|بلا قيمة|بلا معنى|لا جدوى)\b/i.test(args.message),
+      // Arabic emotional intensity indicators
+      hasEmotionalIntensity: /\b(لا أستطيع|لا أقدر|لن أستطيع|لا أريد|لا أعود|أبداً|دائماً|كل شيء|لا شيء|كل|كله|جميع)\b/i.test(args.message),
+      // Arabic religious/cultural distress indicators
+      hasReligiousCulturalDistress: /\b(الله لا يريدني|لعنة|معاقب|مذنب|حرام|عار|خجل|فضيحة|عيب|حقير|مرفوض)\b/i.test(args.message),
+      // Arabic family/honor related distress
+      hasFamilyHonorDistress: /\b(عار العائلة|خجل الأهل|فضيحة الأسرة|سمعة العائلة|شرف العائلة|خذلت أهلي|أهانت عائلتي)\b/i.test(args.message)
+    } : {
+      // English contextual factors
+      hasTimeReference: /\b(tonight|today|now|soon|tomorrow|this week|right now|immediately|shortly|very soon)\b/i.test(args.message),
+      hasMethodReference: /\b(pills|rope|blade|jump|gun|knife|bridge|train|gas|hang|kill|stab|throw|overdose)\b/i.test(args.message),
+      hasIsolationIndicators: /\b(alone|nobody|no one|isolated|abandoned|lonely|by myself|no friends|no family)\b/i.test(args.message),
+      hasHopelessnessIndicators: /\b(hopeless|worthless|pointless|meaningless|useless|no hope|no point|no meaning|no purpose)\b/i.test(args.message),
+      hasEmotionalIntensity: /\b(can't|couldn't|won't|don't|never|always|everything|nothing|all|every|completely|totally)\b/i.test(args.message),
+      hasReligiousCulturalDistress: /\b(god hates me|cursed|punishment|sinful|shame|disgrace|dishonor|rejected|condemned)\b/i.test(args.message),
+      hasFamilyHonorDistress: /\b(family shame|disappointed family|dishonored family|failed parents|let down family|embarrassed family)\b/i.test(args.message)
+    };
+    
+    // Escalate severity based on contextual factors
+    const contextScore = Object.values(contextualFactors).filter(Boolean).length;
+    if (contextScore >= 3 && immediateSeverity !== "critical") {
+      if (immediateSeverity === "high") {
+        immediateSeverity = "critical";
+      } else if (immediateSeverity === "medium") {
+        immediateSeverity = "high";
+      } else if (immediateSeverity === "low") {
+        immediateSeverity = "medium";
       }
     }
+    
+    // Add cultural context indicators to found indicators
+    const culturalContext = [];
+    if (args.language === "ar") {
+      if (contextualFactors.hasReligiousCulturalDistress) culturalContext.push("Religious/Cultural Distress");
+      if (contextualFactors.hasFamilyHonorDistress) culturalContext.push("Family/Honor Related Distress");
+    } else {
+      if (contextualFactors.hasReligiousCulturalDistress) culturalContext.push("Religious/Cultural Distress");
+      if (contextualFactors.hasFamilyHonorDistress) culturalContext.push("Family/Honor Related Distress");
+    }
+    foundIndicators.push(...culturalContext);
 
     // Use AI for more nuanced analysis
     const systemPrompt = args.language === "ar"

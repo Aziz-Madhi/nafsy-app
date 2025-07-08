@@ -1,7 +1,6 @@
 import { Image } from "@/components/ui/img";
 import { api } from "@/convex/_generated/api";
 import { useTranslation } from "@/hooks/useLocale";
-import * as AC from "@bacons/apple-colors";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { Redirect, Tabs } from "expo-router";
@@ -96,11 +95,11 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: AC.systemBlue as unknown as string,
-        tabBarInactiveTintColor: AC.secondaryLabel as unknown as string,
+        tabBarActiveTintColor: "#007AFF" as unknown as string,
+        tabBarInactiveTintColor: "#8E8E93" as unknown as string,
         tabBarStyle: {
-          backgroundColor: AC.secondarySystemBackground,
-          borderTopColor: AC.separator,
+          backgroundColor: "#F2F2F7",
+          borderTopColor: "#C6C6C8",
         },
         headerShown: false,
         tabBarShowLabel: Platform.OS === "web",

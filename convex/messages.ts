@@ -260,25 +260,47 @@ export const sendMessage = action({
     })),
   },
   handler: async (ctx, args): Promise<void> => {
-    // First, add the user's message
-    await ctx.runMutation(api.messages.addMessage, {
-      conversationId: args.conversationId,
-      userId: args.userId,
-      role: "user",
-      content: args.content,
-      metadata: { language: args.language },
-    });
+    // Performance logging - start timing
+    const startTime = Date.now();
+    const performanceMetrics = {
+      messageLength: args.content.length,
+      language: args.language,
+      chatMode: args.chatMode || 'full',
+      hasRecentMessages: !!args.recentMessages,
+      hasUserInfo: !!args.userInfo,
+      contextSize: args.recentMessages?.length || 0,
+      startTime,
+      userMessageTime: 0,
+      crisisDetectionTime: 0,
+      aiResponseTime: 0,
+      totalTime: 0,
+      error: null as string | null,
+    };
 
-    // Enhanced crisis detection with AI
-    const detectedLanguage = detectMessageLanguage(args.content);
-    
-    // Use comprehensive AI-powered crisis detection
-    const crisisAnalysis = await ctx.runAction(api.ai.detectCrisis, {
-      message: args.content,
-      language: detectedLanguage,
-      userId: args.userId,
-      conversationId: args.conversationId,
-    });
+    try {
+      // First, add the user's message - with timing
+      const userMessageStart = Date.now();
+      await ctx.runMutation(api.messages.addMessage, {
+        conversationId: args.conversationId,
+        userId: args.userId,
+        role: "user",
+        content: args.content,
+        metadata: { language: args.language },
+      });
+      performanceMetrics.userMessageTime = Date.now() - userMessageStart;
+
+      // Enhanced crisis detection with AI - with timing
+      const crisisDetectionStart = Date.now();
+      const detectedLanguage = detectMessageLanguage(args.content);
+      
+      // Use comprehensive AI-powered crisis detection
+      const crisisAnalysis = await ctx.runAction(api.ai.detectCrisis, {
+        message: args.content,
+        language: detectedLanguage,
+        userId: args.userId,
+        conversationId: args.conversationId,
+      });
+      performanceMetrics.crisisDetectionTime = Date.now() - crisisDetectionStart;
 
     if (crisisAnalysis.isCrisis) {
       // Build emergency response based on severity
@@ -353,41 +375,76 @@ export const sendMessage = action({
 
     const user = args.userInfo;
 
-    // Route to appropriate AI action based on chat mode
-    const chatMode = args.chatMode || 'full'; // Default to full mode
-    let aiResponse: any;
+      // Route to appropriate AI action based on chat mode - with timing
+      const aiResponseStart = Date.now();
+      const chatMode = args.chatMode || 'full'; // Default to full mode
+      let aiResponse: any;
 
-    if (chatMode === 'floating') {
-      // Use floating chat AI for brief, conversational responses
-      aiResponse = await ctx.runAction(api.ai.generateFloatingResponse, {
-        messages: formattedMessages,
-        userInfo: user,
-        language: detectedLanguage,
+      if (chatMode === 'floating') {
+        // Use floating chat AI for brief, conversational responses
+        aiResponse = await ctx.runAction(api.ai.generateFloatingResponse, {
+          messages: formattedMessages,
+          userInfo: user,
+          language: detectedLanguage,
+        });
+      } else {
+        // Use full chat AI for detailed responses
+        aiResponse = await ctx.runAction(api.ai.generateResponse, {
+          messages: formattedMessages,
+          userInfo: user,
+          language: detectedLanguage,
+        });
+      }
+      performanceMetrics.aiResponseTime = Date.now() - aiResponseStart;
+
+      // Add AI response to conversation with chunks if available
+      await ctx.runMutation(api.messages.addMessage, {
+        conversationId: args.conversationId,
+        userId: args.userId,
+        role: "assistant",
+        content: aiResponse.content,
+        sentiment: aiResponse.sentiment,
+        metadata: { 
+          language: detectedLanguage,
+          chatMode,
+          chunks: aiResponse.chunks || undefined, // Store chunks for floating mode
+        },
       });
-    } else {
-      // Use full chat AI for detailed responses
-      aiResponse = await ctx.runAction(api.ai.generateResponse, {
-        messages: formattedMessages,
-        userInfo: user,
-        language: detectedLanguage,
+
+    } catch (error) {
+      performanceMetrics.error = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error in sendMessage:', error);
+      throw error;
+    } finally {
+      // Performance logging - end timing and log metrics
+      performanceMetrics.totalTime = Date.now() - performanceMetrics.startTime;
+      
+      // Log performance metrics for monitoring
+      console.log('Backend sendMessage Performance Metrics:', {
+        messageLength: performanceMetrics.messageLength,
+        language: performanceMetrics.language,
+        chatMode: performanceMetrics.chatMode,
+        hasRecentMessages: performanceMetrics.hasRecentMessages,
+        hasUserInfo: performanceMetrics.hasUserInfo,
+        contextSize: performanceMetrics.contextSize,
+        userMessageTime: `${performanceMetrics.userMessageTime}ms`,
+        crisisDetectionTime: `${performanceMetrics.crisisDetectionTime}ms`,
+        aiResponseTime: `${performanceMetrics.aiResponseTime}ms`,
+        totalTime: `${performanceMetrics.totalTime}ms`,
+        error: performanceMetrics.error,
+        timestamp: new Date().toISOString(),
       });
+      
+      // Log warning if performance is slow
+      if (performanceMetrics.totalTime > 10000) {
+        console.warn('Slow backend performance detected:', {
+          totalTime: `${performanceMetrics.totalTime}ms`,
+          messageLength: performanceMetrics.messageLength,
+          contextSize: performanceMetrics.contextSize,
+          chatMode: performanceMetrics.chatMode,
+        });
+      }
     }
-
-    // Add AI response to conversation with chunks if available
-    await ctx.runMutation(api.messages.addMessage, {
-      conversationId: args.conversationId,
-      userId: args.userId,
-      role: "assistant",
-      content: aiResponse.content,
-      sentiment: aiResponse.sentiment,
-      metadata: { 
-        language: detectedLanguage,
-        chatMode,
-        chunks: aiResponse.chunks || undefined, // Store chunks for floating mode
-      },
-    });
-
-    return aiResponse;
   },
 });
 

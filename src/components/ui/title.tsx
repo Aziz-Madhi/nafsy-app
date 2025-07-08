@@ -1,5 +1,4 @@
 import { OpaqueColorValue, Text, TextProps } from "react-native";
-import * as AC from "@bacons/apple-colors";
 import * as Fonts from "@/constants/fonts";
 
 // Type for common props
@@ -103,7 +102,7 @@ function createTypographyComponent(
               : monospaced
               ? Fonts.monospaced
               : Fonts.system,
-            color: color ?? AC.label,
+            color: color ?? "#000000",
             ...styleConfig,
           },
           props.style,

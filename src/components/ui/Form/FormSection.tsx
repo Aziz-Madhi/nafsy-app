@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import Animated from "react-native-reanimated";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import * as AppleColors from "@bacons/apple-colors";
+import { useAppTheme } from "@/theme";
 import { Link as RouterLink } from "expo-router";
 import { Switch } from "@/components/ui/Switch";
 import { IconSymbol, IconSymbolName } from "@/components/ui/IconSymbol";
@@ -22,9 +22,10 @@ import { TextField } from "./FormTextField";
 import { DatePicker } from "./FormDatePicker";
 import { Toggle } from "./FormToggle";
 import { Link } from "./FormLink";
-import { FormFont, styles, ListStyleContext, SectionStyleContext } from "../Form";
+import { ListStyleContext, SectionStyleContext, FormFont, styles } from "./contexts";
 import { mergedStyleProp, isStringishNode, getFlatChildren } from "./utils";
 import { SystemImageProps, SystemImageCustomProps } from "./types";
+import { useFormFont } from "./fontHelpers";
 
 const minItemHeight = 20;
 
@@ -43,6 +44,8 @@ export function Section({
   itemStyle,
   ...props
 }: FormSectionProps) {
+  const { colors } = useAppTheme();
+  const formFont = useFormFont();
   const listStyle = React.use(ListStyleContext) ?? "auto";
 
   const allChildren = getFlatChildren(children);
@@ -95,10 +98,10 @@ export function Section({
       resolvedProps.hint ??= resolvedProps.hintBoolean ? (
         <Image
           source="sf:checkmark.circle.fill"
-          tintColor={AppleColors.systemGreen}
+          tintColor={colors.system.success}
         />
       ) : (
-        <Image source="sf:slash.circle" tintColor={AppleColors.systemGray} />
+        <Image source="sf:slash.circle" tintColor={colors.text.secondary} />
       );
     }
 
@@ -111,7 +114,7 @@ export function Section({
 
       delete resolvedProps.title;
       resolvedProps.style = mergedStyleProp(
-        { color: color ?? AppleColors.link },
+        { color: color ?? colors.interactive.primary },
         resolvedProps.style
       );
       child = <RNText {...resolvedProps}>{title}</RNText>;
@@ -169,6 +172,7 @@ export function Section({
             <SymbolView
               systemImage={resolvedProps.systemImage}
               style={resolvedProps.style}
+              colors={colors}
             />
             {child}
             {hintView ? <Spacer /> : null}
@@ -242,6 +246,7 @@ export function Section({
               <SymbolView
                 systemImage={resolvedProps.systemImage}
                 style={resolvedProps.style}
+                colors={colors}
               />
               {wrappedTextChildren}
               <Spacer />
@@ -250,6 +255,7 @@ export function Section({
                 <LinkChevronIcon
                   href={resolvedProps.href}
                   systemImage={resolvedProps.hintImage}
+                  colors={colors}
                 />
               </View>
             </HStack>
@@ -265,12 +271,12 @@ export function Section({
           style={{ paddingVertical: 0, paddingHorizontal: 0 }}
         >
           {React.cloneElement(child, {
-            placeholderTextColor: AppleColors.placeholderText,
+            placeholderTextColor: colors.text.placeholder,
             ...resolvedProps,
             onPress: undefined,
             onLongPress: undefined,
             style: mergedStyleProp(
-              FormFont.default,
+              formFont.default,
               {
                 outline: "none",
                 // outlineWidth: 1,
@@ -382,7 +388,7 @@ export function Section({
             dynamicTypeRamp="footnote"
             style={{
               textTransform: "uppercase",
-              color: AppleColors.secondaryLabel,
+              color: colors.text.secondary,
               paddingVertical: 8,
               fontSize: 14,
               // use Apple condensed font
@@ -399,7 +405,7 @@ export function Section({
       {footer ? <RNText
           dynamicTypeRamp="footnote"
           style={{
-            color: AppleColors.secondaryLabel,
+            color: colors.text.secondary,
             paddingHorizontal: 20,
             paddingTop: 8,
             fontSize: 14,
@@ -414,9 +420,11 @@ export function Section({
 function SymbolView({
   systemImage,
   style,
+  colors,
 }: {
   systemImage?: SystemImageProps | React.ReactNode;
   style?: StyleProp<TextStyle>;
+  colors: any;
 }) {
   if (!systemImage) {
     return null;
@@ -443,7 +451,7 @@ function SymbolView({
       size={symbolProps.size ?? 20}
       style={[{ marginRight: 8 }, symbolProps.style]}
       weight={symbolProps.weight}
-      color={color ?? AppleColors.label}
+      color={color ?? colors.text.primary}
     />
   );
 }
@@ -451,9 +459,11 @@ function SymbolView({
 function LinkChevronIcon({
   href,
   systemImage,
+  colors,
 }: {
   href?: any;
   systemImage?: SystemImageProps | React.ReactNode;
+  colors: any;
 }) {
   const isHrefExternal =
     typeof href === "string" && /^([\w\d_+.-]+:)?\/\//.test(href);
@@ -469,7 +479,7 @@ function LinkChevronIcon({
         <IconSymbol
           name={systemImage.name}
           size={systemImage.size ?? size}
-          color={systemImage.color ?? AppleColors.tertiaryLabel}
+          color={systemImage.color ?? colors.text.tertiary}
         />
       );
     }
@@ -490,7 +500,7 @@ function LinkChevronIcon({
       // from xcode, not sure which color is the exact match
       // #BFBFBF
       // #9D9DA0
-      tintColor={AppleColors.tertiaryLabel}
+      tintColor={colors.text.tertiary}
     />
   );
 }

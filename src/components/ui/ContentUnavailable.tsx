@@ -2,7 +2,6 @@
 
 import { View, Text } from "react-native";
 import { IconSymbol, IconSymbolName } from "./IconSymbol";
-import * as AC from "@bacons/apple-colors";
 
 type Props = {
   title: string;
@@ -68,7 +67,7 @@ export function ContentUnavailable({
           animationSpec={animationSpec}
           name={resolvedSystemImage as any}
           size={48}
-          color={AC.systemGray}
+          color="#8E8E93"
         />
       ) : (
         resolvedSystemImage
@@ -84,7 +83,7 @@ export function ContentUnavailable({
         <Text
           dynamicTypeRamp="title1"
           style={{
-            color: AC.label,
+            color: "#000000",
             textAlign: "center",
             fontWeight: "bold",
             fontSize: 17,
@@ -95,7 +94,7 @@ export function ContentUnavailable({
         {resolvedDescription ? <Text
             dynamicTypeRamp="body"
             style={{
-              color: AC.secondaryLabel,
+              color: "#8E8E93",
               fontSize: 16,
               textAlign: "center",
             }}

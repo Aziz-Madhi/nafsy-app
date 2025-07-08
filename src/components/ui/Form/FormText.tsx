@@ -1,47 +1,36 @@
-import React from 'react';
-import { Text, StyleSheet } from 'react-native';
-import { useAppTheme } from '@/theme';
+import React from "react";
+import { Text as RNText, TextProps, TextStyle } from "react-native";
+import { useFormFont } from "./fontHelpers";
+import { mergedStyleProp } from "./utils";
 
-interface FormTextProps {
-  children: React.ReactNode;
+export type FormTextProps = TextProps & {
+  /** Value displayed on the right side of the form item. */
+  hint?: React.ReactNode;
+  /** A true/false value for the hint. */
+  hintBoolean?: React.ReactNode;
+  /** Adds a prefix SF Symbol image to the left of the text */
+  systemImage?: any;
+  
   bold?: boolean;
-  style?: any;
-  numberOfLines?: number;
-}
+};
 
 /**
  * Modular FormText component extracted from Form.tsx
- * This demonstrates the theme-aware text styling approach
+ * Compatible with existing Form usage patterns - Text but with iOS default color and sizes.
  */
-export function FormText({ 
-  bold = false, 
-  children, 
-  style,
-  ...props 
-}: FormTextProps) {
-  const { theme } = useAppTheme();
+export function FormText({ bold, ...props }: FormTextProps) {
+  const formFont = useFormFont();
+  const font: TextStyle = {
+    ...formFont.default,
+    flexShrink: 0,
+    fontWeight: bold ? "600" : "normal",
+  };
 
   return (
-    <Text
-      style={[
-        styles.text,
-        { color: theme.colors.text.primary },
-        bold && styles.bold,
-        style
-      ]}
+    <RNText
+      dynamicTypeRamp="body"
       {...props}
-    >
-      {children}
-    </Text>
+      style={mergedStyleProp(font, props.style)}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  text: {
-    fontSize: 16,
-    lineHeight: 22,
-  },
-  bold: {
-    fontWeight: '600',
-  },
-});

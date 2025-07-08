@@ -18,8 +18,11 @@ export type FormDatePickerProps = FormTextProps &
     accentColor?: OpaqueColorValue | string;
   };
 
-export function DatePicker({ ...props }: FormDatePickerProps) {
-  return <FormText {...props} />;
+export function DatePicker({ children, ...props }: FormDatePickerProps) {
+  // The DatePicker component is designed to work within Form.Section
+  // The actual DateTimePicker is handled by the Section component automatically
+  // This component just renders the label text
+  return <>{children}</>;
 }
 
 if (__DEV__) DatePicker.displayName = "FormDatePicker";

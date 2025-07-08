@@ -1,76 +1,38 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { SwitchProps, TextProps } from 'react-native';
 import { Switch } from '@/components/ui/Switch';
-import { useAppTheme } from '@/theme';
 
-interface FormToggleProps {
-  label: string;
+interface FormToggleProps extends TextProps {
   value: boolean;
   onValueChange: (value: boolean) => void;
   disabled?: boolean;
-  description?: string;
+  children: React.ReactNode;
 }
 
 /**
  * Modular FormToggle component extracted from Form.tsx
- * This demonstrates the theme-aware toggle styling approach
+ * Compatible with existing Form usage patterns
  */
 export function FormToggle({ 
-  label, 
   value, 
   onValueChange, 
   disabled = false,
-  description,
+  children,
+  ...textProps
 }: FormToggleProps) {
-  const { theme } = useAppTheme();
-
-  return (
-    <View style={[
-      styles.container,
-      { backgroundColor: theme.colors.background.secondary }
-    ]}>
-      <View style={styles.content}>
-        <Text style={[
-          styles.label,
-          { color: theme.colors.text.primary },
-          disabled && { color: theme.colors.text.tertiary }
-        ]}>
-          {label}
-        </Text>
-        {description ? <Text style={[
-            styles.description,
-            { color: theme.colors.text.secondary }
-          ]}>
-            {description}
-          </Text> : null}
-      </View>
-      <Switch
-        value={value}
-        onValueChange={onValueChange}
-        disabled={disabled}
-      />
-    </View>
-  );
+  // The Toggle component is designed to work within Form.Section
+  // The Switch is handled by the Section component automatically
+  // This component just renders the label text
+  return <>{children}</>;
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    minHeight: 44,
-  },
-  content: {
-    flex: 1,
-    marginRight: 12,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '400',
-  },
-  description: {
-    fontSize: 14,
-    marginTop: 2,
-  },
-});
+// For standalone usage
+export function Toggle({ 
+  value, 
+  onValueChange, 
+  disabled = false,
+  children,
+  ...textProps
+}: FormToggleProps) {
+  return <FormToggle value={value} onValueChange={onValueChange} disabled={disabled} {...textProps}>{children}</FormToggle>;
+}
