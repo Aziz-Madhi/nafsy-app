@@ -94,6 +94,55 @@ export const formatDuration = (seconds: number, locale: Locale = 'en'): string =
   }
 };
 
+/**
+ * Parse a duration string (e.g., "5 min", "3 min", "1h 30m") to seconds
+ */
+export const parseDurationToSeconds = (durationStr: string | number): number => {
+  // If it's already a number, return it
+  if (typeof durationStr === 'number') {
+    return durationStr;
+  }
+  
+  // If it's a string, parse it
+  if (typeof durationStr === 'string') {
+    const str = durationStr.toLowerCase().trim();
+    
+    // Common patterns: "5 min", "3 min", "10 min", "1h 30m", "30s", etc.
+    let totalSeconds = 0;
+    
+    // Match hours (1h, 2 hours, etc.)
+    const hourMatch = str.match(/(\d+)\s*h(?:our)?s?/);
+    if (hourMatch) {
+      totalSeconds += parseInt(hourMatch[1], 10) * 3600;
+    }
+    
+    // Match minutes (5 min, 30 minutes, etc.)
+    const minuteMatch = str.match(/(\d+)\s*m(?:in)?(?:ute)?s?/);
+    if (minuteMatch) {
+      totalSeconds += parseInt(minuteMatch[1], 10) * 60;
+    }
+    
+    // Match seconds (30s, 45 seconds, etc.)
+    const secondMatch = str.match(/(\d+)\s*s(?:ec)?(?:ond)?s?/);
+    if (secondMatch) {
+      totalSeconds += parseInt(secondMatch[1], 10);
+    }
+    
+    // If no units found, try to extract just a number and assume minutes
+    if (totalSeconds === 0) {
+      const numberMatch = str.match(/(\d+)/);
+      if (numberMatch) {
+        totalSeconds = parseInt(numberMatch[1], 10) * 60; // Assume minutes
+      }
+    }
+    
+    return totalSeconds;
+  }
+  
+  // Default fallback
+  return 0;
+};
+
 export const getDateRange = (days: number): { start: number; end: number } => {
   const end = Date.now();
   const start = end - (days * 24 * 60 * 60 * 1000);

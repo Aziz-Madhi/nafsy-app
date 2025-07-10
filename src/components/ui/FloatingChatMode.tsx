@@ -2,7 +2,7 @@ import { useTheme } from '@/theme';
 import { useFloatingChunkedDisplay } from '@/hooks/useChunkedDisplay';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import {
   Dimensions,
   Keyboard,
@@ -72,7 +72,7 @@ function MessageBubble({
   nextChunk: () => void;
   isPaused: boolean;
   isDark: boolean;
-  truncateMessage: (content: string, role: string) => string;
+  truncateMessage: (content: string, role: 'user' | 'assistant') => string;
 }) {
   const isUser = message.role === 'user';
   
@@ -230,9 +230,14 @@ export function FloatingChatMode({
   const keyboardOffset = useSharedValue(0);
   const inputPulseAnimation = useSharedValue(1);
 
-  // Get the LATEST AI message for chunked display (not first)
-  const latestAIMessage = recentMessages.slice().reverse().find(msg => msg.role === 'assistant');
-  const aiChunks = latestAIMessage?.chunks || (latestAIMessage ? [latestAIMessage.content] : []);
+  // Get the LATEST AI message for chunked display (not first) - memoized to prevent unnecessary resets
+  const latestAIMessage = useMemo(() => {
+    return recentMessages.slice().reverse().find(msg => msg.role === 'assistant');
+  }, [recentMessages]);
+  
+  const aiChunks = useMemo(() => {
+    return latestAIMessage?.chunks || (latestAIMessage ? [latestAIMessage.content] : []);
+  }, [latestAIMessage]);
   
   // Chunked display for AI responses
   const {
@@ -299,28 +304,14 @@ export function FloatingChatMode({
     if (isNewMessage) {
       lastProcessedMessageId.current = latestMessage.id;
       
-      // For user messages, show immediately
-      // For AI messages, let chunked display handle it
-      if (latestMessage.role === 'user') {
-        const animatedMessage = {
-          ...latestMessage,
-          animation: 0,
-          fadeAnimation: 0,
-        };
+      // Create animated message
+      const animatedMessage = {
+        ...latestMessage,
+        animation: 0,
+        fadeAnimation: latestMessage.role === 'user' ? 0 : 1, // User messages fade in, AI messages start visible
+      };
 
-        setDisplayedMessages([animatedMessage]);
-        
-        // Animate in user message immediately - this will be handled by the MessageBubble component
-      } else if (latestMessage.role === 'assistant') {
-        // For AI messages, create animated message but let chunked display control content
-        const animatedMessage = {
-          ...latestMessage,
-          animation: 0,
-          fadeAnimation: 1, // Start visible for AI messages
-        };
-
-        setDisplayedMessages([animatedMessage]);
-      }
+      setDisplayedMessages([animatedMessage]);
     }
   }, [recentMessages]);
 

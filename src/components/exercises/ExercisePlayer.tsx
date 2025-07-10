@@ -26,6 +26,7 @@ import { BlurView } from 'expo-blur';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
+import { parseDurationToSeconds } from '@/utils/helpers';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -198,11 +199,13 @@ export function ExercisePlayer({
 
     // Record exercise completion
     try {
+      const parsedDuration = exercise.duration ? parseDurationToSeconds(exercise.duration) : undefined;
+      
       await recordExercise({
         userId,
         type: exercise.type,
         conversationId,
-        duration: exercise.duration,
+        duration: parsedDuration,
         data: {
           inputs: exerciseData,
           outputs: {

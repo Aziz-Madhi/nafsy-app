@@ -145,6 +145,7 @@ export default defineSchema({
         moodAfter: v.optional(v.number()),
         insights: v.optional(v.array(v.string())),
         completionNotes: v.optional(v.string()),
+        effectiveness: v.optional(v.number()),
       })),
       effectiveness: v.optional(v.number()),
     }),
