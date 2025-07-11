@@ -1,4 +1,3 @@
-import { useTranslation } from "@/hooks/useLocale";
 
 export function formatMessageDate(timestamp: number, locale: string = 'en'): string {
   const date = new Date(timestamp);

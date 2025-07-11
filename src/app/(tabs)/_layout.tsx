@@ -1,4 +1,4 @@
-import { Image } from "@/components/ui/img";
+import { MaterialIcons } from "@expo/vector-icons";
 import { api } from "@/convex/_generated/api";
 import { useTranslation } from "@/hooks/useLocale";
 import { useAuth, useUser } from "@clerk/clerk-expo";
@@ -6,22 +6,23 @@ import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { Redirect, Tabs } from "expo-router";
 import { useEffect, useRef } from "react";
 import { Platform } from "react-native";
+import { useAppTheme } from "@/theme";
 
-// Tab icon components to avoid nested components during render
+// Tab icon components using direct Material Icons
 const ChatIcon = ({ color, size }: { color: string; size: number }) => (
-  <Image source="sf:message.fill" size={size} tintColor={color} />
+  <MaterialIcons name="message" size={size} color={color} />
 );
 
 const MoodIcon = ({ color, size }: { color: string; size: number }) => (
-  <Image source="sf:face.smiling" size={size} tintColor={color} />
+  <MaterialIcons name="mood" size={size} color={color} />
 );
 
 const ExercisesIcon = ({ color, size }: { color: string; size: number }) => (
-  <Image source="sf:heart.circle.fill" size={size} tintColor={color} />
+  <MaterialIcons name="favorite" size={size} color={color} />
 );
 
 const ProfileIcon = ({ color, size }: { color: string; size: number }) => (
-  <Image source="sf:person.fill" size={size} tintColor={color} />
+  <MaterialIcons name="person" size={size} color={color} />
 );
 
 export default function TabsLayout() {
@@ -29,6 +30,7 @@ export default function TabsLayout() {
   const { isAuthenticated, isLoading: isConvexLoading } = useConvexAuth();
   const { user } = useUser();
   const { t } = useTranslation();
+  const { colors } = useAppTheme();
   const upsertUser = useMutation(api.users.upsertUser);
 
   // Ref to ensure we only attempt to create the Convex user once
@@ -82,7 +84,7 @@ export default function TabsLayout() {
 
   // Redirect to onboarding if user doesn't exist or hasn't completed onboarding
   if (!userData || !userData.onboardingCompleted) {
-    return <Redirect href="/(auth)/onboarding-steps" />;
+    return <Redirect href="/(auth)/onboarding" />;
   }
 
   const tabLabels = {
@@ -95,11 +97,11 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#007AFF" as unknown as string,
-        tabBarInactiveTintColor: "#8E8E93" as unknown as string,
+        tabBarActiveTintColor: colors.interactive.primary,
+        tabBarInactiveTintColor: colors.text.secondary,
         tabBarStyle: {
-          backgroundColor: "#F2F2F7",
-          borderTopColor: "#C6C6C8",
+          backgroundColor: colors.background.secondary,
+          borderTopColor: colors.system.border,
         },
         headerShown: false,
         tabBarShowLabel: Platform.OS === "web",

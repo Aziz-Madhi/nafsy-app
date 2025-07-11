@@ -4,7 +4,6 @@
  */
 import { useActionWithState, useDebouncedAction, ActionOptions } from './useActionWithState';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
 
 /**
  * Hook for sending chat messages with AI response

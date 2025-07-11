@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  SafeAreaView,
   View,
   ScrollView,
   RefreshControl,
@@ -9,8 +8,9 @@ import {
   TouchableOpacity,
   Text,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Image } from '@/components/ui/img';
+import { Image } from '@/components/core/Image/Image';
 import { useTranslation } from '@/hooks/useLocale';
 import { useAppTheme } from '@/theme';
 
@@ -80,7 +80,7 @@ export const BaseScreen = React.memo<BaseScreenProps>(function BaseScreen({
       <View style={styles.headerContainer}>
         <View style={styles.headerLeft}>
           {showBackButton ? <TouchableOpacity
-              style={commonStyles.button}
+              style={{ padding: 8 }}
               onPress={() => router.back()}
               accessibilityLabel="Go back"
               accessibilityRole="button"

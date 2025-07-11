@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -17,18 +17,18 @@ import Animated, {
   withRepeat,
   withSequence,
 } from 'react-native-reanimated';
+import { useFadeAnimation } from '@/hooks/animations';
 import { SafeAreaView , useSafeAreaInsets } from 'react-native-safe-area-context';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+import { IconSymbol } from '@/components/core/Icon/IconSymbol';
 import { useTheme } from '@/theme';
 import { useLocale } from '@/hooks/useLocale';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { parseDurationToSeconds } from '@/utils/helpers';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: _SCREEN_WIDTH, height: _SCREEN_HEIGHT } = Dimensions.get('window');
 
 // GroundingExercise component moved outside to avoid nested component error
 function GroundingExercise({ 
@@ -135,24 +135,31 @@ export function ExercisePlayer({
 }: ExercisePlayerProps) {
   const { colors, isDark } = useTheme();
   const { locale } = useLocale();
-  const insets = useSafeAreaInsets();
+  const _insets = useSafeAreaInsets();
   
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [effectiveness, setEffectiveness] = useState<number | null>(null);
   const [exerciseData, setExerciseData] = useState<any>({});
   
-  // Animations
+  // Use reusable animation hooks  
+  const { fadeIn, animatedStyle: fadeStyle } = useFadeAnimation({ initialOpacity: 0 });
+  
+  // Breathing animation - keep custom due to complex sequence requirements
   const breathingScale = useSharedValue(1);
-  const fadeAnim = useSharedValue(0);
-  const progressAnim = useSharedValue(0);
+  const _progressAnim = useSharedValue(0);
   
   const recordExercise = useMutation(api.exercises.recordExerciseCompletion);
 
+  // Early return after all hooks are called to avoid hooks rules violation
+  if (!exercise) {
+    return null;
+  }
+
   useEffect(() => {
-    // Fade in animation
-    fadeAnim.value = withTiming(1, { duration: 500 });
-  }, [fadeAnim]);
+    // Fade in animation using hook
+    fadeIn();
+  }, [fadeIn]);
 
   // Breathing animation
   useEffect(() => {
@@ -350,11 +357,6 @@ export function ExercisePlayer({
     }
   };
 
-  const fadeStyle = useAnimatedStyle(() => {
-    return {
-      opacity: fadeAnim.value,
-    };
-  });
 
   return (
     <Animated.View style={[styles.container, fadeStyle]}>

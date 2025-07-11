@@ -6,7 +6,7 @@ import {
   I18nManager,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { Image } from "@/components/ui/img";
+import { Image } from "@/components/core/Image/Image";
 import { useLocale } from "@/hooks/useLocale";
 import { CenteredScreen } from "@/components/layout/BaseScreen";
 import { useAppTheme } from "@/theme";

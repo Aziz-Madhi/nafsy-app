@@ -393,7 +393,7 @@ export function getAccessibleFontSize(baseSize: number, maxScale: number = MAXIM
 /**
  * Announce message to screen reader
  */
-export function announceForAccessibility(message: string, locale: Locale = 'en') {
+export function announceForAccessibility(message: string, _locale: Locale = 'en') {
   AccessibilityInfo.announceForAccessibility(message);
 }
 
@@ -427,7 +427,7 @@ export function createAccessibilityActions(actions: { name: string; label: strin
 export function getMoodTrackingAccessibilityProps(
   selectedRating?: number,
   selectedEmotions: string[] = [],
-  locale: Locale = 'en'
+  _locale: Locale = 'en'
 ) {
   const ratingText = selectedRating ? `Current rating: ${selectedRating} out of 10` : 'No rating selected';
   const emotionsText = selectedEmotions.length > 0 
@@ -447,7 +447,7 @@ export function getExerciseInstructionAccessibilityProps(
   step: number,
   totalSteps: number,
   instruction: string,
-  locale: Locale = 'en'
+  _locale: Locale = 'en'
 ) {
   return {
     accessibilityRole: AccessibilityRoles.TEXT,
@@ -483,7 +483,7 @@ export function getCrisisResourceAccessibilityProps(
   title: string,
   type: 'hotline' | 'text' | 'chat' | 'website',
   isEmergency: boolean = false,
-  locale: Locale = 'en'
+  _locale: Locale = 'en'
 ) {
   const typeText = {
     hotline: 'Phone hotline',

@@ -14,9 +14,7 @@ import Slider from '@react-native-community/slider';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useTheme } from '@/theme';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
+import { IconSymbol } from '@/components/core/Icon/IconSymbol';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Id } from '@/convex/_generated/dataModel';
 import { useLocale } from '@/hooks/useLocale';
@@ -51,7 +49,7 @@ interface MoodTrackerProps {
 
 export function MoodTracker({ userId, onComplete }: MoodTrackerProps) {
   const { colors, isDark } = useTheme();
-  const { t, locale } = useLocale();
+  const { locale } = useLocale();
   const insets = useSafeAreaInsets();
   
   const [moodRating, setMoodRating] = useState(5);

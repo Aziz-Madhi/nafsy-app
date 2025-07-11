@@ -42,6 +42,9 @@ export const en = {
       fillAllFields: "Please fill in all fields",
       invalidCredentials: "Invalid email or password",
       oauthError: "Authentication failed. Please try again.",
+      // OAuth providers
+      google: "Google",
+      apple: "Apple",
     },
     signUp: {
       title: "Create Account",
@@ -61,6 +64,12 @@ export const en = {
       privacyPolicy: "Privacy Policy",
       passwordMismatch: "Passwords do not match",
       passwordTooShort: "Password must be at least 8 characters",
+      // Email verification
+      verifyEmail: "Verify Your Email",
+      verifyEmailDesc: "We've sent a verification code to your email address",
+      verificationCode: "Verification Code",
+      verify: "Verify",
+      terms: "Terms",
     },
     onboarding: {
       title: "Welcome to Nafsy",
@@ -127,6 +136,7 @@ export const en = {
     typing: "Nafsy is typing...",
     error: "Message Error",
     sendError: "Failed to send message. Please try again.",
+    floatingModeHint: "Double-tap to return to floating mode",
     you: "You",
     assistant: "Nafsy",
     search: {
@@ -208,6 +218,62 @@ export const en = {
     meditation: "Meditation",
     relaxation: "Relaxation",
     mindfulness: "Mindfulness",
+    // Grounding exercise (5-4-3-2-1 technique)
+    grounding: {
+      title: "Grounding Exercise",
+      step1: "Name 5 things you can see",
+      step2: "Name 4 things you can touch",
+      step3: "Name 3 things you can hear",
+      step4: "Name 2 things you can smell",
+      step5: "Name 1 thing you can taste",
+    },
+    // Exercise data
+    data: {
+      // Breathing exercises
+      boxBreathing: {
+        title: "Box Breathing",
+        description: "Calm your mind with rhythmic breathing",
+      },
+      breathing478: {
+        title: "4-7-8 Breathing",
+        description: "Quick relaxation technique",
+      },
+      // Grounding exercises
+      grounding54321: {
+        title: "5-4-3-2-1 Grounding",
+        description: "Connect with your senses",
+        steps: [
+          "Name 5 things you can see around you",
+          "Name 4 things you can touch or feel",
+          "Name 3 things you can hear",
+          "Name 2 things you can smell",
+          "Name 1 thing you can taste",
+        ],
+      },
+      // Thought challenge exercises
+      thoughtChallenge: {
+        title: "Thought Challenge",
+        description: "Examine and reframe negative thoughts",
+        steps: [
+          "Identify the negative thought",
+          "Rate your emotions (0-10)",
+          "List evidence supporting the thought",
+          "List evidence against the thought",
+          "Create a balanced thought",
+          "Re-rate your emotions",
+        ],
+      },
+      // Gratitude exercises
+      gratitudeJournal: {
+        title: "Gratitude Journal",
+        description: "Focus on positive moments",
+        steps: [
+          "Think of 3 things you are grateful for today",
+          "Write why you are grateful for each",
+          "Notice how you feel after reflecting",
+        ],
+      },
+    },
   },
   
   // Profile

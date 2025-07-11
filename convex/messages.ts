@@ -1,42 +1,7 @@
 import { v } from "convex/values";
 import { api } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
-
-// Language detection function (duplicated from ai.ts for consistency)
-function detectMessageLanguage(text: string): 'en' | 'ar' {
-  // Arabic character range detection
-  const arabicRegex = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
-  
-  // Arabic keywords
-  const arabicKeywords = ['انا', 'هذا', 'هل', 'ماذا', 'كيف', 'متى', 'اين', 'لماذا', 'من', 'الى', 'في', 'على', 'مع', 'بعد', 'قبل'];
-  
-  // English keywords
-  const englishKeywords = ['i', 'am', 'is', 'are', 'was', 'were', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'can', 'may', 'might', 'must', 'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'];
-  
-  const lowerText = text.toLowerCase();
-  
-  // Check for Arabic characters first
-  if (arabicRegex.test(text)) {
-    return 'ar';
-  }
-  
-  // Check for Arabic keywords
-  const arabicCount = arabicKeywords.filter(keyword => lowerText.includes(keyword)).length;
-  const englishCount = englishKeywords.filter(keyword => lowerText.includes(keyword)).length;
-  
-  // If we found Arabic keywords, assume Arabic
-  if (arabicCount > 0) {
-    return 'ar';
-  }
-  
-  // If we found more English keywords, assume English
-  if (englishCount > arabicCount) {
-    return 'en';
-  }
-  
-  // Default to English if unclear
-  return 'en';
-}
+import { detectMessageLanguage } from "./aiHelpers";
 
 // Add a message to a conversation
 export const addMessage = mutation({

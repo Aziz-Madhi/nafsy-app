@@ -344,7 +344,7 @@ describe('Chat Functionality', () => {
       await E2EHelpers.tapElement(by.id('sign-up-button'));
       
       // Complete onboarding quickly
-      await E2EHelpers.waitForElement(by.id('onboarding-steps-screen'));
+      await E2EHelpers.waitForElement(by.id('onboarding-screen'));
       await E2EHelpers.tapElement(by.id('age-range-25-34'));
       await E2EHelpers.tapElement(by.id('continue-button'));
       
@@ -361,7 +361,7 @@ describe('Chat Functionality', () => {
       await E2EHelpers.tapElement(by.id('complete-onboarding-button'));
       
       // Complete onboarding chat
-      await E2EHelpers.waitForElement(by.id('onboarding-chat-screen'));
+      await E2EHelpers.waitForElement(by.id('onboarding-screen'));
       await E2EHelpers.typeText(by.id('chat-input'), 'I\'m ready to start!');
       await E2EHelpers.tapElement(by.id('send-button'));
       await E2EHelpers.waitForLoadingToComplete(30000);

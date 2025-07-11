@@ -64,12 +64,12 @@ export const getResources = query({
       .take(args.limit || 50);
 
     // Filter by language if not using language index
-    if (args.language && !args.language) {
+    if (args.language && args.type) {
       resources = resources.filter(r => r.language === args.language);
     }
 
-    // Filter by difficulty if not using difficulty index
-    if (args.difficulty && !args.difficulty) {
+    // Filter by difficulty if not using difficulty index  
+    if (args.difficulty && (args.type || args.language)) {
       resources = resources.filter(r => r.difficulty === args.difficulty);
     }
 

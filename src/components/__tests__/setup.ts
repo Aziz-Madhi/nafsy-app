@@ -3,7 +3,8 @@
  * Configuration for testing React Native components with Testing Library
  */
 
-import '@testing-library/jest-native/extend-expect';
+// Jest native extensions - using inline matchers for now since package not installed
+// import '@testing-library/jest-native/extend-expect';
 
 // Mock Expo modules used in components
 jest.mock('expo-constants', () => ({
@@ -54,7 +55,7 @@ jest.mock('@react-native-segmented-control/segmented-control', () => 'SegmentedC
 
 // Mock React Native Gesture Handler
 jest.mock('react-native-gesture-handler', () => {
-  const View = require('react-native/Libraries/Components/View/View');
+  const { View } = await import('react-native');
   return {
     Swipeable: View,
     DrawerLayout: View,
@@ -89,7 +90,7 @@ jest.mock('react-native-gesture-handler', () => {
 
 // Mock React Native Reanimated
 jest.mock('react-native-reanimated', () => {
-  const Reanimated = require('react-native-reanimated/mock');
+  const Reanimated = await import('react-native-reanimated/mock') as any;
   
   // The mock for `call` immediately calls the callback which is incorrect
   // So we override it with a no-op
@@ -148,7 +149,7 @@ jest.mock('@clerk/clerk-expo', () => ({
   })),
   ClerkProvider: ({ children }: { children: React.ReactNode }) => children,
   SignedIn: ({ children }: { children: React.ReactNode }) => children,
-  SignedOut: ({ children }: { children: React.ReactNode }) => null,
+  SignedOut: ({ _children }: { _children: React.ReactNode }) => null,
 }));
 
 // Mock Convex React

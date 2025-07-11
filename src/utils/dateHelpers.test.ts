@@ -41,7 +41,7 @@ describe('Date Helper Functions', () => {
       const today = new Date('2024-01-15T10:00:00.000Z');
       const timestamp = today.getTime();
       
-      const result = formatMessageDate(timestamp, 'en');
+      const _result = formatMessageDate(timestamp, 'en');
       expect(result).toBe('Today');
     });
 
@@ -57,7 +57,7 @@ describe('Date Helper Functions', () => {
       const yesterday = new Date('2024-01-14T10:00:00.000Z');
       const timestamp = yesterday.getTime();
       
-      const result = formatMessageDate(timestamp, 'en');
+      const _result = formatMessageDate(timestamp, 'en');
       expect(result).toBe('Yesterday');
     });
 
@@ -75,7 +75,7 @@ describe('Date Helper Functions', () => {
       
       mockFormat.mockReturnValue('Friday');
       
-      const result = formatMessageDate(timestamp, 'en');
+      const _result = formatMessageDate(timestamp, 'en');
       
       expect(mockDateTimeFormat).toHaveBeenCalledWith('en-US', { weekday: 'long' });
       expect(mockFormat).toHaveBeenCalledWith(threeDaysAgo);
@@ -100,7 +100,7 @@ describe('Date Helper Functions', () => {
       
       mockFormat.mockReturnValue('January 1, 2024');
       
-      const result = formatMessageDate(timestamp, 'en');
+      const _result = formatMessageDate(timestamp, 'en');
       
       expect(mockDateTimeFormat).toHaveBeenCalledWith('en-US', {
         year: 'numeric',
@@ -132,7 +132,7 @@ describe('Date Helper Functions', () => {
         return new (Date as any)(...args);
       });
       
-      const result = formatMessageDate(timestamp, 'en');
+      const _result = formatMessageDate(timestamp, 'en');
       expect(result).toBe('Yesterday');
     });
 
@@ -140,7 +140,7 @@ describe('Date Helper Functions', () => {
       const exactMidnight = new Date('2024-01-15T00:00:00.000Z');
       const timestamp = exactMidnight.getTime();
       
-      const result = formatMessageDate(timestamp, 'en');
+      const _result = formatMessageDate(timestamp, 'en');
       expect(result).toBe('Today');
     });
 
@@ -150,7 +150,7 @@ describe('Date Helper Functions', () => {
       
       mockFormat.mockReturnValue('Tomorrow');
       
-      const result = formatMessageDate(timestamp, 'en');
+      const _result = formatMessageDate(timestamp, 'en');
       
       // Should treat as a regular date since it's not today/yesterday
       expect(mockDateTimeFormat).toHaveBeenCalled();
@@ -279,7 +279,7 @@ describe('Date Helper Functions', () => {
       
       mockFormat.mockReturnValue('2:30 PM');
       
-      const result = formatMessageTime(timestamp);
+      const _result = formatMessageTime(timestamp);
       
       expect(mockDateTimeFormat).toHaveBeenCalledWith('en-US', {
         hour: 'numeric',

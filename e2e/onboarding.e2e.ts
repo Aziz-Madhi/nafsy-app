@@ -68,7 +68,7 @@ describe('Onboarding Flow', () => {
       await E2EHelpers.waitForLoadingToComplete(30000);
       
       // Should navigate to onboarding steps
-      await E2EHelpers.waitForElement(by.id('onboarding-steps-screen'));
+      await E2EHelpers.waitForElement(by.id('onboarding-screen'));
     });
 
     it('should validate required fields', async () => {
@@ -108,7 +108,7 @@ describe('Onboarding Flow', () => {
       await E2EHelpers.typeText(by.id('last-name-input'), TEST_USER.lastName);
       
       await E2EHelpers.tapElement(by.id('sign-up-button'));
-      await E2EHelpers.waitForElement(by.id('onboarding-steps-screen'));
+      await E2EHelpers.waitForElement(by.id('onboarding-screen'));
     });
 
     it('should complete age selection step', async () => {
@@ -171,7 +171,7 @@ describe('Onboarding Flow', () => {
       await E2EHelpers.tapElement(by.id('complete-onboarding-button'));
       
       // Should navigate to onboarding chat
-      await E2EHelpers.waitForElement(by.id('onboarding-chat-screen'));
+      await E2EHelpers.waitForElement(by.id('onboarding-screen'));
     });
 
     it('should allow going back through onboarding steps', async () => {
@@ -223,7 +223,7 @@ describe('Onboarding Flow', () => {
     });
 
     it('should display AI introduction message', async () => {
-      await E2EHelpers.waitForElement(by.id('onboarding-chat-screen'));
+      await E2EHelpers.waitForElement(by.id('onboarding-screen'));
       
       // Should see AI welcome message
       await detoxExpect(element(by.text('Hello! I\'m your AI companion.'))).toBeVisible();
@@ -231,7 +231,7 @@ describe('Onboarding Flow', () => {
     });
 
     it('should allow user to send first message', async () => {
-      await E2EHelpers.waitForElement(by.id('onboarding-chat-screen'));
+      await E2EHelpers.waitForElement(by.id('onboarding-screen'));
       
       // Type and send first message
       const firstMessage = 'Hello, I\'m excited to start this journey!';
@@ -250,7 +250,7 @@ describe('Onboarding Flow', () => {
     });
 
     it('should complete onboarding chat and navigate to main app', async () => {
-      await E2EHelpers.waitForElement(by.id('onboarding-chat-screen'));
+      await E2EHelpers.waitForElement(by.id('onboarding-screen'));
       
       // Complete a few chat exchanges
       await E2EHelpers.typeText(by.id('chat-input'), 'I feel ready to explore the app!');
@@ -283,7 +283,7 @@ describe('Onboarding Flow', () => {
       await E2EHelpers.tapElement(by.id('sign-up-button'));
       
       // Onboarding steps
-      await E2EHelpers.waitForElement(by.id('onboarding-steps-screen'));
+      await E2EHelpers.waitForElement(by.id('onboarding-screen'));
       await E2EHelpers.tapElement(by.id('age-range-25-34'));
       await E2EHelpers.tapElement(by.id('continue-button'));
       

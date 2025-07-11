@@ -12,9 +12,7 @@ export default function AuthLayout() {
     return null;
   }
 
-  const inOnboardingFlow = segments.includes("onboarding") || 
-                          segments.includes("onboarding-chat") || 
-                          segments.includes("onboarding-steps");
+  const inOnboardingFlow = segments.includes("onboarding");
 
   // If the user is fully authenticated, redirect to the main app,
   // unless they are on the onboarding screen.
@@ -33,8 +31,6 @@ export default function AuthLayout() {
       <Stack.Screen name="sign-in" />
       <Stack.Screen name="sign-up" />
       <Stack.Screen name="onboarding" />
-      <Stack.Screen name="onboarding-chat" />
-      <Stack.Screen name="onboarding-steps" />
     </Stack>
   );
 }

@@ -6,7 +6,7 @@
 import './setup';
 import React from 'react';
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
-import { ChatManagement } from '../ui/ChatManagement';
+import { ChatManagement } from '../chat/ChatManagement';
 import { useTranslation, useLocale } from '@/hooks/useLocale';
 
 // Mock dependencies

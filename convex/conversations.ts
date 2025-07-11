@@ -224,21 +224,20 @@ export const switchToConversation = mutation({
     conversationId: v.id("conversations"),
   },
   handler: async (ctx, args) => {
-    // First, deactivate all conversations for this user
-    const userConversations = await ctx.db
+    // OPTIMIZATION: Only fetch and deactivate the currently active conversation
+    // instead of fetching all conversations
+    const activeConversation = await ctx.db
       .query("conversations")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .collect();
+      .filter((q) => q.eq(q.field("isActive"), true))
+      .first();
 
-    await Promise.all(
-      userConversations.map(async (conversation) => {
-        if (conversation.isActive) {
-          await ctx.db.patch(conversation._id, { isActive: false });
-        }
-      })
-    );
+    // Deactivate the current active conversation if it exists and is different
+    if (activeConversation && activeConversation._id !== args.conversationId) {
+      await ctx.db.patch(activeConversation._id, { isActive: false });
+    }
 
-    // Then activate the selected conversation
+    // Activate the selected conversation
     await ctx.db.patch(args.conversationId, { isActive: true });
 
     return { success: true };

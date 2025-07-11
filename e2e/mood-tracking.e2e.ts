@@ -372,7 +372,7 @@ describe('Mood Tracking', () => {
       await E2EHelpers.tapElement(by.id('sign-up-button'));
       
       // Complete onboarding quickly
-      await E2EHelpers.waitForElement(by.id('onboarding-steps-screen'));
+      await E2EHelpers.waitForElement(by.id('onboarding-screen'));
       await E2EHelpers.tapElement(by.id('age-range-25-34'));
       await E2EHelpers.tapElement(by.id('continue-button'));
       
@@ -388,7 +388,7 @@ describe('Mood Tracking', () => {
       await E2EHelpers.tapElement(by.id('language-english'));
       await E2EHelpers.tapElement(by.id('complete-onboarding-button'));
       
-      await E2EHelpers.waitForElement(by.id('onboarding-chat-screen'));
+      await E2EHelpers.waitForElement(by.id('onboarding-screen'));
       await E2EHelpers.typeText(by.id('chat-input'), 'Ready to start!');
       await E2EHelpers.tapElement(by.id('send-button'));
       await E2EHelpers.waitForLoadingToComplete(30000);

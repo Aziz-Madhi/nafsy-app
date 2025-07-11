@@ -1,357 +1,573 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   View,
   Text,
   SafeAreaView,
-  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
-  Alert,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import { useUser } from "@clerk/clerk-expo";
 import { useConvexAuth, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Image } from "@/components/ui/img";
+import { Image } from "@/components/core/Image/Image";
 import { useTranslation } from "@/hooks/useLocale";
 import { useAppTheme } from "@/theme";
-import * as Form from "@/components/ui/Form";
+import { QuickReplySuggestions } from "@/components/chat/QuickReplySuggestions";
+import { TypingIndicator } from "@/components/chat/TypingIndicator";
 
-export default function OnboardingScreen() {
+interface OnboardingStep {
+  id: string;
+  question: string;
+  quickReplies?: string[];
+  inputType?: "text" | "time" | "select";
+  dataKey: string;
+  validator?: (value: string) => boolean;
+  nextStep?: (value: string) => string | null;
+}
+
+interface Message {
+  id: string;
+  text: string;
+  isBot: boolean;
+  timestamp: Date;
+  quickReplies?: string[];
+  inputType?: "text" | "time" | "select";
+}
+
+export default function OnboardingChatScreen() {
   const router = useRouter();
   const { user } = useUser();
   const { isAuthenticated } = useConvexAuth();
-  const { t, tLegacy: _tLegacy, locale } = useTranslation();
-  const { theme, styles: commonStyles } = useAppTheme();
+  const { t: _t, locale } = useTranslation();
+  const { theme: _theme, styles: commonStyles, spacing, fontSize, fontWeight, colors, borderRadius } = useAppTheme();
   
-  const _upsertUser = useMutation(api.users.upsertUser);
-  const completeOnboarding = useMutation(api.users.completeOnboarding);
+  const completeOnboardingMutation = useMutation(api.users.completeOnboarding);
   
-  const [step, setStep] = useState(1);
-  const [preferences, setPreferences] = useState({
-    dailyCheckInTime: "09:00",
-    enableNotifications: true,
-    voiceEnabled: false,
-    theme: "auto" as "light" | "dark" | "auto",
-  });
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [isTyping, setIsTyping] = useState(false);
+  const [inputText, setInputText] = useState("");
+  const [collectedData, setCollectedData] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState(false);
+  
+  const scrollViewRef = useRef<ScrollView>(null);
+  const fadeAnim = useSharedValue(0);
+  const slideAnim = useSharedValue(50);
 
-  const content = {
-    welcome: t("auth.onboarding.title"),
-    letsGetStarted: t("auth.onboarding.subtitle"),
-    preferences: "Your Preferences", // TODO: Add to centralized translations
-    notifications: "Daily Mood Check-ins", // TODO: Add to centralized translations
-    notificationDesc: "Get reminded to track your mood", // TODO: Add to centralized translations
-    voiceChat: "Voice Conversations", // TODO: Add to centralized translations
-    voiceChatDesc: "Talk to Nafsy using voice", // TODO: Add to centralized translations
-    theme: "App Theme", // TODO: Add to centralized translations
-    themeAuto: "Automatic", // TODO: Add to centralized translations
-    themeLight: "Light", // TODO: Add to centralized translations
-    themeDark: "Dark", // TODO: Add to centralized translations
-    continue: t("continue"),
-    finish: t("auth.onboarding.getStarted"),
-    privacy: "Your privacy matters", // TODO: Add to centralized translations
-    privacyDesc: "Everything you share with Nafsy is encrypted and private. We never share your data without your permission. You can delete your data anytime.", // TODO: Add to centralized translations
-    emergencyContact: t("auth.onboarding.emergencyContact"),
-    emergencyDesc: t("auth.onboarding.emergencyDescription"),
+  // Define onboarding conversation flow
+  const onboardingSteps: OnboardingStep[] = useMemo(() => [
+    {
+      id: "welcome",
+      question: locale === "ar" 
+        ? `مرحباً! أنا نفسي، رفيقك في رحلة الصحة النفسية 👋`
+        : `Hi! I'm Nafsy, your mental wellness companion 👋`,
+      quickReplies: locale === "ar" ? ["مرحباً! 👋"] : ["Hello! 👋"],
+      dataKey: "started",
+      nextStep: () => "askName",
+    },
+    {
+      id: "askName",
+      question: locale === "ar" ? "ما اسمك؟" : "What should I call you?",
+      inputType: "text",
+      dataKey: "displayName",
+      validator: (value) => value.trim().length > 0,
+      nextStep: () => "greetUser",
+    },
+    {
+      id: "greetUser",
+      question: locale === "ar" 
+        ? `سعيد بلقائك، ${collectedData.displayName}! 😊`
+        : `Nice to meet you, ${collectedData.displayName}! 😊`,
+      dataKey: "greeted",
+      nextStep: () => "askMood",
+    },
+    {
+      id: "askMood",
+      question: locale === "ar" 
+        ? "كيف تشعر اليوم؟"
+        : "How are you feeling today?",
+      quickReplies: locale === "ar" 
+        ? ["رائع 😊", "جيد 😐", "ليس جيداً 😔", "أحتاج للمساعدة 🆘"]
+        : ["Great 😊", "Okay 😐", "Not great 😔", "Need help 🆘"],
+      dataKey: "initialMood",
+      nextStep: (value) => {
+        if (value.includes("🆘")) return "offerCrisisSupport";
+        return "askGoals";
+      },
+    },
+    {
+      id: "offerCrisisSupport",
+      question: locale === "ar"
+        ? "أنا هنا لدعمك. إذا كنت في أزمة، يرجى الاتصال بخط المساعدة المحلي. هل تريد المتابعة؟"
+        : "I'm here to support you. If you're in crisis, please reach out to a local helpline. Would you like to continue?",
+      quickReplies: locale === "ar" ? ["نعم، تابع", "لا، شكراً"] : ["Yes, continue", "No, thanks"],
+      dataKey: "crisisAcknowledged",
+      nextStep: (value) => {
+        if (value.includes(locale === "ar" ? "نعم" : "Yes")) return "askGoals";
+        return null; // End onboarding
+      },
+    },
+    {
+      id: "askGoals",
+      question: locale === "ar"
+        ? "ما الذي يجلبك إلى نفسي؟"
+        : "What brings you to Nafsy?",
+      quickReplies: locale === "ar"
+        ? ["إدارة التوتر", "تتبع المزاج", "بناء العادات", "مجرد استكشاف"]
+        : ["Manage stress", "Track moods", "Build habits", "Just exploring"],
+      dataKey: "primaryGoal",
+      nextStep: () => "askNotifications",
+    },
+    {
+      id: "askNotifications",
+      question: locale === "ar"
+        ? "هل تريد تذكيرات يومية لتسجيل مزاجك؟"
+        : "Would you like daily check-in reminders?",
+      quickReplies: locale === "ar" 
+        ? ["نعم، من فضلك!", "ربما لاحقاً"]
+        : ["Yes, please!", "Maybe later"],
+      dataKey: "enableNotifications",
+      nextStep: (value) => {
+        const wantsNotifications = value.includes(locale === "ar" ? "نعم" : "Yes");
+        setCollectedData(prev => ({ ...prev, enableNotifications: wantsNotifications }));
+        return wantsNotifications ? "askNotificationTime" : "explainPrivacy";
+      },
+    },
+    {
+      id: "askNotificationTime",
+      question: locale === "ar"
+        ? "ما هو أفضل وقت لتذكيرك؟"
+        : "What time works best for you?",
+      quickReplies: ["9:00 AM", "12:00 PM", "6:00 PM", "9:00 PM"],
+      dataKey: "dailyCheckInTime",
+      nextStep: () => "explainPrivacy",
+    },
+    {
+      id: "explainPrivacy",
+      question: locale === "ar"
+        ? "خصوصيتك مهمة لنا. كل ما تشاركه مشفر وخاص. 🔒"
+        : "Your privacy matters to us. Everything you share is encrypted and private. 🔒",
+      dataKey: "privacyAcknowledged",
+      nextStep: () => "readyToStart",
+    },
+    {
+      id: "readyToStart",
+      question: locale === "ar"
+        ? "مستعد لبدء رحلتك الصحية؟"
+        : "Ready to start your wellness journey?",
+      quickReplies: locale === "ar" ? ["هيا بنا! 🚀"] : ["Let's go! 🚀"],
+      dataKey: "completed",
+      nextStep: () => null,
+    },
+  ], [locale, collectedData.displayName]);
+
+  // Initialize first message
+  useEffect(() => {
+    if (messages.length === 0) {
+      setTimeout(() => {
+        addBotMessage(onboardingSteps[0]);
+      }, 500);
+    }
+  }, [messages.length, addBotMessage, onboardingSteps]);
+
+  // Animate message entrance
+  useEffect(() => {
+    fadeAnim.value = withTiming(1, { duration: 300 });
+    slideAnim.value = withTiming(0, { duration: 300 });
+  }, [messages.length, fadeAnim, slideAnim]);
+
+  const addBotMessage = useCallback((step: OnboardingStep) => {
+    setIsTyping(true);
+    
+    // Simulate typing delay
+    setTimeout(() => {
+      setIsTyping(false);
+      const newMessage: Message = {
+        id: `bot-${Date.now()}`,
+        text: step.question,
+        isBot: true,
+        timestamp: new Date(),
+        quickReplies: step.quickReplies,
+        inputType: step.inputType,
+      };
+      
+      setMessages(prev => [...prev, newMessage]);
+      scrollToBottom();
+    }, 1000);
+  }, []);
+
+  const handleUserResponse = async (response: string, step: OnboardingStep) => {
+    // Add user message
+    const userMessage: Message = {
+      id: `user-${Date.now()}`,
+      text: response,
+      isBot: false,
+      timestamp: new Date(),
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    setInputText("");
+    
+    // Store response data
+    if (step.dataKey !== "started" && step.dataKey !== "greeted" && 
+        step.dataKey !== "privacyAcknowledged" && step.dataKey !== "completed") {
+      setCollectedData(prev => ({ ...prev, [step.dataKey]: response }));
+    }
+    
+    // Determine next step
+    const nextStepId = step.nextStep?.(response);
+    
+    if (nextStepId) {
+      const nextStepIndex = onboardingSteps.findIndex(s => s.id === nextStepId);
+      if (nextStepIndex !== -1) {
+        setCurrentStepIndex(nextStepIndex);
+        setTimeout(() => {
+          addBotMessage(onboardingSteps[nextStepIndex]);
+        }, 500);
+      }
+    } else {
+      // Onboarding complete
+      await completeOnboarding();
+    }
   };
 
-  const handleComplete = async () => {
+  const completeOnboarding = async () => {
     if (!user || !isAuthenticated) {
-      console.error("Cannot complete onboarding: user not authenticated", { user: !!user, isAuthenticated });
+      console.error("Cannot complete onboarding: user not authenticated");
       return;
     }
 
-    console.log("Starting onboarding completion with:", { clerkId: user.id, language: locale, preferences });
     setIsLoading(true);
+    
     try {
-      // Complete onboarding with preferences (user should already exist)
-      await completeOnboarding({
+      // Process collected data into preferences
+      const preferences = {
+        dailyCheckInTime: collectedData.dailyCheckInTime || "09:00",
+        enableNotifications: collectedData.enableNotifications || false,
+        voiceEnabled: false, // Can add this to the flow later
+        theme: "auto" as const,
+      };
+
+      // Complete onboarding with collected data
+      await completeOnboardingMutation({
         clerkId: user.id,
         language: locale,
         preferences,
+        displayName: collectedData.displayName,
+        primaryGoal: collectedData.primaryGoal,
+        initialMood: collectedData.initialMood,
       });
 
-      console.log("Onboarding completed successfully, navigating to tabs");
       // Navigate to main app
       router.replace("/(tabs)");
     } catch (error) {
       console.error("Onboarding error:", error);
-      Alert.alert(
-        t("error"),
-        t("Onboarding failed", { 
-          en: "Failed to complete setup. Please try again.", 
-          ar: "فشل إكمال الإعداد. يرجى المحاولة مرة أخرى." 
-        })
-      );
+      // Show error message
+      const errorMessage: Message = {
+        id: `error-${Date.now()}`,
+        text: locale === "ar" 
+          ? "حدث خطأ. يرجى المحاولة مرة أخرى."
+          : "Something went wrong. Please try again.",
+        isBot: true,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const renderStep = () => {
-    switch (step) {
-      case 1:
-        return (
-          <View style={styles.stepContent}>
-            <View style={styles.stepHeader}>
-              <Image 
-                source="sf:hand.wave.fill" 
-                size={60} 
-                tintColor={theme.colors.wellness.calm}
-                style={styles.icon}
-              />
-              <Text style={styles.stepTitle}>
-                {content.welcome} {user?.firstName || ""}!
-              </Text>
-              <Text style={styles.stepSubtitle}>{content.letsGetStarted}</Text>
-            </View>
-
-            <Form.List style={styles.form}>
-              <Form.Section title={content.preferences}>
-                <Form.Toggle
-                  value={preferences.enableNotifications}
-                  onValueChange={(value) => 
-                    setPreferences(prev => ({ ...prev, enableNotifications: value }))
-                  }
-                  systemImage="bell.badge"
-                >
-                  {content.notifications}
-                </Form.Toggle>
-                <Text style={styles.settingDescription}>{content.notificationDesc}</Text>
-
-                <Form.Toggle
-                  value={preferences.voiceEnabled}
-                  onValueChange={(value) => 
-                    setPreferences(prev => ({ ...prev, voiceEnabled: value }))
-                  }
-                  systemImage="mic"
-                >
-                  {content.voiceChat}
-                </Form.Toggle>
-                <Text style={styles.settingDescription}>{content.voiceChatDesc}</Text>
-              </Form.Section>
-
-              <Form.Section title={content.theme}>
-                <Form.HStack>
-                  <TouchableOpacity
-                    style={[
-                      styles.themeOption,
-                      preferences.theme === "auto" && styles.selectedTheme,
-                    ]}
-                    onPress={() => setPreferences(prev => ({ ...prev, theme: "auto" }))}
-                  >
-                    <Text style={styles.themeText}>{content.themeAuto}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.themeOption,
-                      preferences.theme === "light" && styles.selectedTheme,
-                    ]}
-                    onPress={() => setPreferences(prev => ({ ...prev, theme: "light" }))}
-                  >
-                    <Text style={styles.themeText}>{content.themeLight}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.themeOption,
-                      preferences.theme === "dark" && styles.selectedTheme,
-                    ]}
-                    onPress={() => setPreferences(prev => ({ ...prev, theme: "dark" }))}
-                  >
-                    <Text style={styles.themeText}>{content.themeDark}</Text>
-                  </TouchableOpacity>
-                </Form.HStack>
-              </Form.Section>
-            </Form.List>
-          </View>
-        );
-
-      case 2:
-        return (
-          <View style={styles.stepContent}>
-            <View style={styles.stepHeader}>
-              <Image 
-                source="sf:lock.shield.fill" 
-                size={60} 
-                tintColor={theme.colors.interactive.success}
-                style={styles.icon}
-              />
-              <Text style={styles.stepTitle}>{content.privacy}</Text>
-              <Text style={styles.stepDescription}>{content.privacyDesc}</Text>
-            </View>
-
-            <View style={styles.privacyFeatures}>
-              <View style={styles.privacyFeature}>
-                <Image source="sf:lock.fill" size={24} tintColor={theme.colors.interactive.primary} />
-                <Text style={styles.privacyFeatureText}>
-                  {t("auth.onboarding.encrypted")}
-                </Text>
-              </View>
-              <View style={styles.privacyFeature}>
-                <Image source="sf:hand.raised.fill" size={24} tintColor={theme.colors.interactive.primary} />
-                <Text style={styles.privacyFeatureText}>
-                  {t("auth.onboarding.noSharing")}
-                </Text>
-              </View>
-              <View style={styles.privacyFeature}>
-                <Image source="sf:trash.fill" size={24} tintColor={theme.colors.interactive.primary} />
-                <Text style={styles.privacyFeatureText}>
-                  {t("auth.onboarding.deleteAnytime")}
-                </Text>
-              </View>
-            </View>
-          </View>
-        );
+  const handleSendMessage = () => {
+    const currentStep = onboardingSteps[currentStepIndex];
+    
+    if (currentStep.validator && !currentStep.validator(inputText)) {
+      return; // Don't send if validation fails
     }
+    
+    handleUserResponse(inputText, currentStep);
   };
 
-  const styles = createStyles(theme);
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  };
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: fadeAnim.value,
+      transform: [{ translateY: slideAnim.value }],
+    };
+  });
+
+  const renderMessage = (message: Message) => {
+    const isRTL = locale === "ar";
+    
+    return (
+      <Animated.View
+        key={message.id}
+        style={[
+          styles.messageContainer,
+          message.isBot ? styles.botMessageContainer : styles.userMessageContainer,
+          isRTL && styles.rtlContainer,
+          animatedStyle,
+        ]}
+      >
+        {message.isBot ? <View style={[styles.botAvatar, isRTL && styles.rtlAvatar]}>
+            <Image 
+              source="sf:heart.circle.fill" 
+              size={32} 
+              tintColor={colors.wellness.calm}
+            />
+          </View> : null}
+        
+        <View style={[
+          styles.messageBubble,
+          message.isBot ? styles.botBubble : styles.userBubble,
+        ]}>
+          <Text style={[
+            styles.messageText,
+            message.isBot ? styles.botText : styles.userText,
+            isRTL && styles.rtlText,
+          ]}>
+            {message.text}
+          </Text>
+        </View>
+      </Animated.View>
+    );
+  };
+
+  const styles = createStyles({ spacing, fontSize, fontWeight, colors, borderRadius });
 
   return (
-    <SafeAreaView style={commonStyles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        {renderStep()}
-
-        <View style={styles.footer}>
-          <TouchableOpacity
-            style={[styles.continueButton, isLoading && styles.disabledButton]}
-            onPress={() => {
-              if (step < 2) {
-                setStep(step + 1);
-              } else {
-                handleComplete();
-              }
-            }}
-            disabled={isLoading}
-          >
-            <Text style={styles.continueButtonText}>
-              {step === 2 ? content.finish : content.continue}
-            </Text>
-          </TouchableOpacity>
-
-          <View style={styles.progress}>
-            {[1, 2].map((i) => (
+    <SafeAreaView style={commonStyles.container} testID="onboarding-screen">
+      <KeyboardAvoidingView 
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>
+            {locale === "ar" ? "مرحباً بك في نفسي" : "Welcome to Nafsy"}
+          </Text>
+          
+          {/* Progress indicator */}
+          <View style={styles.progressContainer}>
+            {onboardingSteps.map((_, index) => (
               <View
-                key={i}
+                key={index}
                 style={[
                   styles.progressDot,
-                  i <= step && styles.progressDotActive,
+                  index <= currentStepIndex && styles.progressDotActive,
                 ]}
               />
             ))}
           </View>
         </View>
-      </ScrollView>
+
+        {/* Messages */}
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.messagesContainer}
+          contentContainerStyle={styles.messagesContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {messages.map(renderMessage)}
+          
+          {isTyping ? <View style={styles.typingContainer}>
+              <TypingIndicator visible={true} />
+            </View> : null}
+        </ScrollView>
+
+        {/* Quick Replies */}
+        {messages.length > 0 && 
+         messages[messages.length - 1].quickReplies && 
+         !isTyping ? <View style={styles.quickRepliesContainer}>
+            <QuickReplySuggestions
+              suggestions={messages[messages.length - 1].quickReplies!.map((text, index) => ({
+                id: `suggestion-${index}`,
+                text,
+                sentiment: 'neutral' as const
+              }))}
+              onSelect={(suggestion) => 
+                handleUserResponse(suggestion, onboardingSteps[currentStepIndex])
+              }
+              mode="traditional"
+              isVisible={true}
+            />
+          </View> : null}
+
+        {/* Input */}
+        {messages.length > 0 && 
+         messages[messages.length - 1].inputType === "text" && 
+         !isTyping && (
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.textInput}
+              value={inputText}
+              onChangeText={setInputText}
+              placeholder={locale === "ar" ? "اكتب رسالتك..." : "Type your message..."}
+              placeholderTextColor={colors.text.secondary}
+              onSubmitEditing={handleSendMessage}
+              returnKeyType="send"
+              editable={!isLoading}
+            />
+            
+            <TouchableOpacity
+              style={[styles.sendButton, isLoading && styles.sendButtonDisabled]}
+              onPress={handleSendMessage}
+              disabled={!inputText.trim() || isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator size="small" color={colors.background.primary} />
+              ) : (
+                <Image 
+                  source="sf:arrow.up.circle.fill" 
+                  size={32} 
+                  tintColor={inputText.trim() ? colors.interactive.primary : colors.text.tertiary}
+                />
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-const createStyles = (theme: ReturnType<typeof useAppTheme>) => ({
-  content: {
-    flexGrow: 1,
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.xl * 2,
-  },
-  stepContent: {
+const createStyles = ({ spacing, fontSize, fontWeight, colors, borderRadius }: {
+  spacing: ReturnType<typeof useAppTheme>['spacing'];
+  fontSize: ReturnType<typeof useAppTheme>['fontSize'];
+  fontWeight: ReturnType<typeof useAppTheme>['fontWeight'];
+  colors: ReturnType<typeof useAppTheme>['colors'];
+  borderRadius: ReturnType<typeof useAppTheme>['borderRadius'];
+}) => ({
+  container: {
     flex: 1,
   },
-  stepHeader: {
-    alignItems: "center",
-    marginBottom: theme.spacing.xl * 2,
+  header: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.system.separator,
   },
-  icon: {
-    marginBottom: theme.spacing.lg,
+  headerTitle: {
+    fontSize: fontSize.xl,
+    fontWeight: fontWeight.bold,
+    color: colors.text.primary,
+    textAlign: "center" as const,
+    marginBottom: spacing.sm,
   },
-  stepTitle: {
-    fontSize: theme.fontSize.xxl,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
-    textAlign: "center",
-  },
-  stepSubtitle: {
-    fontSize: theme.fontSize.md,
-    color: theme.colors.text.secondary,
-    textAlign: "center",
-  },
-  stepDescription: {
-    fontSize: theme.fontSize.md,
-    color: theme.colors.text.secondary,
-    textAlign: "center",
-    lineHeight: 24,
-    paddingHorizontal: theme.spacing.lg,
-  },
-  form: {
-    marginTop: -theme.spacing.lg,
-  },
-  settingDescription: {
-    fontSize: theme.fontSize.sm,
-    color: theme.colors.text.secondary,
-    marginTop: -theme.spacing.xs,
-    marginBottom: theme.spacing.md,
-    paddingHorizontal: theme.spacing.md,
-  },
-  themeOption: {
-    flex: 1,
-    paddingVertical: theme.spacing.sm,
-    alignItems: "center",
-    borderRadius: theme.borderRadius.sm,
-    backgroundColor: theme.colors.surface,
-  },
-  selectedTheme: {
-    backgroundColor: theme.colors.interactive.primary,
-  },
-  themeText: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.medium,
-    color: theme.colors.text.primary,
-  },
-  privacyFeatures: {
-    gap: theme.spacing.lg,
-    marginTop: theme.spacing.xl * 2,
-  },
-  privacyFeature: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
-  },
-  privacyFeatureText: {
-    fontSize: theme.fontSize.md,
-    color: theme.colors.text.primary,
-  },
-  footer: {
-    paddingVertical: theme.spacing.lg,
-    gap: theme.spacing.lg,
-  },
-  continueButton: {
-    height: 56,
-    backgroundColor: theme.colors.interactive.primary,
-    borderRadius: theme.borderRadius.md,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  disabledButton: {
-    opacity: 0.6,
-  },
-  continueButtonText: {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.background,
-  },
-  progress: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: theme.spacing.xs,
+  progressContainer: {
+    flexDirection: "row" as const,
+    justifyContent: "center" as const,
+    gap: spacing.xs,
   },
   progressDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: theme.colors.divider,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.system.separator,
   },
   progressDotActive: {
-    backgroundColor: theme.colors.interactive.primary,
-    width: 24,
+    backgroundColor: colors.interactive.primary,
+    width: 20,
+  },
+  messagesContainer: {
+    flex: 1,
+  },
+  messagesContent: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.lg,
+  },
+  messageContainer: {
+    marginBottom: spacing.md,
+  },
+  botMessageContainer: {
+    flexDirection: "row" as const,
+    alignItems: "flex-end" as const,
+  },
+  userMessageContainer: {
+    alignItems: "flex-end" as const,
+  },
+  botAvatar: {
+    marginRight: spacing.sm,
+  },
+  messageBubble: {
+    maxWidth: "80%",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.lg,
+  },
+  botBubble: {
+    backgroundColor: colors.background.secondary,
+  },
+  userBubble: {
+    backgroundColor: colors.interactive.primary,
+  },
+  messageText: {
+    fontSize: fontSize.md,
+    lineHeight: 22,
+  },
+  botText: {
+    color: colors.text.primary,
+  },
+  userText: {
+    color: colors.text.inverse,
+  },
+  typingContainer: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    paddingLeft: spacing.xl + spacing.md,
+  },
+  quickRepliesContainer: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  inputContainer: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.system.separator,
+  },
+  textInput: {
+    flex: 1,
+    height: 40,
+    paddingHorizontal: spacing.md,
+    marginRight: spacing.sm,
+    borderRadius: borderRadius.round,
+    backgroundColor: colors.background.secondary,
+    color: colors.text.primary,
+    fontSize: fontSize.md,
+  },
+  sendButton: {
+    justifyContent: "center" as const,
+    alignItems: "center" as const,
+  },
+  sendButtonDisabled: {
+    opacity: 0.5,
+  },
+  rtlContainer: {
+    flexDirection: "row-reverse" as const,
+  },
+  rtlAvatar: {
+    marginRight: 0,
+    marginLeft: spacing.sm,
+  },
+  rtlText: {
+    textAlign: "right" as const,
+    writingDirection: "rtl" as const,
   },
 });

@@ -42,6 +42,9 @@ export const ar = {
       fillAllFields: "يرجى ملء جميع الحقول",
       invalidCredentials: "البريد الإلكتروني أو كلمة المرور غير صحيحة",
       oauthError: "فشلت المصادقة. يرجى المحاولة مرة أخرى.",
+      // OAuth providers
+      google: "Google",
+      apple: "Apple",
     },
     signUp: {
       title: "إنشاء حساب",
@@ -61,6 +64,12 @@ export const ar = {
       privacyPolicy: "سياسة الخصوصية",
       passwordMismatch: "كلمات المرور غير متطابقة",
       passwordTooShort: "يجب أن تحتوي كلمة المرور على 8 أحرف على الأقل",
+      // Email verification
+      verifyEmail: "تأكيد بريدك الإلكتروني",
+      verifyEmailDesc: "لقد أرسلنا رمز تأكيد إلى عنوان بريدك الإلكتروني",
+      verificationCode: "رمز التأكيد",
+      verify: "تأكيد",
+      terms: "الشروط",
     },
     onboarding: {
       title: "مرحباً بك في نفسي",
@@ -127,6 +136,7 @@ export const ar = {
     typing: "نفسي يكتب...",
     error: "خطأ في الرسالة",
     sendError: "فشل في إرسال الرسالة. يرجى المحاولة مرة أخرى.",
+    floatingModeHint: "انقر مرتين للعودة إلى الوضع العائم",
     you: "أنت",
     assistant: "نفسي",
     search: {
@@ -208,6 +218,62 @@ export const ar = {
     meditation: "التأمل",
     relaxation: "الاسترخاء",
     mindfulness: "اليقظة الذهنية",
+    // Grounding exercise (5-4-3-2-1 technique)
+    grounding: {
+      title: "تمرين التأريض",
+      step1: "اذكر 5 أشياء تراها",
+      step2: "اذكر 4 أشياء تلمسها",
+      step3: "اذكر 3 أشياء تسمعها",
+      step4: "اذكر شيئين تشمهما",
+      step5: "اذكر شيئاً واحداً تذوقه",
+    },
+    // Exercise data
+    data: {
+      // Breathing exercises
+      boxBreathing: {
+        title: "التنفس الصندوقي",
+        description: "اهدئ عقلك بالتنفس المنتظم",
+      },
+      breathing478: {
+        title: "تنفس 4-7-8",
+        description: "تقنية استرخاء سريعة",
+      },
+      // Grounding exercises
+      grounding54321: {
+        title: "تقنية 5-4-3-2-1",
+        description: "تواصل مع حواسك",
+        steps: [
+          "اذكر 5 أشياء يمكنك رؤيتها حولك",
+          "اذكر 4 أشياء يمكنك لمسها أو الشعور بها",
+          "اذكر 3 أشياء يمكنك سماعها",
+          "اذكر شيئين يمكنك شمهما",
+          "اذكر شيئاً واحداً يمكنك تذوقه",
+        ],
+      },
+      // Thought challenge exercises
+      thoughtChallenge: {
+        title: "تحدي الأفكار",
+        description: "افحص وأعد صياغة الأفكار السلبية",
+        steps: [
+          "حدد الفكرة السلبية",
+          "قيم مشاعرك (0-10)",
+          "اكتب الأدلة التي تدعم الفكرة",
+          "اكتب الأدلة التي تعارض الفكرة",
+          "اصنع فكرة متوازنة",
+          "أعد تقييم مشاعرك",
+        ],
+      },
+      // Gratitude exercises
+      gratitudeJournal: {
+        title: "يوميات الامتنان",
+        description: "ركز على اللحظات الإيجابية",
+        steps: [
+          "فكر في 3 أشياء أنت ممتن لها اليوم",
+          "اكتب لماذا أنت ممتن لكل منها",
+          "لاحظ كيف تشعر بعد التأمل",
+        ],
+      },
+    },
   },
   
   // Profile

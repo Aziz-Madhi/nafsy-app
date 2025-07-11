@@ -4,17 +4,17 @@
  */
 
 import {
-  formatDate, formatDateTime, formatTime, formatRelativeTime, formatDuration,
-  getDateRange, isToday, isYesterday, isThisWeek,
+  formatDate, formatDuration,
+  getDateRange, isToday, isYesterday,
   validateEmail, validatePhone, validateName, validatePassword, validateMoodRating,
-  validateRequired, validateMinLength, validateMaxLength, validateRange, validateUrl,
+  validateUrl,
   truncateText, capitalizeFirst, capitalizeWords, slugify, extractInitials,
   generateRandomId, generateUUID,
-  formatNumber, formatPercentage, roundToDecimal, clamp, average, median, standardDeviation,
+  roundToDecimal, clamp, average, median, standardDeviation,
   groupBy, sortBy, uniqueBy, chunk, intersection, difference, shuffle,
   pick, omit, isEmpty, deepClone, isEqual,
-  getMoodLabel, getMoodColor, getExerciseLabel, calculateMoodTrend, calculateStreak,
-  resolveTheme, debounce, throttle, delay, retry, timeout
+  getMoodLabel, getMoodColor, calculateMoodTrend, calculateStreak,
+  debounce, throttle, delay, retry, timeout
 } from './helpers';
 
 // Mock Intl APIs for consistent testing
@@ -600,14 +600,14 @@ describe('Helper Functions', () => {
 
     describe('calculateStreak', () => {
       it('should calculate consecutive daily streak', () => {
-        const now = new Date('2024-01-15T12:00:00.000Z');
+        const _now = new Date('2024-01-15T12:00:00.000Z');
         const timestamps = [
           new Date('2024-01-15T10:00:00.000Z').getTime(), // Today
           new Date('2024-01-14T10:00:00.000Z').getTime(), // Yesterday
           new Date('2024-01-13T10:00:00.000Z').getTime(), // Day before
         ];
         
-        const result = calculateStreak(timestamps);
+        const _result = calculateStreak(timestamps);
         expect(result).toBe(3);
       });
 
@@ -622,7 +622,7 @@ describe('Helper Functions', () => {
           new Date('2024-01-13T10:00:00.000Z').getTime(), // Skipped yesterday
         ];
         
-        const result = calculateStreak(timestamps);
+        const _result = calculateStreak(timestamps);
         expect(result).toBe(1); // Only today counts
       });
     });

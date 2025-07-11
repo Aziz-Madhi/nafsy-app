@@ -3,7 +3,7 @@ import { buildRecentMessages } from "@/utils/chat";
 import { recordChatMetric } from "@/utils/metrics";
 import { useUser } from "@clerk/clerk-expo";
 import { useAction, useMutation, useQuery } from "convex/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { Alert } from "react-native";
 
 export interface ChatMessage {
@@ -41,6 +41,16 @@ export function useChatManager(chatMode: 'floating' | 'full' = 'full') {
   const [allMessages, setAllMessages] = useState<ChatMessage[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const hasLoadedInitial = useRef(false);
+  
+  // OPTIMIZATION: Maintain a Set of message IDs for O(1) deduplication
+  const messageIds = useRef(new Set<string>());
+  
+  // OPTIMIZATION: Memoize message ID set to prevent recreation on every render
+  const existingMessageIds = useMemo(() => {
+    // Update the ref when allMessages changes and return the set
+    messageIds.current = new Set(allMessages.map(msg => msg._id));
+    return messageIds.current;
+  }, [allMessages]);
 
   // Convex hooks
   const testQuery = useQuery(api.users.getUserByClerkId, 
@@ -55,7 +65,7 @@ export function useChatManager(chatMode: 'floating' | 'full' = 'full') {
   const startNewConversation = useMutation(api.conversations.startNewConversation);
   const sendMessage = useAction(api.messages.sendMessage);
   const addReaction = useMutation(api.messages.addReaction);
-  const removeReaction = useMutation(api.messages.removeReaction);
+  const _removeReaction = useMutation(api.messages.removeReaction);
   const switchToConversation = useMutation(api.conversations.switchToConversation);
   
   // New query for conversation history
@@ -87,13 +97,17 @@ export function useChatManager(chatMode: 'floating' | 'full' = 'full') {
       setIsLoadingMore(false);
     } else if (hasLoadedInitial.current) {
       // Real-time updates (new messages)
-      // Use message IDs for proper deduplication instead of just length
-      const existingIds = new Set(allMessages.map(msg => msg._id));
-      const newMessages = messageData.messages.filter((msg: any) => !existingIds.has(msg._id));
+      // OPTIMIZATION: Use memoized Set for O(1) deduplication
+      const newMessages = messageData.messages.filter((msg: any) => !existingMessageIds.has(msg._id));
       
       if (newMessages.length > 0) {
-        // Add only truly new messages
-        setAllMessages(prev => [...prev, ...newMessages]);
+        // Add only truly new messages and update the ID set
+        setAllMessages(prev => {
+          const updated = [...prev, ...newMessages];
+          // Update the ref with new IDs
+          newMessages.forEach(msg => messageIds.current.add(msg._id));
+          return updated;
+        });
         setCursor(messageData.nextCursor);
       } else if (messageData.messages.length !== allMessages.length) {
         // Handle edge case where message order might have changed
@@ -109,6 +123,8 @@ export function useChatManager(chatMode: 'floating' | 'full' = 'full') {
       setAllMessages([]);
       setCursor(null);
       hasLoadedInitial.current = false;
+      // OPTIMIZATION: Clear message IDs set when switching conversations
+      messageIds.current.clear();
     }
   }, [activeConversation]);
 
@@ -122,7 +138,7 @@ export function useChatManager(chatMode: 'floating' | 'full' = 'full') {
   }, [testQuery, activeConversation, createConversation]);
 
   // Detect language from text content
-  const detectLanguage = (text: string): 'en' | 'ar' => {
+  const detectLanguage = useCallback((text: string): 'en' | 'ar' => {
     // Arabic character range detection
     const arabicRegex = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
     
@@ -155,7 +171,7 @@ export function useChatManager(chatMode: 'floating' | 'full' = 'full') {
     
     // Default to user's profile language or English
     return (testQuery?.language as 'en' | 'ar') || 'en';
-  };
+  }, [testQuery?.language]);
 
   // Send message function with natural timing
   const handleSendMessage = useCallback(async (message?: string) => {

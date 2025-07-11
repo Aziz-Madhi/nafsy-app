@@ -170,7 +170,7 @@ export function ScreenErrorBoundary({ children }: { children: ReactNode }) {
   
   return (
     <ErrorBoundary
-      onError={(error, errorInfo) => {
+      onError={(error, _errorInfo) => {
         // Log screen-level errors
         console.error('Screen Error:', error.message);
         // TODO: Send to crash reporting service
@@ -203,7 +203,7 @@ export function ComponentErrorBoundary({
   
   return (
     <ErrorBoundary
-      onError={(error, errorInfo) => {
+      onError={(error, _errorInfo) => {
         console.error(`Component Error in ${componentName}:`, error.message);
       }}
       fallback={
@@ -226,7 +226,7 @@ export function NetworkErrorBoundary({ children }: { children: ReactNode }) {
   
   return (
     <ErrorBoundary
-      onError={(error, errorInfo) => {
+      onError={(error, _errorInfo) => {
         console.error('Network Error:', error.message);
       }}
       fallback={

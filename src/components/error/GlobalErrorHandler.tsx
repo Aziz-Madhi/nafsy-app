@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { ErrorBoundary } from './ErrorBoundary';
-import { useAppTheme } from '@/theme';
+import { useAppTheme, lightTheme } from '@/theme';
 
 /**
  * Global Error Handler for Nafsy app
@@ -26,7 +26,7 @@ class ErrorReportingService {
   static reportError(error: Error, context: string, extra?: Record<string, any>) {
     // TODO: Integrate with crash reporting service (e.g., Sentry, Bugsnag)
     
-    const errorReport = {
+    const _errorReport = {
       message: error.message,
       stack: error.stack,
       context,
@@ -73,17 +73,13 @@ function GlobalErrorFallback({
   // Always call hooks at the top level - no conditional calling
   const themeData = useAppTheme();
   const theme = themeData?.theme || {
-    colors: {
-      background: { primary: '#FFFFFF' },
-      text: { primary: '#000000', secondary: '#666666' },
-      interactive: { primary: '#007AFF', destructive: '#FF3B30' }
-    }
+    colors: lightTheme
   };
   const commonStyles = themeData?.styles || {
-    primaryButton: { backgroundColor: '#007AFF', padding: 12, borderRadius: 8 },
-    secondaryButton: { backgroundColor: '#F2F2F7', padding: 12, borderRadius: 8 },
-    primaryButtonText: { color: '#FFFFFF', fontWeight: '600' },
-    secondaryButtonText: { color: '#000000', fontWeight: '500' }
+    primaryButton: { backgroundColor: lightTheme.interactive.primary, padding: 12, borderRadius: 8 },
+    secondaryButton: { backgroundColor: lightTheme.background.secondary, padding: 12, borderRadius: 8 },
+    primaryButtonText: { color: lightTheme.text.inverse, fontWeight: '600' },
+    secondaryButtonText: { color: lightTheme.text.primary, fontWeight: '500' }
   };
   
   const handleReportBug = () => {
@@ -186,10 +182,7 @@ function FeatureErrorFallback({ featureName }: { featureName: string }) {
   // Always call hooks at the top level
   const themeData = useAppTheme();
   const theme = themeData?.theme || {
-    colors: {
-      background: { secondary: '#F2F2F7' },
-      text: { primary: '#000000', secondary: '#666666' }
-    }
+    colors: lightTheme
   };
   
   return (
@@ -236,11 +229,7 @@ function CriticalErrorFallback() {
   // Always call hooks at the top level
   const themeData = useAppTheme();
   const theme = themeData?.theme || {
-    colors: {
-      background: { primary: '#FFFFFF' },
-      text: { secondary: '#666666' },
-      interactive: { destructive: '#FF3B30' }
-    }
+    colors: lightTheme
   };
   
   return (
@@ -328,18 +317,19 @@ const styles = StyleSheet.create({
   devTitle: {
     fontSize: 12,
     fontWeight: '600',
-    color: 'white',
+    color: lightTheme.text.inverse,
     marginBottom: 8,
   },
   devError: {
     fontSize: 12,
-    color: 'white',
+    color: lightTheme.text.inverse,
     marginBottom: 8,
     fontWeight: '500',
   },
   devStack: {
     fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: lightTheme.text.inverse,
+    opacity: 0.8,
     fontFamily: 'monospace',
   },
   featureErrorContainer: {

@@ -6,7 +6,7 @@ import {
   Dimensions,
   ScrollView,
 } from 'react-native';
-import Svg, { Path, Circle, Line, Text as SvgText, G, Rect } from 'react-native-svg';
+import Svg, { Path, Circle, Line, Text as SvgText, G } from 'react-native-svg';
 import { useTheme } from '@/theme';
 import { useLocale } from '@/hooks/useLocale';
 import { format } from 'date-fns';
