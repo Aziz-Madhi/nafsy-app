@@ -3,7 +3,19 @@ import { StyleSheet, Text, View } from "react-native";
 import { useAppTheme } from "@/theme";
 
 export default function NotFoundScreen() {
-  const { colors } = useAppTheme();
+  // Handle case where ThemeProvider might not be available yet
+  let colors;
+  try {
+    const theme = useAppTheme();
+    colors = theme.colors;
+  } catch (error) {
+    // Fallback colors when ThemeProvider is not available
+    colors = {
+      background: { primary: '#FFFFFF' },
+      text: { primary: '#000000' },
+      interactive: { primary: '#007AFF' }
+    };
+  }
   const styles = createStyles(colors);
 
   return (
