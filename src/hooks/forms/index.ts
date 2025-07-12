@@ -5,9 +5,15 @@ import { VALIDATION_RULES } from './useFormValidation';
 export {
   useForm,
   useAuthForm,
-  useMultiStepForm,
   type UseFormConfig,
 } from './useForm';
+
+export {
+  useMultiStepForm,
+  type MultiStepFormConfig,
+  type Step,
+  type MultiStepFormReturn,
+} from './useMultiStepForm';
 
 export {
   useFormState,

@@ -21,7 +21,6 @@ import type * as exercises from "../exercises.js";
 import type * as init from "../init.js";
 import type * as messages from "../messages.js";
 import type * as moods from "../moods.js";
-import type * as optimizedQueries from "../optimizedQueries.js";
 import type * as resources from "../resources.js";
 import type * as users from "../users.js";
 
@@ -42,7 +41,6 @@ declare const fullApi: ApiFromModules<{
   init: typeof init;
   messages: typeof messages;
   moods: typeof moods;
-  optimizedQueries: typeof optimizedQueries;
   resources: typeof resources;
   users: typeof users;
 }>;

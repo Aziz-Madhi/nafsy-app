@@ -13,7 +13,7 @@ export const EXERCISES = {
       type: 'breathing' as const,
       difficulty: 'beginner' as const,
       icon: 'wind',
-      gradient: ['#6495ED', '#4169E1'] as [string, string],
+      gradient: ['#A3C9E2', '#85C1E9'] as [string, string], // Softer blue for breathing
       pattern: { inhale: 4, hold: 4, exhale: 4 },
     },
     {
@@ -24,7 +24,7 @@ export const EXERCISES = {
       type: 'breathing' as const,
       difficulty: 'intermediate' as const,
       icon: 'leaf',
-      gradient: ['#4ADE80', '#22C55E'] as [string, string],
+      gradient: ['#8BC34A', '#7ED321'] as [string, string], // Softer green for calm
       pattern: { inhale: 4, hold: 7, exhale: 8 },
     },
   ],
@@ -37,7 +37,7 @@ export const EXERCISES = {
       type: 'grounding' as const,
       difficulty: 'beginner' as const,
       icon: 'hand.raised',
-      gradient: ['#F59E0B', '#EF4444'] as [string, string],
+      gradient: ['#FFAB78', '#F5A623'] as [string, string], // Softer orange for grounding
       stepsKey: 'exercises.data.grounding54321.steps',
     },
   ],
@@ -50,7 +50,7 @@ export const EXERCISES = {
       type: 'thoughtChallenge' as const,
       difficulty: 'advanced' as const,
       icon: 'brain',
-      gradient: ['#8B5CF6', '#7C3AED'] as [string, string],
+      gradient: ['#B19CD9', '#AF7AC5'] as [string, string], // Softer purple for thoughts
       stepsKey: 'exercises.data.thoughtChallenge.steps',
     },
   ],
@@ -63,7 +63,7 @@ export const EXERCISES = {
       type: 'gratitude' as const,
       difficulty: 'beginner' as const,
       icon: 'heart.fill',
-      gradient: ['#EC4899', '#DB2777'] as [string, string],
+      gradient: ['#FFB6C1', '#FF91A4'] as [string, string], // Softer pink for gratitude
       stepsKey: 'exercises.data.gratitudeJournal.steps',
     },
   ],

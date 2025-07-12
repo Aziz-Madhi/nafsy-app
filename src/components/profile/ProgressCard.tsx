@@ -64,7 +64,7 @@ export function ProgressCard({
           <IconSymbol 
             name={(trend === 'improving' ? 'arrow.up.right' : trend === 'declining' ? 'arrow.down.right' : 'minus') as any}
             size={16}
-            color={trend === 'improving' ? '#4ADE80' : trend === 'declining' ? '#F87171' : colors.text.tertiary}
+            color={trend === 'improving' ? colors.mood.great : trend === 'declining' ? colors.mood.terrible : colors.text.tertiary}
           />
         )}
       </View>

@@ -1,13 +1,15 @@
+import { useTheme } from '@/theme';
+import { colorUtils } from '@/theme/colors';
 import React, { memo, useCallback } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
   Dimensions,
   ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useTheme } from '@/theme';
+import Animated from 'react-native-reanimated';
 
 const { width } = Dimensions.get('window');
 
@@ -15,7 +17,8 @@ interface QuickReply {
   id: string;
   text: string;
   icon?: string;
-  sentiment: 'positive' | 'neutral' | 'supportive';
+  sentiment: 'positive' | 'neutral' | 'supportive' | 'mindful' | 'encouraging';
+  moodContext?: 'excellent' | 'good' | 'okay' | 'bad' | 'terrible';
 }
 
 interface QuickReplySuggestionsProps {
@@ -24,6 +27,25 @@ interface QuickReplySuggestionsProps {
   mode: 'floating' | 'traditional';
   isVisible: boolean;
 }
+
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
+
+// Mood-appropriate color mapping based on context
+const MOOD_COLORS = {
+  excellent: '#4CAF50',   // Calming green
+  good: '#8BC34A',        // Light green
+  okay: '#4A90E2',        // Soft blue (neutral/calming) - colors.interactive.primary
+  bad: '#F8A25D',         // Warm peach (supportive)
+  terrible: '#7ED321',    // Muted green (hopeful) - colors.wellness.growth
+};
+
+const SENTIMENT_COLORS = {
+  positive: '#4CAF50',    // Success green
+  neutral: '#4A90E2',     // Soft blue - colors.interactive.primary
+  supportive: '#F8A25D',  // Warm peach
+  mindful: '#9B59B6',     // Soft purple
+  encouraging: '#7ED321', // Muted green - colors.wellness.growth
+};
 
 /**
  * QuickReplySuggestions - Contextual reply options for mental health chat
@@ -60,26 +82,38 @@ const QuickReplySuggestionsComponent: React.FC<QuickReplySuggestionsProps> = ({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.floatingScrollContent}
       >
-        {suggestions.slice(0, 3).map((suggestion) => (
-          <TouchableOpacity
-            key={suggestion.id}
-            style={[
-              styles.floatingChip,
-              {
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                borderColor: getSentimentColor(suggestion.sentiment),
-              }
-            ]}
-            onPress={() => handleSelect(suggestion.text)}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel={`Quick reply: ${suggestion.text}`}
-          >
-            <Text style={[styles.floatingChipText, { color: '#2D3748' }]} numberOfLines={1}>
-              {suggestion.text}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        {suggestions.slice(0, 3).map((suggestion, index) => {
+          const moodColor = suggestion.moodContext 
+            ? MOOD_COLORS[suggestion.moodContext] 
+            : getSentimentColor(suggestion.sentiment, theme);
+          
+          return (
+            <AnimatedTouchableOpacity
+              key={suggestion.id}
+              style={[
+                styles.floatingChip,
+                {
+                  backgroundColor: colorUtils.withOpacity(moodColor, 0.15),
+                  borderColor: moodColor,
+                }
+              ]}
+              onPress={() => handleSelect(suggestion.text)}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={`Quick reply: ${suggestion.text}`}
+            >
+              <Text 
+                style={[
+                  styles.floatingChipText, 
+                  { color: theme.scheme === 'dark' ? theme.colors.text.primary : moodColor }
+                ]} 
+                numberOfLines={1}
+              >
+                {suggestion.text}
+              </Text>
+            </AnimatedTouchableOpacity>
+          );
+        })}
       </ScrollView>
     );
   }
@@ -92,29 +126,42 @@ const QuickReplySuggestionsComponent: React.FC<QuickReplySuggestionsProps> = ({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {suggestions.map((suggestion) => (
-          <TouchableOpacity
-            key={suggestion.id}
-            style={[
-              styles.chip,
-              {
-                backgroundColor: theme.colors.interactive.secondary,
-                borderColor: theme.colors.system.border,
-              }
-            ]}
-            onPress={() => handleSelect(suggestion.text)}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel={`Quick reply: ${suggestion.text}`}
-          >
-            <Text 
-              style={[styles.chipText, { color: theme.colors.text.primary }]}
-              numberOfLines={1}
+        {suggestions.map((suggestion) => {
+          const moodColor = suggestion.moodContext 
+            ? MOOD_COLORS[suggestion.moodContext] 
+            : getSentimentColor(suggestion.sentiment, theme);
+          
+          return (
+            <AnimatedTouchableOpacity
+              key={suggestion.id}
+              style={[
+                styles.chip,
+                {
+                  backgroundColor: colorUtils.withOpacity(moodColor, 0.1),
+                  borderColor: colorUtils.withOpacity(moodColor, 0.3),
+                }
+              ]}
+              onPress={() => handleSelect(suggestion.text)}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={`Quick reply: ${suggestion.text}`}
             >
-              {suggestion.text}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text 
+                style={[
+                  styles.chipText, 
+                  { 
+                    color: theme.scheme === 'dark' 
+                      ? theme.colors.text.primary 
+                      : colorUtils.darken(moodColor, 0.2) 
+                  }
+                ]}
+                numberOfLines={1}
+              >
+                {suggestion.text}
+              </Text>
+            </AnimatedTouchableOpacity>
+          );
+        })}
       </ScrollView>
     </View>
   );
@@ -134,15 +181,12 @@ function _getFloatingPosition(index: number) {
   return positions[index] || positions[0];
 }
 
-function getSentimentColor(sentiment: QuickReply['sentiment']): string {
-  switch (sentiment) {
-    case 'positive':
-      return 'rgba(52, 199, 89, 0.9)'; // systemGreen
-    case 'supportive':
-      return 'rgba(100, 149, 237, 0.9)'; // systemBlue
-    default:
-      return 'rgba(255, 255, 255, 0.95)'; // neutral white
-  }
+function getSentimentColor(
+  sentiment: QuickReply['sentiment'], 
+  theme: ReturnType<typeof useTheme>['theme']
+): string {
+  // Use our new evidence-based colors
+  return SENTIMENT_COLORS[sentiment] || theme.colors.interactive.primary;
 }
 
 const styles = StyleSheet.create({
@@ -159,8 +203,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
     elevation: 3,
   },
   floatingChipText: {
@@ -180,9 +224,9 @@ const styles = StyleSheet.create({
   },
   chip: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 20,
-    borderWidth: 1,
+    borderWidth: 1.5,
     marginRight: 8,
   },
   chipText: {

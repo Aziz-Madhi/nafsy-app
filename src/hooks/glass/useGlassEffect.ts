@@ -115,8 +115,14 @@ export function useGlassEffect(config: GlassEffectConfig = {}): GlassEffectProps
           
         case GLASS_VARIANTS.CARD:
           return {
-            light: ['rgba(255, 255, 255, 0.4)', 'rgba(255, 255, 255, 0.2)'],
-            dark: ['rgba(255, 255, 255, 0.12)', 'rgba(255, 255, 255, 0.06)'],
+            light: [
+              'rgba(255, 255, 255, 0.4)', 
+              'rgba(245, 245, 245, 0.2)'  // Warm gray tint (#F5F5F5)
+            ],
+            dark: [
+              'rgba(30, 30, 30, 0.4)',     // Dark surface (#1E1E1E)
+              'rgba(18, 18, 18, 0.2)'      // Dark background (#121212)
+            ],
           };
           
         case GLASS_VARIANTS.INPUT:
@@ -148,9 +154,11 @@ export function useGlassEffect(config: GlassEffectConfig = {}): GlassEffectProps
     // Background color (primary gradient color)
     const backgroundColor = currentGradientColors[0];
     
-    // Border color with theme adaptation
+    // Border color with theme adaptation using new color palette
     const borderColor = borderEnabled 
-      ? (isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.3)')
+      ? (isDark 
+        ? 'rgba(133, 193, 233, 0.15)' // Light sky blue for dark mode (#85C1E9)
+        : 'rgba(74, 144, 226, 0.2)')   // Soft blue for light mode (#4A90E2)
       : 'transparent';
       
     // Shadow properties

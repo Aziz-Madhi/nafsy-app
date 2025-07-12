@@ -7,3 +7,4 @@ export { ExerciseStatsBanner } from './ExerciseStatsBanner';
 export { ExerciseCategories } from './ExerciseCategories';
 export { ExerciseList } from './ExerciseList';
 export { RecommendationBanner } from './RecommendationBanner';
+export { ExerciseQuickActions } from './ExerciseQuickActions';

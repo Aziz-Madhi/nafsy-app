@@ -96,7 +96,6 @@ bun install react-native-paper
 ### Color Palette Implementation
 
 ```typescript
-// src/theme/colors.ts
 export const colors = {
   // Primary palette based on research
   primary: {
@@ -145,7 +144,6 @@ export const colors = {
 ### Typography System
 
 ```typescript
-// src/theme/typography.ts
 import { Platform } from "react-native";
 
 export const typography = {
@@ -186,7 +184,7 @@ export const typography = {
 ### Theme Provider
 
 ```typescript
-// src/theme/ThemeProvider.tsx
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -247,7 +245,7 @@ export const useTheme = () => {
 ### Logo Component
 
 ```typescript
-// src/components/Logo.tsx
+
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
@@ -291,7 +289,7 @@ const styles = StyleSheet.create({
 ### Onboarding Screens
 
 ```typescript
-// src/screens/onboarding/WelcomeScreen.tsx
+
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -390,7 +388,7 @@ const styles = StyleSheet.create({
 ### Sign Up with Progressive Disclosure
 
 ```typescript
-// src/screens/onboarding/SignUpScreen.tsx
+
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
@@ -580,7 +578,7 @@ const styles = StyleSheet.create({
 ## Questionnaire Implementation
 
 ```typescript
-// src/screens/questionnaire/QuestionnaireScreen.tsx
+
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -840,98 +838,10 @@ const styles = StyleSheet.create({
 });
 ```
 
-## Main App Navigation
-
-```typescript
-// src/navigation/MainNavigator.tsx
-import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../theme/ThemeProvider';
-import { HomeScreen } from '../screens/main/HomeScreen';
-import { ChatScreen } from '../screens/main/ChatScreen';
-import { ExercisesScreen } from '../screens/main/ExercisesScreen';
-import { MoodTrackerScreen } from '../screens/main/MoodTrackerScreen';
-import { ProfileScreen } from '../screens/main/ProfileScreen';
-
-const Tab = createBottomTabNavigator();
-
-export const MainNavigator: React.FC = () => {
-  const { colors } = useTheme();
-
-  return (
-    <Tab.Navigator
-      screenOptions={{
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.neutral.gray200,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
-        },
-        tabBarActiveTintColor: colors.primary.blue,
-        tabBarInactiveTintColor: colors.neutral.gray400,
-        headerStyle: {
-          backgroundColor: colors.background,
-        },
-        headerTintColor: colors.text,
-      }}
-    >
-      <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Chat"
-        component={ChatScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="chatbubbles" size={size} color={color} />
-          ),
-          tabBarLabel: 'AI Coach',
-        }}
-      />
-      <Tab.Screen
-        name="Mood"
-        component={MoodTrackerScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="heart" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Exercises"
-        component={ExercisesScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="fitness" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
-          ),
-        }}
-      />
-    </Tab.Navigator>
-  );
-};
-```
-
 ## AI Chat Implementation
 
 ```typescript
-// src/screens/main/ChatScreen.tsx
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, StyleSheet, KeyboardAvoidingView, Platform, TouchableOpacity, Text } from 'react-native';
 import { GiftedChat, IMessage, Send, InputToolbar, Bubble } from 'react-native-gifted-chat';
@@ -1142,7 +1052,7 @@ const styles = StyleSheet.create({
 ## Mood Tracking Implementation
 
 ```typescript
-// src/screens/main/MoodTrackerScreen.tsx
+
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Calendar } from 'react-native-calendars';
@@ -1324,7 +1234,7 @@ const styles = StyleSheet.create({
 ## Exercise Section Implementation
 
 ```typescript
-// src/screens/main/ExercisesScreen.tsx
+
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -1573,95 +1483,7 @@ const styles = StyleSheet.create({
 });
 ```
 
-## Services and State Management
-
 ```typescript
-// src/services/AIChatService.ts
-interface ChatResponse {
-  text: string;
-  suggestedActions?: Array<{ title: string; value: string }>;
-  sentiment?: "positive" | "neutral" | "negative";
-}
-
-export class AIChatService {
-  static async getResponse(message: string): Promise<ChatResponse> {
-    // Implement your AI integration here
-    // This is a mock implementation
-
-    // Analyze sentiment
-    const sentiment = this.analyzeSentiment(message);
-
-    // Generate contextual response
-    let response: ChatResponse = {
-      text: "",
-      sentiment,
-    };
-
-    if (
-      message.toLowerCase().includes("anxious") ||
-      message.toLowerCase().includes("anxiety")
-    ) {
-      response.text =
-        "I hear that you're feeling anxious. That can be really challenging. Would you like to try a quick breathing exercise that might help you feel more centered?";
-      response.suggestedActions = [
-        { title: "Yes, let's try breathing", value: "breathing_exercise" },
-        { title: "Tell me more about anxiety", value: "anxiety_info" },
-        { title: "I'd like to talk about it", value: "talk_anxiety" },
-      ];
-    } else if (
-      message.toLowerCase().includes("sad") ||
-      message.toLowerCase().includes("depressed")
-    ) {
-      response.text =
-        "I'm sorry you're feeling this way. It's okay to feel sad sometimes. Remember, I'm here to support you. What would be most helpful right now?";
-      response.suggestedActions = [
-        { title: "Practice self-compassion", value: "self_compassion" },
-        { title: "Try mood lifting exercise", value: "mood_exercise" },
-        { title: "Just listen", value: "listen" },
-      ];
-    } else {
-      response.text =
-        "Thank you for sharing that with me. How can I best support you today?";
-    }
-
-    return response;
-  }
-
-  private static analyzeSentiment(
-    message: string
-  ): "positive" | "neutral" | "negative" {
-    const negativeWords = [
-      "sad",
-      "anxious",
-      "depressed",
-      "angry",
-      "frustrated",
-      "worried",
-    ];
-    const positiveWords = [
-      "happy",
-      "good",
-      "great",
-      "excited",
-      "calm",
-      "peaceful",
-    ];
-
-    const lowerMessage = message.toLowerCase();
-
-    if (negativeWords.some((word) => lowerMessage.includes(word))) {
-      return "negative";
-    } else if (positiveWords.some((word) => lowerMessage.includes(word))) {
-      return "positive";
-    }
-
-    return "neutral";
-  }
-}
-```
-
-```typescript
-// src/store/userStore.ts
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -1750,8 +1572,6 @@ export const useUserStore = create<UserState>((set, get) => ({
 
 ## Key Implementation Notes
 
-1. **Accessibility First**: All touch targets are 44px minimum, proper color contrast ratios maintained, and screen reader support implemented throughout.
-
 2. **Progressive Disclosure**: Onboarding broken into small steps to prevent overwhelm, following research showing better completion rates.
 
 3. **Performance Optimization**:
@@ -1762,8 +1582,6 @@ export const useUserStore = create<UserState>((set, get) => ({
 
 4. **Privacy & Security**:
    - Sensitive data stored in expo-secure-store
-   - Optional local-only data storage
-   - Clear data ownership controls
 
 5. **Crisis Management**: Emergency button always visible in chat, with proper escalation paths.
 

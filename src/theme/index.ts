@@ -7,6 +7,16 @@
 // Import required for the convenience hook
 import { useTheme } from './ThemeProvider';
 import { createThemedCommonStyles, Spacing, BorderRadius, FontSize, FontWeight } from './themedStyles';
+import { 
+  typography, 
+  fontFamilies, 
+  fontSize as typographyFontSize, 
+  fontWeight as typographyFontWeight, 
+  lineHeightMultiplier, 
+  letterSpacing, 
+  getLineHeight,
+  typographyGuidelines 
+} from './typography';
 
 export type { ThemeColors, Theme, ThemeMode } from './colors';
 export {
@@ -40,6 +50,18 @@ export {
   FontWeight,
 } from './themedStyles';
 
+// Typography system
+export {
+  typography,
+  fontFamilies,
+  fontSize as typographyFontSize,
+  fontWeight as typographyFontWeight,
+  lineHeightMultiplier,
+  letterSpacing,
+  getLineHeight,
+  typographyGuidelines,
+} from './typography';
+
 /**
  * Convenience hook that combines common usage patterns
  * Returns structured theme object with proper typing
@@ -64,6 +86,9 @@ export function useAppTheme() {
     borderRadius: BorderRadius,
     fontSize: FontSize,
     fontWeight: FontWeight,
+    // Typography system (new design guidelines)
+    typography,
+    typographyGuidelines,
   } as const;
 }
 

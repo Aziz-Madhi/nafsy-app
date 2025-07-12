@@ -7,7 +7,8 @@ import {
   ExerciseStatsBanner,
   ExerciseCategories,
   ExerciseList,
-  RecommendationBanner
+  RecommendationBanner,
+  ExerciseQuickActions
 } from "@/components/exercises";
 import { useExerciseRecommendations } from "@/hooks/useAIActions";
 import { EXERCISES } from "@/data/exercises";
@@ -23,6 +24,8 @@ export default function ExercisesScreen() {
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
   const [showPlayer, setShowPlayer] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [showQuickActions, setShowQuickActions] = useState(false);
+  const [quickActionsExercise, setQuickActionsExercise] = useState<any>(null);
   
   // OPTIMIZATION: Consolidated data fetching and theming
   const { user, isDataLoading, exerciseStats, exerciseHistory, latestMood } = useUserData();
@@ -124,6 +127,51 @@ export default function ExercisesScreen() {
     setSelectedExercise(exercise);
     setShowPlayer(true);
   }, []);
+
+  const handleExerciseLongPress = React.useCallback((exercise: any) => {
+    setQuickActionsExercise(exercise);
+    setShowQuickActions(true);
+  }, []);
+
+  const quickActions = React.useMemo(() => [
+    {
+      id: "start",
+      icon: "play.fill",
+      label: locale === 'ar' ? 'بدء' : 'Start',
+      color: "#4CAF50",
+      onPress: () => {
+        if (quickActionsExercise) {
+          setSelectedExercise(quickActionsExercise);
+          setShowPlayer(true);
+          setShowQuickActions(false);
+        }
+      },
+    },
+    {
+      id: "favorite",
+      icon: favorites.has(quickActionsExercise?.id) ? "heart.fill" : "heart",
+      label: locale === 'ar' ? 'المفضلة' : 'Favorite',
+      color: "#F44336",
+      onPress: () => {
+        if (quickActionsExercise) {
+          handleFavoriteToggle(quickActionsExercise.id);
+          setShowQuickActions(false);
+        }
+      },
+    },
+    {
+      id: "quick-complete",
+      icon: "checkmark.circle.fill",
+      label: locale === 'ar' ? 'إنجاز سريع' : 'Quick Complete',
+      color: "#4A90E2", // colors.interactive.primary
+      onPress: () => {
+        if (quickActionsExercise) {
+          handleQuickComplete(quickActionsExercise);
+          setShowQuickActions(false);
+        }
+      },
+    },
+  ], [quickActionsExercise, favorites, locale, handleFavoriteToggle, handleQuickComplete]);
   
   const ListHeaderComponent = React.useCallback(() => (
     <>
@@ -179,6 +227,16 @@ export default function ExercisesScreen() {
           }}
         />
       ) : null}
+
+      {/* Exercise Quick Actions */}
+      <ExerciseQuickActions
+        isVisible={showQuickActions}
+        actions={quickActions}
+        onClose={() => {
+          setShowQuickActions(false);
+          setQuickActionsExercise(null);
+        }}
+      />
     </BaseScreen>
   );
 }

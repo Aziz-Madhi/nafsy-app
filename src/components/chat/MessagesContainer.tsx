@@ -41,7 +41,7 @@ export function MessagesContainer({
       <GenericList<MessageGroupData>
         ref={listRef}
         data={groupMessagesByDate(messages, locale).map((group, index) => ({
-          id: group.date || `group-${index}`,
+          id: `${group.date}-${index}-${group.messages.length}`,
           date: group.date,
           messages: group.messages,
         }))}

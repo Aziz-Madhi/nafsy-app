@@ -22,11 +22,11 @@ export interface ExerciseData {
 export const getDifficultyColor = (difficulty: ExerciseDifficulty, fallbackColor: string = '#6B7280'): string => {
   switch (difficulty) {
     case 'beginner':
-      return '#4ADE80'; // Green for beginner
+      return '#94D67B'; // Softer green for beginner
     case 'intermediate':
-      return '#FBBF24'; // Yellow for intermediate
+      return '#FFD166'; // Softer yellow for intermediate
     case 'advanced':
-      return '#F87171'; // Red for advanced
+      return '#FF8A80'; // Softer red for advanced
     default:
       return fallbackColor;
   }

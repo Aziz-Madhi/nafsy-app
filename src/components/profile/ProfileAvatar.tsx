@@ -83,8 +83,10 @@ export function ProfileAvatar({
           ]}
         >
           <LinearGradient
-            colors={['#6495ED', '#4169E1', '#8A2BE2']}
+            colors={['#4A90E2', '#7ED321', '#AF7AC5']}
             style={styles.avatarGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
           >
             <Text style={styles.avatarText}>
               {user?.displayName?.[0]?.toUpperCase() || user?.name?.[0]?.toUpperCase() || "U"}
@@ -126,7 +128,7 @@ const styles = StyleSheet.create({
     height: 140,
     borderRadius: 70,
     borderWidth: 2,
-    borderColor: 'rgba(100, 149, 237, 0.3)',
+    borderColor: 'rgba(74, 144, 226, 0.3)',
     borderStyle: 'dashed',
   },
   avatarRingSecondary: {
@@ -135,7 +137,7 @@ const styles = StyleSheet.create({
     height: 160,
     borderRadius: 80,
     borderWidth: 1,
-    borderColor: 'rgba(100, 149, 237, 0.2)',
+    borderColor: 'rgba(126, 211, 33, 0.2)',
     borderStyle: 'solid',
   },
   achievementBadge: {
@@ -154,9 +156,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 5,
   },
   avatarGradient: {
     width: '100%',

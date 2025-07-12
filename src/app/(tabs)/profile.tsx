@@ -67,7 +67,7 @@ export default function ProfileScreen() {
       title: locale === 'ar' ? 'المزاج' : 'Mood',
       value: moodStats?.averageRating?.toFixed(1) || '0.0',
       subtitle: locale === 'ar' ? 'المتوسط' : 'Average',
-      color: '#6495ED',
+      color: '#6BA3E5',
       trend: moodStats?.trend,
     },
     {
@@ -75,21 +75,21 @@ export default function ProfileScreen() {
       title: locale === 'ar' ? 'الاستمرارية' : 'Streak',
       value: calculateStreak().toString(),
       subtitle: locale === 'ar' ? 'يوم' : 'days',
-      color: '#F59E0B',
+      color: '#FFAB78',
     },
     {
       icon: 'heart.circle.fill' as any,
       title: locale === 'ar' ? 'التمارين' : 'Exercises',
       value: exerciseStats?.totalExercises?.toString() || '0',
       subtitle: locale === 'ar' ? 'مكتمل' : 'completed',
-      color: '#EC4899',
+      color: '#F687B3',
     },
     {
       icon: 'star.fill' as any,
       title: locale === 'ar' ? 'التقييم' : 'Rating',
       value: exerciseStats?.averageEffectiveness?.toFixed(1) || '0.0',
       subtitle: locale === 'ar' ? 'من 5' : 'out of 5',
-      color: '#FFB800',
+      color: '#FFD166',
     },
   ];
 

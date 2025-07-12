@@ -8,15 +8,23 @@ export const recordMood = mutation({
     rating: v.number(),
     note: v.optional(v.string()),
     factors: v.optional(v.array(v.string())),
+    emoji: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const now = Date.now();
+    const today = new Date(now).toISOString().split('T')[0]; // YYYY-MM-DD
+    
     const moodId = await ctx.db.insert("moods", {
       userId: args.userId,
       rating: args.rating,
       note: args.note,
       factors: args.factors,
-      timestamp: Date.now(),
+      emoji: args.emoji,
+      timestamp: now,
     });
+
+    // Update streak
+    await updateStreak(ctx, args.userId, "mood", today);
 
     return moodId;
   },
@@ -231,3 +239,93 @@ export const getMoodInsights = query({
     };
   },
 });
+
+// Get user's current streak
+export const getUserStreak = query({
+  args: {
+    userId: v.id("users"),
+    type: v.union(v.literal("mood"), v.literal("exercise"), v.literal("check-in")),
+  },
+  handler: async (ctx, args) => {
+    const streak = await ctx.db
+      .query("streaks")
+      .withIndex("by_user_type", (q) => 
+        q.eq("userId", args.userId).eq("type", args.type)
+      )
+      .first();
+
+    return streak || {
+      currentStreak: 0,
+      longestStreak: 0,
+      lastEntryDate: "",
+      streakStartDate: "",
+      totalEntries: 0,
+    };
+  },
+});
+
+// Helper function to update streak
+async function updateStreak(
+  ctx: any,
+  userId: any,
+  type: "mood" | "exercise" | "check-in",
+  currentDate: string
+) {
+  const existingStreak = await ctx.db
+    .query("streaks")
+    .withIndex("by_user_type", (q: any) => 
+      q.eq("userId", userId).eq("type", type)
+    )
+    .first();
+
+  if (!existingStreak) {
+    // Create new streak
+    await ctx.db.insert("streaks", {
+      userId,
+      type,
+      currentStreak: 1,
+      longestStreak: 1,
+      lastEntryDate: currentDate,
+      streakStartDate: currentDate,
+      totalEntries: 1,
+    });
+    return;
+  }
+
+  const lastDate = new Date(existingStreak.lastEntryDate);
+  const current = new Date(currentDate);
+  const daysDiff = Math.floor(
+    (current.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24)
+  );
+
+  let newCurrentStreak = existingStreak.currentStreak;
+  let newStreakStartDate = existingStreak.streakStartDate;
+
+  if (daysDiff === 0) {
+    // Same day, don't update streak
+    await ctx.db.patch(existingStreak._id, {
+      totalEntries: existingStreak.totalEntries + 1,
+    });
+    return;
+  } else if (daysDiff === 1) {
+    // Consecutive day, increment streak
+    newCurrentStreak = existingStreak.currentStreak + 1;
+  } else {
+    // Streak broken, restart
+    newCurrentStreak = 1;
+    newStreakStartDate = currentDate;
+  }
+
+  const newLongestStreak = Math.max(
+    existingStreak.longestStreak,
+    newCurrentStreak
+  );
+
+  await ctx.db.patch(existingStreak._id, {
+    currentStreak: newCurrentStreak,
+    longestStreak: newLongestStreak,
+    lastEntryDate: currentDate,
+    streakStartDate: newStreakStartDate,
+    totalEntries: existingStreak.totalEntries + 1,
+  });
+}

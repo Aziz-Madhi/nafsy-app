@@ -121,5 +121,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     fontStyle: 'italic',
+    overflow: 'hidden',
   },
 });

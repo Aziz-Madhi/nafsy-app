@@ -21,38 +21,38 @@ interface AnimatedMoodGradientProps {
 const MOOD_GRADIENTS = {
   // Very low mood (1-2)
   veryLow: {
-    colors: ['#1e3a8a', '#312e81', '#1e1b4b'],
+    colors: ['#4A5F7A', '#525B75', '#3F4865'],
     locations: [0, 0.5, 1],
   },
   // Low mood (3-4)
   low: {
-    colors: ['#374151', '#4b5563', '#6b7280'],
+    colors: ['#6B7785', '#7B8694', '#8B96A3'],
     locations: [0, 0.5, 1],
   },
   // Neutral mood (5-6)
   neutral: {
-    colors: ['#6366f1', '#8b5cf6', '#a855f7'],
+    colors: ['#8B93E6', '#A78BFA', '#C4A5F5'],
     locations: [0, 0.5, 1],
   },
   // Good mood (7-8)
   good: {
-    colors: ['#10b981', '#34d399', '#6ee7b7'],
+    colors: ['#5FB88E', '#7DD3A6', '#9BE5C1'],
     locations: [0, 0.5, 1],
   },
   // Excellent mood (9-10)
   excellent: {
-    colors: ['#f59e0b', '#fbbf24', '#fcd34d'],
+    colors: ['#FFB778', '#FFCD94', '#FFE3B0'],
     locations: [0, 0.5, 1],
   },
 };
 
 // Time-based gradients
 const TIME_GRADIENTS = {
-  dawn: ['#ff9a9e', '#fecfef', '#fecfef'],
-  morning: ['#a8edea', '#fed6e3', '#d299c2'],
-  afternoon: ['#ffecd2', '#fcb69f', '#ff8a80'],
-  evening: ['#667eea', '#764ba2', '#667eea'],
-  night: ['#2c3e50', '#34495e', '#2c3e50'],
+  dawn: ['#FFB3BA', '#FFE0E6', '#FFE0E6'],
+  morning: ['#BAE6E4', '#FFE4ED', '#E0B5D3'],
+  afternoon: ['#FFF4E6', '#FFD4B3', '#FFAB9E'],
+  evening: ['#8B93E6', '#9A7BB8', '#8B93E6'],
+  night: ['#3A4D63', '#495D75', '#3A4D63'],
 };
 
 export function AnimatedMoodGradient({

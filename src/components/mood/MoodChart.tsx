@@ -37,7 +37,7 @@ export function MoodChart({ moodData, averageRating = 0, trend = 'neutral' }: Mo
   
   if (moodData.length === 0) {
     return (
-      <View style={[styles.emptyContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}>
+      <View style={[styles.emptyContainer, { backgroundColor: colors.background.secondary }]}>
         <Text style={[styles.emptyText, { color: colors.text.secondary }]}>
           {locale === 'ar' ? 'لا توجد بيانات مزاج بعد' : 'No mood data yet'}
         </Text>
@@ -78,10 +78,10 @@ export function MoodChart({ moodData, averageRating = 0, trend = 'neutral' }: Mo
   // Create area path (filled area under the line)
   const areaPath = `${pathData} L ${points[points.length - 1].x} ${PADDING + chartHeight} L ${PADDING} ${PADDING + chartHeight} Z`;
 
-  // Get trend color
+  // Get trend color using theme colors
   const getTrendColor = () => {
-    if (trend === 'improving') return '#4ADE80';
-    if (trend === 'declining') return '#F87171';
+    if (trend === 'improving') return colors.mood.great;
+    if (trend === 'declining') return colors.mood.terrible;
     return colors.interactive.primary;
   };
 
@@ -128,7 +128,7 @@ export function MoodChart({ moodData, averageRating = 0, trend = 'neutral' }: Mo
                     y1={y}
                     x2={PADDING + chartWidth}
                     y2={y}
-                    stroke={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}
+                    stroke={colors.system.separator}
                     strokeWidth="1"
                     strokeDasharray="3,3"
                   />
@@ -136,8 +136,9 @@ export function MoodChart({ moodData, averageRating = 0, trend = 'neutral' }: Mo
                     x={PADDING - 5}
                     y={y + 5}
                     textAnchor="end"
-                    fill={colors.text.tertiary}
-                    fontSize="12"
+                    fill={colors.text.secondary}
+                    fontSize="14"
+                    fontWeight="500"
                   >
                     {rating}
                   </SvgText>
@@ -148,8 +149,8 @@ export function MoodChart({ moodData, averageRating = 0, trend = 'neutral' }: Mo
             {/* Area fill */}
             <Path
               d={areaPath}
-              fill={colors.interactive.primary}
-              fillOpacity="0.1"
+              fill={getTrendColor()}
+              fillOpacity="0.15"
             />
             
             {/* Line */}
@@ -168,10 +169,10 @@ export function MoodChart({ moodData, averageRating = 0, trend = 'neutral' }: Mo
                 <Circle
                   cx={point.x}
                   cy={point.y}
-                  r="6"
-                  fill={getTrendColor()}
-                  stroke="#FFFFFF"
-                  strokeWidth="2"
+                  r="5"
+                  fill={colors.background.primary}
+                  stroke={getTrendColor()}
+                  strokeWidth="2.5"
                 />
                 {/* Date labels for first, middle, and last points */}
                 {(index === 0 || index === Math.floor(points.length / 2) || index === points.length - 1) && (
@@ -179,8 +180,8 @@ export function MoodChart({ moodData, averageRating = 0, trend = 'neutral' }: Mo
                     x={point.x}
                     y={PADDING + chartHeight + 20}
                     textAnchor="middle"
-                    fill={colors.text.tertiary}
-                    fontSize="10"
+                    fill={colors.text.secondary}
+                    fontSize="12"
                   >
                     {formatDate(point.timestamp)}
                   </SvgText>
@@ -226,6 +227,10 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     alignItems: 'center',
+    backgroundColor: 'rgba(74, 144, 226, 0.1)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
   },
   avgLabel: {
     fontSize: 12,

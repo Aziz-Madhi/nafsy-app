@@ -18,6 +18,7 @@ export const en = {
   retry: "Retry",
   loading: "Loading...",
   error: "Error",
+  ok: "OK",
   
   // Authentication
   auth: {
@@ -123,6 +124,27 @@ export const en = {
     mood: "Mood",
     exercises: "Exercises",
     profile: "Profile",
+  },
+  
+  // Crisis support
+  crisis: {
+    needHelp: "Need immediate help?",
+    modal: {
+      title: "Emergency Support",
+      subtitle: "If you're in crisis, help is available. Choose the option that feels right for you.",
+    },
+    callError: {
+      title: "Unable to make call",
+      message: "Please dial the number manually or try again later.",
+    },
+  },
+  
+  // Common actions (for global access)
+  common: {
+    close: "Close",
+    ok: "OK",
+    cancel: "Cancel",
+    continue: "Continue",
   },
   
   // Chat screen

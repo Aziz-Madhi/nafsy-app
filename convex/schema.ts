@@ -104,7 +104,20 @@ export default defineSchema({
     note: v.optional(v.string()),
     factors: v.optional(v.array(v.string())),
     timestamp: v.number(),
-  }).index("by_user", ["userId"]),
+    emoji: v.optional(v.string()), // Store the selected emoji
+  }).index("by_user", ["userId"])
+    .index("by_timestamp", ["timestamp"]),
+  
+  // New table for tracking streaks
+  streaks: defineTable({
+    userId: v.id("users"),
+    type: v.union(v.literal("mood"), v.literal("exercise"), v.literal("check-in")),
+    currentStreak: v.number(),
+    longestStreak: v.number(),
+    lastEntryDate: v.string(), // YYYY-MM-DD format
+    streakStartDate: v.string(), // YYYY-MM-DD format
+    totalEntries: v.number(),
+  }).index("by_user_type", ["userId", "type"]),
 
   exercises: defineTable({
     userId: v.id("users"),

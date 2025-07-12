@@ -5,3 +5,6 @@ export { LastMoodCard } from './LastMoodCard';
 export { ExerciseRecommendationCard } from './ExerciseRecommendationCard';
 export { InsightsSection } from './InsightsSection';
 export { CommonFactorsSection } from './CommonFactorsSection';
+export { MoodEmojiSelector } from './MoodEmojiSelector';
+export { MoodCalendar } from './MoodCalendar';
+export { StreakBadge } from './StreakBadge';

@@ -4,7 +4,7 @@ import {
   MessagesContainer, 
   ChatInput, 
   ChatModals, 
-  QuickReplySuggestions 
+  QuickReplySuggestions
 } from "@/components/chat";
 import { useChatManager } from "@/hooks/useChatManager";
 import { useTranslation, useLocale } from "@/hooks/useLocale";
@@ -118,13 +118,11 @@ export default function ChatScreen() {
   // Render floating mode
   if (isFloatingMode) {
     return (
-      <FloatingChatMode
-        onSendMessage={handleSendMessage}
-        isTyping={isTyping}
-        recentMessages={floatingMessages}
-        onSwitchToFullChat={switchToFullChat}
-        quickReplies={quickReplies}
-      />
+      <View style={styles.floatingContainer}>
+        <FloatingChatMode
+          onSwitchToFullChat={switchToFullChat}
+        />
+      </View>
     );
   }
 
@@ -230,6 +228,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   chatContainer: {
+    flex: 1,
+  },
+  floatingContainer: {
     flex: 1,
   },
 });

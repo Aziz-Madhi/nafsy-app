@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { BaseScreen } from '@/components/layout/BaseScreen';
 import { useTheme } from '@/theme';
+import React from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 // OPTIMIZATION: Consolidated loading screen pattern following LEVER framework
 // Eliminates ~20 lines of duplicate code per screen where loading state is displayed

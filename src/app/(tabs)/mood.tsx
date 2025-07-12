@@ -6,7 +6,10 @@ import {
   LastMoodCard,
   ExerciseRecommendationCard,
   InsightsSection,
-  CommonFactorsSection
+  CommonFactorsSection,
+  MoodEmojiSelector,
+  MoodCalendar,
+  StreakBadge
 } from "@/components/mood";
 import { AnimatedMoodGradient } from "@/components/animations/AnimatedMoodGradient";
 import { IconSymbol } from "@/components/core/Icon/IconSymbol";
@@ -14,7 +17,7 @@ import { useExerciseRecommendations } from "@/hooks/useAIActions";
 import { useLocale } from "@/hooks/useLocale";
 import { getRelativeTime } from "@/utils/date";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, View, TouchableOpacity, Text } from "react-native";
 // OPTIMIZATION: Consolidated imports following LEVER framework
 import { useUserData } from "@/hooks/useUserData";
 import { useThemedGlass } from "@/hooks/useThemedGlass";
@@ -34,6 +37,8 @@ export default function MoodScreen() {
   const { locale } = useLocale();
   const [showTracker, setShowTracker] = useState(false);
   const [showInsights, setShowInsights] = useState(false);
+  const [viewMode, setViewMode] = useState<'chart' | 'calendar'>('chart');
+  const [currentMonth, setCurrentMonth] = useState(new Date());
   
   // OPTIMIZATION: Consolidated data fetching and theming
   const { user, isDataLoading, moodStats, latestMood, moodHistory } = useUserData();
@@ -194,6 +199,18 @@ export default function MoodScreen() {
           buttonAnimatedStyle={buttonAnimatedStyle}
         />
         
+        {/* Streak Badge */}
+        {user?._id ? (
+          <View style={styles.streakContainer}>
+            <StreakBadge 
+              userId={user._id} 
+              type="mood" 
+              variant="compact"
+              showAnimation={true}
+            />
+          </View>
+        ) : null}
+        
         {/* Last Mood Card */}
         <LastMoodCard
           latestMood={latestMood}
@@ -208,12 +225,65 @@ export default function MoodScreen() {
           locale={locale}
         />
         
-        {/* Mood Chart */}
-        {moodHistory && moodHistory.length > 0 ? <MoodChart 
-            moodData={moodHistory}
-            averageRating={moodStats?.averageRating}
-            trend={moodStats?.trend}
-          /> : null}
+        {/* View Toggle */}
+        <View style={styles.viewToggleContainer}>
+          <TouchableOpacity
+            style={[styles.viewToggleButton, viewMode === 'chart' && styles.viewToggleButtonActive]}
+            onPress={() => setViewMode('chart')}
+          >
+            <IconSymbol 
+              name="chart.line.uptrend.xyaxis" 
+              size={16} 
+              color={viewMode === 'chart' ? colors.text.inverse : colors.text.secondary} 
+            />
+            <Text style={[
+              styles.viewToggleText, 
+              { color: viewMode === 'chart' ? colors.text.inverse : colors.text.secondary }
+            ]}>
+              {locale === 'ar' ? 'الرسم البياني' : 'Chart'}
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.viewToggleButton, viewMode === 'calendar' && styles.viewToggleButtonActive]}
+            onPress={() => setViewMode('calendar')}
+          >
+            <IconSymbol 
+              name="calendar" 
+              size={16} 
+              color={viewMode === 'calendar' ? colors.text.inverse : colors.text.secondary} 
+            />
+            <Text style={[
+              styles.viewToggleText, 
+              { color: viewMode === 'calendar' ? colors.text.inverse : colors.text.secondary }
+            ]}>
+              {locale === 'ar' ? 'التقويم' : 'Calendar'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+        
+        {/* Mood Visualization */}
+        {moodHistory && moodHistory.length > 0 ? (
+          viewMode === 'chart' ? (
+            <MoodChart 
+              moodData={moodHistory}
+              averageRating={moodStats?.averageRating}
+              trend={moodStats?.trend}
+            />
+          ) : (
+            <View style={styles.calendarContainer}>
+              <MoodCalendar
+                moodEntries={moodHistory.map(mood => ({
+                  date: new Date(mood.timestamp).toISOString().split('T')[0],
+                  mood: mood.rating,
+                  emoji: mood.emoji || '😐'
+                }))}
+                currentMonth={currentMonth}
+                onMonthChange={setCurrentMonth}
+              />
+            </View>
+          )
+        ) : null}
         
         {/* Insights Section */}
         <InsightsSection
@@ -244,5 +314,49 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 10,
+  },
+  streakContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  viewToggleContainer: {
+    flexDirection: 'row',
+    marginHorizontal: 20,
+    marginVertical: 16,
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    borderRadius: 14,
+    padding: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  viewToggleButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    gap: 6,
+  },
+  viewToggleButtonActive: {
+    backgroundColor: '#4A90E2',
+    shadowColor: '#4A90E2',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  viewToggleText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  calendarContainer: {
+    marginHorizontal: 20,
+    marginVertical: 8,
   },
 });

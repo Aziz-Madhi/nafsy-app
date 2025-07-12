@@ -18,6 +18,7 @@ export const ar = {
   retry: "إعادة المحاولة",
   loading: "جاري التحميل...",
   error: "خطأ",
+  ok: "موافق",
   
   // Authentication
   auth: {
@@ -123,6 +124,27 @@ export const ar = {
     mood: "المزاج",
     exercises: "التمارين",
     profile: "الملف الشخصي",
+  },
+  
+  // Crisis support
+  crisis: {
+    needHelp: "هل تحتاج مساعدة فورية؟",
+    modal: {
+      title: "الدعم الطارئ",
+      subtitle: "إذا كنت في أزمة، المساعدة متاحة. اختر الخيار الذي يناسبك.",
+    },
+    callError: {
+      title: "غير قادر على إجراء المكالمة",
+      message: "يرجى الاتصال بالرقم يدوياً أو المحاولة مرة أخرى لاحقاً.",
+    },
+  },
+  
+  // Common actions (for global access)
+  common: {
+    close: "إغلاق",
+    ok: "موافق",
+    cancel: "إلغاء",
+    continue: "متابعة",
   },
   
   // Chat screen

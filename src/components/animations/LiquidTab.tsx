@@ -44,8 +44,9 @@ export function LiquidTab({
   const { colors, isDark } = useTheme();
   const screenWidth = Dimensions.get('window').width;
   
-  // Tab dimensions
-  const tabWidth = (screenWidth - 60) / tabs.length; // 60 = padding
+  // Tab dimensions - adjust max width based on tab count
+  const maxTabWidth = tabs.length <= 3 ? 120 : tabs.length <= 4 ? 100 : 80;
+  const tabWidth = Math.min((screenWidth - 60) / tabs.length, maxTabWidth); // 60 = padding
   
   // Shared values for reanimated
   const translateX = useSharedValue(0);
@@ -189,6 +190,8 @@ export function LiquidTab({
                         fontWeight: isSelected ? '600' : '500',
                       },
                     ]}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
                   >
                     {tab.label}
                   </Text>
@@ -223,8 +226,8 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   tab: {
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 6,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1,
@@ -238,7 +241,8 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   tabText: {
-    fontSize: 14,
+    fontSize: 13,
     textAlign: 'center',
+    numberOfLines: 1,
   },
 });

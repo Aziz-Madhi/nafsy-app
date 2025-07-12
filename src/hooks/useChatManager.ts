@@ -139,6 +139,11 @@ export function useChatManager(chatMode: 'floating' | 'full' = 'full') {
 
   // Detect language from text content
   const detectLanguage = useCallback((text: string): 'en' | 'ar' => {
+    // Safety check for undefined or null text
+    if (!text || typeof text !== 'string') {
+      return (testQuery?.language as 'en' | 'ar') || 'en';
+    }
+    
     // Arabic character range detection
     const arabicRegex = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
     

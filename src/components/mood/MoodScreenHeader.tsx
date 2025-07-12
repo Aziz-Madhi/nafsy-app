@@ -1,10 +1,11 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { runOnJS } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 import { IconSymbol } from "@/components/core/Icon/IconSymbol";
 import { useThemedGlass } from "@/hooks/useThemedGlass";
+import { LinearGradient } from 'expo-linear-gradient';
+import React from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, { runOnJS } from 'react-native-reanimated';
+import { useAppTheme } from "@/theme";
 
 interface MoodScreenHeaderProps {
   userName?: string;
@@ -23,14 +24,15 @@ export function MoodScreenHeader({
   buttonAnimatedStyle,
 }: MoodScreenHeaderProps) {
   const { colors } = useThemedGlass();
+  const { typography } = useAppTheme();
 
   return (
     <View style={styles.header}>
       <View>
-        <Text style={[styles.greeting, { color: colors.text.secondary }]}>
+        <Text style={[typography.body, styles.greeting, { color: colors.text.secondary }]}>
           {locale === 'ar' ? 'مرحباً' : 'Hello'} {userName || ''}
         </Text>
-        <Text style={[styles.title, { color: colors.text.primary }]}>
+        <Text style={[typography.title, styles.title, { color: colors.text.primary }]}>
           {locale === 'ar' ? 'كيف حالك اليوم؟' : 'How are you today?'}
         </Text>
       </View>
@@ -41,7 +43,10 @@ export function MoodScreenHeader({
         >
           <Animated.View style={styles.enhancedAddButton}>
             <LinearGradient
-              colors={[safeColor(colors?.interactive?.primary, '#007AFF'), safeColor(colors?.interactive?.secondary, '#34C759')]}
+              colors={[
+                safeColor(colors?.interactive?.primary, '#4A90E2'), 
+                safeColor(colors?.wellness?.growth, '#7ED321')
+              ]}
               style={styles.addButtonGradient}
             >
               <IconSymbol name="plus" size={24} color="#FFFFFF" />
@@ -66,12 +71,10 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   greeting: {
-    fontSize: 16,
     marginBottom: 4,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
+    marginBottom: 0,
   },
   enhancedAddButton: {
     position: 'relative',

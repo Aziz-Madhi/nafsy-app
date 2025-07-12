@@ -1,5 +1,12 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import Animated, {
+  useAnimatedStyle,
+  withSpring,
+  FadeInDown,
+} from "react-native-reanimated";
+import { colorUtils } from "@/theme/colors";
 
 interface MessageGroupData {
   id: string;
@@ -14,6 +21,9 @@ interface MessageGroupProps {
   formatMessageTime: (timestamp: any) => string;
   locale: string;
 }
+
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
+const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 
 export const MessageGroup = React.memo<MessageGroupProps>(({ 
   group, 
@@ -34,43 +44,29 @@ export const MessageGroup = React.memo<MessageGroupProps>(({
       </View>
       
       {/* Messages in this date group */}
-      {group.messages.map((item) => (
-        <TouchableOpacity
-          key={item._id}
-          onLongPress={(event) => onMessageLongPress(event, item._id)}
-          activeOpacity={0.8}
-          style={[
-            styles.messageBubble,
-            {
-              backgroundColor: item.role === 'user' 
-                ? theme.colors.interactive.primary 
-                : theme.colors.background.secondary,
-              alignSelf: item.role === 'user' ? 'flex-end' : 'flex-start',
-              borderColor: item.role === 'user' 
-                ? 'transparent' 
-                : theme.colors.system.border,
-            },
-          ]}
-        >
-          <Text
-            style={[
-              styles.messageText,
-              {
-                color: item.role === 'user' 
-                  ? theme.colors.text.onPrimary 
-                  : theme.colors.text.primary,
-                textAlign: locale === 'ar' ? 'right' : 'left',
-              },
-            ]}
-          >
-            {item.content}
-          </Text>
+      {group.messages.map((item, index) => {
+        const isUser = item.role === 'user';
+        const bubbleContent = (
+          <>
+            <Text
+              style={[
+                styles.messageText,
+                {
+                  color: isUser 
+                    ? theme.colors.text.inverse 
+                    : theme.colors.text.primary,
+                  textAlign: locale === 'ar' ? 'right' : 'left',
+                },
+              ]}
+            >
+              {item.content}
+            </Text>
           
           {/* Message reactions */}
           {(item.reactions?.length > 0) ? (
             <View style={styles.reactionsContainer}>
               {item.reactions.map((reaction: any, index: number) => (
-                <View key={index} style={styles.reactionBubble}>
+                <View key={`${item._id}-reaction-${index}`} style={styles.reactionBubble}>
                   <Text style={styles.reactionEmoji}>{reaction.emoji}</Text>
                   <Text style={styles.reactionCount}>{reaction.count}</Text>
                 </View>
@@ -78,20 +74,64 @@ export const MessageGroup = React.memo<MessageGroupProps>(({
             </View>
           ) : null}
           
-          <Text
+            <Text
+              style={[
+                styles.messageTime,
+                {
+                  color: isUser 
+                    ? colorUtils.withOpacity(theme.colors.text.inverse, 0.8)
+                    : theme.colors.text.tertiary,
+                },
+              ]}
+            >
+              {formatMessageTime(item._creationTime)}
+            </Text>
+          </>
+        );
+
+        return (
+          <AnimatedTouchableOpacity
+            key={item._id || `${group.id}-message-${index}`}
+            entering={FadeInDown.delay(index * 50).springify()}
+            onLongPress={(event) => onMessageLongPress(event, item._id)}
+            activeOpacity={0.8}
             style={[
-              styles.messageTime,
+              styles.messageBubble,
               {
-                color: item.role === 'user' 
-                  ? theme.colors.text.onPrimary 
-                  : theme.colors.text.tertiary,
+                alignSelf: isUser ? 'flex-end' : 'flex-start',
+                marginLeft: isUser ? 60 : 16,
+                marginRight: isUser ? 16 : 60,
               },
             ]}
           >
-            {formatMessageTime(item._creationTime)}
-          </Text>
-        </TouchableOpacity>
-      ))}
+            {isUser ? (
+              <LinearGradient
+                colors={[
+                  theme.colors.interactive.primary,
+                  colorUtils.lighten(theme.colors.interactive.primary, 0.15),
+                ]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.gradientBubble}
+              >
+                {bubbleContent}
+              </LinearGradient>
+            ) : (
+              <View 
+                style={[
+                  styles.assistantBubble,
+                  {
+                    backgroundColor: theme.colors.background.secondary,
+                    borderColor: theme.colors.system.border,
+                  }
+                ]}
+              >
+                {bubbleContent}
+              </View>
+            )}
+          </AnimatedTouchableOpacity>
+        );
+      })}
     </View>
   );
 });
@@ -115,19 +155,34 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
   },
   messageBubble: {
+    marginVertical: 4,
+    maxWidth: '85%',
+  },
+  gradientBubble: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    marginVertical: 4,
     borderRadius: 20,
-    maxWidth: '80%',
+    shadowColor: '#4A90E2',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  assistantBubble: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 20,
     borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 2,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
     elevation: 2,
   },
   messageText: {
@@ -142,8 +197,8 @@ const styles = StyleSheet.create({
   reactionBubble: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    borderRadius: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    borderRadius: 14,
     paddingHorizontal: 8,
     paddingVertical: 4,
     marginRight: 6,
@@ -159,8 +214,8 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   messageTime: {
-    fontSize: 11,
+    fontSize: 12,
     marginTop: 4,
-    opacity: 0.7,
+    fontWeight: '500',
   },
 });
