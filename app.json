@@ -12,7 +12,7 @@
       "bundleIdentifier": "com.nafsy.app",
       "supportsTablet": false,
       "infoPlist": {
-        "UIViewControllerBasedStatusBarAppearance": true,
+        "UIViewControllerBasedStatusBarAppearance": false,
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -49,15 +49,11 @@
       "expo-sqlite",
       "expo-font",
       "expo-web-browser",
-      "expo-secure-store",
-      [
-        "expo-crypto",
-        {}
-      ]
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
-      "reactCompiler": true
+      "reactCompiler": false
     },
     "extra": {
       "router": {},

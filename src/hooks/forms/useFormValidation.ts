@@ -133,7 +133,7 @@ export function useFormValidation<T extends Record<string, any>>(
 
     setErrors(newErrors);
     return newErrors.length === 0;
-  }, [validationConfig, formData, validateField]);
+  }, [validationConfig, validateField, formData]);
 
   // Mark field as touched
   const touchField = React.useCallback((fieldName: string) => {
@@ -158,10 +158,10 @@ export function useFormValidation<T extends Record<string, any>>(
     return touched.has(fieldName) && errors.some(err => err.field === fieldName);
   }, [errors, touched]);
 
-  // Check if form is valid
+  // Check if form is valid (only consider touched fields for validation state)
   const isValid = React.useMemo(() => {
-    return errors.length === 0;
-  }, [errors]);
+    return errors.filter(err => touched.has(err.field)).length === 0;
+  }, [errors, touched]);
 
   // Reset validation state
   const resetValidation = React.useCallback(() => {
@@ -177,7 +177,10 @@ export function useFormValidation<T extends Record<string, any>>(
     
     setErrors(prev => {
       const filtered = prev.filter(err => err.field !== fieldName);
-      return error ? [...filtered, { field: fieldName, message: error }] : filtered;
+      if (error) {
+        return [...filtered, { field: fieldName, message: error }];
+      }
+      return filtered;
     });
   }, [validateField, touchField]);
 

@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import { I18nManager } from "react-native";
 import { getTranslation, type Locale } from "@/locales";
 
 const LOCALE_KEY = "@nafsy/locale";
@@ -23,10 +24,25 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
       .then((savedLocale) => {
         if (savedLocale === "ar" || savedLocale === "en") {
           setLocaleState(savedLocale);
+          
+          // Synchronize I18nManager with saved locale
+          const shouldBeRTL = savedLocale === "ar";
+          if (I18nManager.isRTL !== shouldBeRTL) {
+            I18nManager.forceRTL(shouldBeRTL);
+          }
+        } else {
+          // Default to English and ensure LTR layout
+          if (I18nManager.isRTL) {
+            I18nManager.forceRTL(false);
+          }
         }
       })
       .catch((error) => {
         console.error("Error loading locale:", error);
+        // On error, default to English and LTR
+        if (I18nManager.isRTL) {
+          I18nManager.forceRTL(false);
+        }
       })
       .finally(() => {
         setIsLoading(false);
@@ -37,6 +53,12 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     try {
       await AsyncStorage.setItem(LOCALE_KEY, newLocale);
       setLocaleState(newLocale);
+      
+      // Synchronize I18nManager with locale state
+      const shouldBeRTL = newLocale === "ar";
+      if (I18nManager.isRTL !== shouldBeRTL) {
+        I18nManager.forceRTL(shouldBeRTL);
+      }
     } catch (error) {
       console.error("Error saving locale:", error);
     }
@@ -48,7 +70,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
       locale,
       setLocale,
       isLoading,
-      isRTL: locale === "ar",
+      isRTL: I18nManager.isRTL,
     }),
     [locale, setLocale, isLoading]
   );
@@ -72,15 +94,15 @@ export function useLocale() {
 export function useTranslation() {
   const { locale } = useLocale();
   
-  const t = (key: string) => {
+  const t = React.useCallback((key: string) => {
     return getTranslation(locale, key);
-  };
+  }, [locale]);
   
   // Legacy support for inline translations (deprecated)
-  const tLegacy = (key: string, translations: { en: string; ar: string }) => {
+  const tLegacy = React.useCallback((key: string, translations: { en: string; ar: string }) => {
     console.warn(`Legacy translation used for "${key}". Please migrate to centralized translations.`);
     return translations[locale];
-  };
+  }, [locale]);
   
-  return { t, tLegacy, locale };
+  return React.useMemo(() => ({ t, tLegacy, locale }), [t, tLegacy, locale]);
 }

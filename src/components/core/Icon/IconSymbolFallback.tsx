@@ -6,7 +6,6 @@ export interface IconSymbolProps {
   size?: number;
   color?: string;
   style?: any;
-  ref?: React.Ref<any>;
 }
 
 // SF Symbol to Material Icons mapping
@@ -38,6 +37,14 @@ const iconMapping = {
   "brain.head.profile": { library: "MaterialIcons", name: "psychology" },
   "square.grid.2x2": { library: "MaterialIcons", name: "grid-view" },
   "arrow.up.circle.fill": { library: "MaterialIcons", name: "send" },
+  
+  // Additional SF Symbol mappings
+  "moon.stars.fill": { library: "MaterialIcons", name: "bedtime" },
+  "shield.fill": { library: "MaterialIcons", name: "security" },
+  "heart.text.square": { library: "MaterialIcons", name: "favorite-border" },
+  "book.fill": { library: "MaterialIcons", name: "menu-book" },
+  "bell.fill": { library: "MaterialIcons", name: "notifications" },
+  "mic.fill": { library: "MaterialIcons", name: "mic" },
 } as const;
 
 export type IconSymbolName = keyof typeof iconMapping;

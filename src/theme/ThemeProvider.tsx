@@ -36,19 +36,17 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const [themeMode, setThemeModeState] = useState<ThemeMode>('system');
   const [isLoading, setIsLoading] = useState(true);
   
-  // Get the actual theme based on mode and system preference
-  const getEffectiveTheme = (mode: ThemeMode, systemScheme: ColorSchemeName): Theme => {
-    if (mode === 'system') {
-      return systemScheme === 'dark' ? themes.dark : themes.light;
-    }
-    return themes[mode];
-  };
-
   const [systemScheme, setSystemScheme] = useState<ColorSchemeName>(
     Appearance.getColorScheme()
   );
   
-  const currentTheme = getEffectiveTheme(themeMode, systemScheme);
+  // Memoize the effective theme calculation to prevent unnecessary re-renders
+  const currentTheme = React.useMemo(() => {
+    if (themeMode === 'system') {
+      return systemScheme === 'dark' ? themes.dark : themes.light;
+    }
+    return themes[themeMode];
+  }, [themeMode, systemScheme]);
 
   // Listen to system theme changes
   useEffect(() => {
@@ -59,12 +57,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     return () => subscription?.remove();
   }, []);
 
-  // Load saved theme preference on mount
-  useEffect(() => {
-    loadThemePreference();
-  }, []);
-
-  const loadThemePreference = async () => {
+  // Memoize the theme preference loading function
+  const loadThemePreference = React.useCallback(async () => {
     try {
       const savedTheme = await AsyncStorage.getItem(THEME_KEY);
       if (savedTheme && ['light', 'dark', 'system'].includes(savedTheme)) {
@@ -75,16 +69,21 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const setThemeMode = async (mode: ThemeMode) => {
+  // Load saved theme preference on mount
+  useEffect(() => {
+    loadThemePreference();
+  }, [loadThemePreference]);
+
+  const setThemeMode = React.useCallback(async (mode: ThemeMode) => {
     try {
       await AsyncStorage.setItem(THEME_KEY, mode);
       setThemeModeState(mode);
     } catch (error) {
       console.error('Error saving theme preference:', error);
     }
-  };
+  }, []);
 
   // Memoize context value to prevent unnecessary re-renders
   const contextValue = React.useMemo(
@@ -96,7 +95,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       isDark: currentTheme.mode === 'dark',
       isLoading,
     }),
-    [currentTheme, themeMode, isLoading]
+    [currentTheme, themeMode, setThemeMode, isLoading]
   );
 
   return (

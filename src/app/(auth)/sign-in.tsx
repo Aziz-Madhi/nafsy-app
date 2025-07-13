@@ -1,22 +1,22 @@
 import { Image } from "@/components/core/Image/Image";
+import { EmailField, PasswordField, PrimaryButton, SecondaryButton } from "@/components/forms";
+import { AUTH_VALIDATION, useAuthForm } from "@/hooks/forms";
 import { useTranslation } from "@/hooks/useLocale";
+import { useOAuthAuthentication, type OAuthStrategy } from "@/hooks/useOAuth";
 import { useAppTheme } from "@/theme";
 import { useSignIn } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import React from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Platform,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
-import { useAuthForm, AUTH_VALIDATION } from "@/hooks/forms";
-import { EmailField, PasswordField, PrimaryButton, SecondaryButton } from "@/components/forms";
-import { useOAuthAuthentication, type OAuthStrategy } from "@/hooks/useOAuth";
 
 // Warm up the browser for OAuth
 WebBrowser.maybeCompleteAuthSession();
@@ -36,12 +36,15 @@ export default function SignInScreen() {
   
   const { authenticateWithOAuth } = useOAuthAuthentication();
 
+  // Memoize initial form data to avoid new object identity each render
+  const initialFormData = React.useMemo<SignInFormData>(() => ({
+    email: '',
+    password: '',
+  }), []);
+
   // Initialize form with validation using the new form system
   const form = useAuthForm<SignInFormData>(
-    {
-      email: '',
-      password: '',
-    },
+    initialFormData,
     {
       email: AUTH_VALIDATION.email,
       password: AUTH_VALIDATION.password,

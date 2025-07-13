@@ -83,8 +83,8 @@ export function BaseInput({
   const sizeConfig = INPUT_SIZES[size];
   const hasError = Boolean(error);
 
-  // Get variant-specific styling
-  const getVariantStyles = () => {
+  // Memoize variant-specific styling to prevent infinite re-renders
+  const { variantContainerStyle, variantInputStyle } = React.useMemo(() => {
     const baseInputStyle: TextStyle = {
       height: sizeConfig.height,
       paddingHorizontal: sizeConfig.paddingHorizontal,
@@ -105,12 +105,12 @@ export function BaseInput({
     switch (variant) {
       case 'glass':
         return {
-          containerStyle: {
+          variantContainerStyle: {
             ...baseContainerStyle,
             borderWidth: 0,
             overflow: 'hidden' as 'hidden',
           },
-          inputStyle: {
+          variantInputStyle: {
             ...baseInputStyle,
             backgroundColor: 'transparent',
           },
@@ -118,14 +118,14 @@ export function BaseInput({
 
       case 'outlined':
         return {
-          containerStyle: {
+          variantContainerStyle: {
             ...baseContainerStyle,
             backgroundColor: 'transparent',
             borderColor: hasError 
               ? colors.interactive.destructive 
               : colors.system.border,
           },
-          inputStyle: {
+          variantInputStyle: {
             ...baseInputStyle,
             backgroundColor: 'transparent',
           },
@@ -133,7 +133,7 @@ export function BaseInput({
 
       case 'filled':
         return {
-          containerStyle: {
+          variantContainerStyle: {
             ...baseContainerStyle,
             backgroundColor: isDark 
               ? 'rgba(255, 255, 255, 0.1)' 
@@ -142,28 +142,26 @@ export function BaseInput({
               ? colors.interactive.destructive 
               : 'transparent',
           },
-          inputStyle: {
+          variantInputStyle: {
             ...baseInputStyle,
           },
         };
 
       default:
         return {
-          containerStyle: {
+          variantContainerStyle: {
             ...baseContainerStyle,
             backgroundColor: colors.background.secondary,
             borderColor: hasError 
               ? colors.interactive.destructive 
               : colors.system.border,
           },
-          inputStyle: {
+          variantInputStyle: {
             ...baseInputStyle,
           },
         };
     }
-  };
-
-  const { containerStyle: variantContainerStyle, inputStyle: variantInputStyle } = getVariantStyles();
+  }, [sizeConfig, colors, isRTL, disabled, variant, hasError, isDark]);
 
   const renderInput = () => (
     <View style={[variantContainerStyle, containerStyle]}>

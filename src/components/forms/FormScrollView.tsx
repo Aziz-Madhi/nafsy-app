@@ -1,37 +1,45 @@
 "use client";
 
-import React from "react";
+import React, { useRef, forwardRef, useImperativeHandle } from "react";
 import { ScrollViewProps } from "react-native";
 import { useAppTheme } from "@/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { useScrollToTop } from "@/hooks/useTabToTop";
+// Removed deprecated useBottomTabBarHeight import
+import { useScrollToTop } from "@react-navigation/native";
 import Animated from "react-native-reanimated";
 
-export function ScrollView(
-  props: ScrollViewProps & { ref?: React.Ref<Animated.ScrollView> }
-) {
-  const { colors } = useAppTheme();
-  const tabBarHeight = useBottomTabBarHeight();
-  const paddingBottom = tabBarHeight || 0;
+export const ScrollView = forwardRef<Animated.ScrollView, ScrollViewProps>(
+  (props, forwardedRef) => {
+    const { colors } = useAppTheme();
+    const { top: statusBarInset, bottom } = useSafeAreaInsets();
+    
+    // Use safe area bottom inset plus some extra space for tab bar
+    // This is a more reliable approach than the deprecated useBottomTabBarHeight
+    const paddingBottom = bottom + 83; // Standard tab bar height (49) + safe area + extra spacing
+    const largeHeaderInset = statusBarInset + 92;
 
-  const { top: statusBarInset, bottom } = useSafeAreaInsets(); // inset of the status bar
+    // Create internal ref for scroll-to-top functionality
+    const scrollViewRef = useRef<Animated.ScrollView>(null);
+    
+    // Use React Navigation's modern useScrollToTop hook
+    useScrollToTop(scrollViewRef);
 
-  const largeHeaderInset = statusBarInset + 92; // inset to use for a large header since it's frame is equal to 96 + the frame of status bar
+    // Forward ref to parent component if needed
+    useImperativeHandle(forwardedRef, () => scrollViewRef.current!, []);
 
-  useScrollToTop(props.ref!, -largeHeaderInset);
-
-  return (
-    <Animated.ScrollView
-      scrollToOverflowEnabled
-      automaticallyAdjustsScrollIndicatorInsets
-      contentInsetAdjustmentBehavior="automatic"
-      contentInset={{ bottom: paddingBottom }}
-      scrollIndicatorInsets={{
-        bottom: paddingBottom - (process.env.EXPO_OS === "ios" ? bottom : 0),
-      }}
-      {...props}
-      style={[{ backgroundColor: colors.background.primary }, props.style]}
-    />
-  );
-}
+    return (
+      <Animated.ScrollView
+        ref={scrollViewRef}
+        scrollToOverflowEnabled
+        automaticallyAdjustsScrollIndicatorInsets
+        contentInsetAdjustmentBehavior="automatic"
+        contentInset={{ bottom: paddingBottom }}
+        scrollIndicatorInsets={{
+          bottom: paddingBottom - (process.env.EXPO_OS === "ios" ? bottom : 0),
+        }}
+        {...props}
+        style={[{ backgroundColor: colors.background.primary }, props.style]}
+      />
+    );
+  }
+);

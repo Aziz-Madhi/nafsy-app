@@ -286,7 +286,7 @@ useSwipeGesture()     // Swipe gesture handling
 // Utility hooks
 useOptimizedQueries() // Query optimization
 useHeaderSearch()     // Header search functionality
-useTabToTop()         // Tab-to-scroll-top behavior
+useScrollToTop()      // Modern scroll-to-top behavior (React Navigation)
 useMergedRef()        // Ref merging utility
 useChunkedDisplay()   // Performance optimization for large lists
 ```

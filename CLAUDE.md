@@ -188,3 +188,8 @@ Refer to Expo's documentation for detailed information on Views, Blueprints, and
 ## Development Gotchas
 
 - If you want to start the expo simulator don't put bun expo start --clear but put bun start --clear remove the expo word
+
+## Claude AI Instructions
+
+- When you try to rerun the app, Ask me first. Don't go by yourself.
+- Do not start "bun expo run:ios" automatically. It takes up to 10 minutes and often times out. Let the user start the build manually.

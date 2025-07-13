@@ -2,7 +2,7 @@
   "mcpServers": {
     "convex": {
       "type": "stdio",
-      "command": "npx",
+      "command": "bunx",
       "args": [
         "-y",
         "convex@latest",

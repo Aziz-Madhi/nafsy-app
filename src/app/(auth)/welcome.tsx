@@ -3,12 +3,11 @@ import {
   View,
   Text,
   TouchableOpacity,
-  I18nManager,
+  StatusBar,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Image } from "@/components/core/Image/Image";
 import { useLocale } from "@/hooks/useLocale";
-import { CenteredScreen } from "@/components/layout/BaseScreen";
 import { useAppTheme } from "@/theme";
 
 // Removed unused width
@@ -34,13 +33,7 @@ export default function WelcomeScreen() {
   const handleLanguageSelect = async (language: "en" | "ar") => {
     setSelectedLanguage(language);
     await setLocale(language);
-    
-    // Handle RTL changes
-    const shouldBeRTL = language === "ar";
-    if (I18nManager.isRTL !== shouldBeRTL) {
-      I18nManager.forceRTL(shouldBeRTL);
-      // Note: App might need to reload for RTL changes to take effect
-    }
+    // RTL changes are now handled automatically in useLocale hook
   };
 
   const content = {
@@ -69,8 +62,10 @@ export default function WelcomeScreen() {
   const styles = createStyles({ spacing, fontSize, fontWeight, colors });
 
   return (
-    <CenteredScreen contentPadding>
-      <View style={styles.header}>
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background.primary} />
+      <View style={styles.content}>
+        <View style={styles.header}>
         <Image 
           source="sf:brain.head.profile" 
           size={80} 
@@ -129,7 +124,8 @@ export default function WelcomeScreen() {
       >
         <Text style={styles.primaryButtonText}>{t.continue}</Text>
       </TouchableOpacity>
-    </CenteredScreen>
+      </View>
+    </View>
   );
 }
 
@@ -139,6 +135,18 @@ const createStyles = ({ spacing, fontSize, fontWeight, colors }: {
   fontWeight: ReturnType<typeof useAppTheme>['fontWeight'];
   colors: ReturnType<typeof useAppTheme>['colors'];
 }) => ({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background.primary,
+    paddingTop: 50, // Manual safe area top padding
+    paddingBottom: 20, // Manual safe area bottom padding
+  },
+  content: {
+    flex: 1,
+    justifyContent: "center" as const,
+    alignItems: "center" as const,
+    paddingHorizontal: spacing.lg,
+  },
   header: {
     alignItems: "center" as const,
     marginBottom: spacing.xl,

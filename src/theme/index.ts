@@ -3,6 +3,8 @@
  * Following LEVER framework - centralized theme access
  */
 
+import React from 'react';
+
 // Core theme types and colors
 // Import required for the convenience hook
 import { useTheme } from './ThemeProvider';
@@ -68,9 +70,15 @@ export {
  */
 export function useAppTheme() {
   const theme = useTheme();
-  const themedStyles = createThemedCommonStyles(theme.colors, theme.isDark);
   
-  return {
+  // Memoize themed styles to prevent infinite re-renders
+  const themedStyles = React.useMemo(() => 
+    createThemedCommonStyles(theme.colors, theme.isDark), 
+    [theme.colors, theme.isDark]
+  );
+  
+  // Memoize the entire return object to prevent unnecessary re-renders
+  return React.useMemo(() => ({
     // Core theme object (use sparingly - prefer destructured values below)
     theme,
     // Recommended: Use these destructured values instead of theme.property
@@ -89,7 +97,12 @@ export function useAppTheme() {
     // Typography system (new design guidelines)
     typography,
     typographyGuidelines,
-  } as const;
+  } as const), [
+    theme,
+    themedStyles,
+    // Note: Spacing, BorderRadius, FontSize, FontWeight, typography, typographyGuidelines 
+    // are constants so they don't need to be in dependencies
+  ]);
 }
 
 /**

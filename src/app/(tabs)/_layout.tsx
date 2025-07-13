@@ -1,4 +1,3 @@
-import { MaterialIcons } from "@expo/vector-icons";
 import { api } from "@/convex/_generated/api";
 import { useTranslation } from "@/hooks/useLocale";
 import { useAuth, useUser } from "@clerk/clerk-expo";
@@ -7,22 +6,23 @@ import { Redirect, Tabs } from "expo-router";
 import { useEffect, useRef } from "react";
 import { Platform } from "react-native";
 import { useAppTheme } from "@/theme";
+import { IconSymbol } from "@/components/core/Icon/IconSymbol";
 
-// Tab icon components using direct Material Icons
+// Tab icon components using IconSymbol for SF Symbols on iOS
 const ChatIcon = ({ color, size }: { color: string; size: number }) => (
-  <MaterialIcons name="message" size={size} color={color} />
+  <IconSymbol name="paperplane.fill" size={size} color={color} />
 );
 
 const MoodIcon = ({ color, size }: { color: string; size: number }) => (
-  <MaterialIcons name="mood" size={size} color={color} />
+  <IconSymbol name="face.smiling" size={size} color={color} />
 );
 
 const ExercisesIcon = ({ color, size }: { color: string; size: number }) => (
-  <MaterialIcons name="favorite" size={size} color={color} />
+  <IconSymbol name="heart.fill" size={size} color={color} />
 );
 
 const ProfileIcon = ({ color, size }: { color: string; size: number }) => (
-  <MaterialIcons name="person" size={size} color={color} />
+  <IconSymbol name="star.fill" size={size} color={color} />
 );
 
 export default function TabsLayout() {

@@ -1,8 +1,8 @@
+import { useLocale } from '@/hooks/useLocale';
 import React from 'react';
 import { Alert } from 'react-native';
 import { useFormState, UseFormStateConfig } from './useFormState';
-import { useFormValidation, FormValidationConfig } from './useFormValidation';
-import { useLocale } from '@/hooks/useLocale';
+import { FormValidationConfig, useFormValidation } from './useFormValidation';
 
 export interface UseFormConfig<T extends Record<string, any>> 
   extends Omit<UseFormStateConfig<T>, 'onSubmit'> {
@@ -74,8 +74,8 @@ export function useForm<T extends Record<string, any>>({
   }, [formState, validation, validateOnChange]);
 
   // Enhanced submit with validation
-  const submitForm = React.useCallback(async () => {
-    await formState.submit();
+  const submitForm = React.useCallback(() => {
+    return formState.submit();
   }, [formState]);
 
   // Manual validation trigger
@@ -89,21 +89,71 @@ export function useForm<T extends Record<string, any>>({
     validation.resetValidation();
   }, [formState, validation]);
 
-  // Check if form can be submitted
+  // Check if form can be submitted - allow submission even with validation errors initially
   const canSubmit = React.useMemo(() => {
-    return !formState.isSubmitting && 
-           !formState.isLoading && 
-           validation.isValid;
-  }, [formState.isSubmitting, formState.isLoading, validation.isValid]);
+    return !formState.isSubmitting && !formState.isLoading;
+  }, [formState.isSubmitting, formState.isLoading]);
 
-  // Form field helpers
-  const getFieldProps = React.useCallback((fieldName: keyof T) => ({
-    value: formState.data[fieldName],
-    onChangeText: (value: string) => updateField(fieldName, value as T[keyof T]),
-    onBlur: () => validation.touchField(fieldName as string),
-    error: validation.getFieldError(fieldName as string),
-    hasError: validation.hasFieldError(fieldName as string),
-  }), [formState.data, updateField, validation]);
+  /**
+   * ---------------------------------------------------------------------
+   * Stable field handlers
+   * ---------------------------------------------------------------------
+   * We previously used React.useMemo with a Proxy to generate a fresh
+   * handlers object each render. Because the memo depended on `updateField`
+   * (which itself changes whenever form validation/state changes) the memo
+   * was recalculated on *every* render – effectively negating the caching
+   * and, in some scenarios, triggering an infinite re-render loop.
+   *
+   * By switching to `useRef` we can persist the handlers map for the entire
+   * lifetime of the form instance. We still capture the *latest* versions of
+   * `updateField` and `validation.touchField` safely via refs so the cached
+   * callbacks always call up-to-date logic without changing their identity.
+   * ---------------------------------------------------------------------
+   */
+
+  // Keep live refs to the latest implementation so cached handlers stay fresh
+  const updateFieldRef = React.useRef(updateField);
+  const touchFieldRef   = React.useRef(validation.touchField);
+
+  React.useEffect(() => {
+    updateFieldRef.current = updateField;
+    touchFieldRef.current  = validation.touchField;
+  }, [updateField, validation.touchField]);
+
+  // One stable object for all field handlers
+  const fieldHandlersRef = React.useRef<Record<string, { onChangeText: (value: string) => void; onBlur: () => void }>>({});
+
+  const getFieldHandlers = React.useCallback(
+    (fieldName: keyof T) => {
+      const key = fieldName as string;
+      if (!fieldHandlersRef.current[key]) {
+        fieldHandlersRef.current[key] = {
+          onChangeText: (value: string) =>
+            updateFieldRef.current(key as keyof T, value as T[keyof T]),
+          onBlur: () => touchFieldRef.current(key),
+        };
+      }
+      return fieldHandlersRef.current[key];
+    },
+    [] // stable – ref ensures latest logic is used
+  );
+
+  // Form field helpers - now with stable function references
+  const getFieldProps = React.useCallback(
+    (fieldName: keyof T) => {
+      const key = fieldName as string;
+      const handlers = getFieldHandlers(fieldName);
+
+      return {
+        value: formState.data[fieldName],
+        onChangeText: handlers.onChangeText,
+        onBlur: handlers.onBlur,
+        error: validation.getFieldError(key),
+        hasError: validation.hasFieldError(key),
+      };
+    },
+    [formState.data, validation, getFieldHandlers]
+  );
 
   return {
     // Form data and state
@@ -140,7 +190,7 @@ export function useAuthForm<T extends Record<string, any>>(
     validationConfig,
     onSubmit,
     showValidationAlerts: true,
-    validateOnChange: true,
+    validateOnChange: false, // Don't validate on every change to prevent infinite loops
     validateOnSubmit: true,
     enableDirtyTracking: false, // Auth forms don't need dirty tracking
   });
